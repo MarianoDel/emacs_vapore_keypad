@@ -2099,6 +2099,12 @@ unsigned char CheckRemoteKeypad (unsigned char * sp0, unsigned char * sp1, unsig
 					interdigit_timeout = 1000;
 				}
 			}
+
+			if (!interdigit_timeout)
+			{
+				remote_keypad_state = RK_TIMEOUT;
+			}
+
 			break;
 
 		case RK_RECEIVING_C:
@@ -2156,6 +2162,11 @@ unsigned char CheckRemoteKeypad (unsigned char * sp0, unsigned char * sp1, unsig
 					interdigit_timeout = 1000;
 				}
 			}
+
+			if (!interdigit_timeout)
+			{
+				remote_keypad_state = RK_TIMEOUT;
+			}
 			break;
 
 		case RK_RECEIVING_E:
@@ -2190,6 +2201,11 @@ unsigned char CheckRemoteKeypad (unsigned char * sp0, unsigned char * sp1, unsig
 					*posi = *sp0 * 100 + *sp1 * 10 + *sp2;
 					remote_keypad_state = RK_NUMBER_FINISH;
 				}
+			}
+
+			if (!interdigit_timeout)
+			{
+				remote_keypad_state = RK_TIMEOUT;
 			}
 			break;
 

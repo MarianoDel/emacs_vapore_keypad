@@ -28,8 +28,8 @@
 //#define HT6P20B2
 //#define EV1527
 //#define PT2264
-//#define HT6P20B2_AND_PT2264
-#define EV1527_AND_PT2264
+#define HT6P20B2_AND_PT2264
+//#define EV1527_AND_PT2264
 
 #define B1_BY_B2		//botones cambiados B1 x B2
 
