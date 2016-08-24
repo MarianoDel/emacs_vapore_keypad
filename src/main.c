@@ -109,6 +109,7 @@ volatile unsigned short button_timer_internal;
 //--- Respecto del KeyPad
 unsigned char keypad_state = 0;
 unsigned char remote_keypad_state = 0;
+unsigned char unlock_by_remote = 0;
 
 //--- Respecto de las alarmas y botones
 //unsigned short last_act = 0;
@@ -131,6 +132,7 @@ unsigned int current_size = 0;
 volatile unsigned char timer_battery = 0;
 unsigned short ac_counter = 0;
 unsigned short bat_counter = 0;
+unsigned char slow_toggle = 0;
 #endif
 
 const char s_1024 [] = {"1024 bytes\r\n"};
@@ -499,6 +501,7 @@ int main(void)
 					  {
 						  USARTx_Send("Master Remote Unlock\r\n");
 						  main_state = MAIN_TO_UNLOCK;
+						  unlock_by_remote = 1;
 					  }
 					  else
 					  {
@@ -508,12 +511,14 @@ int main(void)
 							  {
 								  USARTx_Send("User default Remote Unlock\r\n");
 								  main_state = MAIN_TO_UNLOCK;
+								  unlock_by_remote = 1;
 							  }
 						  }
 						  else if (position == (unsigned short) CheckIndexInMemory_SST(1000))
 						  {
 							  USARTx_Send("User Remote Unlock\r\n");
 							  main_state = MAIN_TO_UNLOCK;
+							  unlock_by_remote = 1;
 						  }
 					  }
 				  }
@@ -582,6 +587,7 @@ int main(void)
 				  {
 					  USARTx_Send("Keypad Locked\r\n");
 					  main_state = MAIN_MAIN;
+					  unlock_by_remote = 0;
 					  ShowNumbers(DISPLAY_NONE);
 				  }
 #endif
@@ -2011,7 +2017,8 @@ unsigned char CheckRemoteKeypad (unsigned char * sp0, unsigned char * sp1, unsig
 					if (button_remote == REM_B10)
 					{
 						ShowNumbers(DISPLAY_NONE);
-						SirenCommands(SIREN_HALF_CMD);
+						if (unlock_by_remote)
+							SirenCommands(SIREN_HALF_CMD);
 						BuzzerCommands(BUZZER_HALF_CMD, 1);
 						remote_keypad_state = RK_CANCEL;
 					}
@@ -2028,7 +2035,8 @@ unsigned char CheckRemoteKeypad (unsigned char * sp0, unsigned char * sp1, unsig
 							ShowNumbers(button_remote);
 							*sp0 = button_remote;
 						}
-						SirenCommands(SIREN_SHORT_CMD);
+						if (unlock_by_remote)
+							SirenCommands(SIREN_SHORT_CMD);
 						BuzzerCommands(BUZZER_SHORT_CMD, 1);
 
 						*sp1 = 0;
@@ -2060,7 +2068,8 @@ unsigned char CheckRemoteKeypad (unsigned char * sp0, unsigned char * sp1, unsig
 				if (button_remote == REM_B10)
 				{
 					ShowNumbers(DISPLAY_NONE);
-					SirenCommands(SIREN_HALF_CMD);
+					if (unlock_by_remote)
+						SirenCommands(SIREN_HALF_CMD);
 					BuzzerCommands(BUZZER_HALF_CMD, 1);
 					remote_keypad_state = RK_CANCEL;
 				}
@@ -2069,7 +2078,8 @@ unsigned char CheckRemoteKeypad (unsigned char * sp0, unsigned char * sp1, unsig
 				if (button_remote == REM_B12)
 				{
 					ShowNumbers(DISPLAY_LINE);
-					SirenCommands(SIREN_SHORT_CMD);
+					if (unlock_by_remote)
+						SirenCommands(SIREN_SHORT_CMD);
 					BuzzerCommands(BUZZER_SHORT_CMD, 2);
 					*sp2 = *sp0;
 					*sp1 = 0;
@@ -2078,8 +2088,8 @@ unsigned char CheckRemoteKeypad (unsigned char * sp0, unsigned char * sp1, unsig
 					*posi = *sp2;
 					remote_keypad_state = RK_NUMBER_FINISH;
 				}
-
-				if (((button_remote > REM_NO) && (button_remote < REM_B10)) || (button_remote == REM_B11))	//es un numero 1 a 9 o 0
+				//es un numero 1 a 9 o 0
+				if (((button_remote > REM_NO) && (button_remote < REM_B10)) || (button_remote == REM_B11))
 				{
 					if (button_remote == REM_B11)
 					{
@@ -2092,7 +2102,8 @@ unsigned char CheckRemoteKeypad (unsigned char * sp0, unsigned char * sp1, unsig
 						ShowNumbers(button_remote);
 					}
 
-					SirenCommands(SIREN_SHORT_CMD);
+					if (unlock_by_remote)
+						SirenCommands(SIREN_SHORT_CMD);
 					BuzzerCommands(BUZZER_SHORT_CMD, 1);
 					*sp2 = 0;
 					remote_keypad_state = RK_RECEIVING_C;
@@ -2125,7 +2136,8 @@ unsigned char CheckRemoteKeypad (unsigned char * sp0, unsigned char * sp1, unsig
 				if (button_remote == REM_B10)
 				{
 					ShowNumbers(DISPLAY_NONE);
-					SirenCommands(SIREN_HALF_CMD);
+					if (unlock_by_remote)
+						SirenCommands(SIREN_HALF_CMD);
 					BuzzerCommands(BUZZER_HALF_CMD, 1);
 					remote_keypad_state = RK_CANCEL;
 				}
@@ -2134,7 +2146,8 @@ unsigned char CheckRemoteKeypad (unsigned char * sp0, unsigned char * sp1, unsig
 				if (button_remote == REM_B12)
 				{
 					ShowNumbers(DISPLAY_LINE);
-					SirenCommands(SIREN_SHORT_CMD);
+					if (unlock_by_remote)
+						SirenCommands(SIREN_SHORT_CMD);
 					BuzzerCommands(BUZZER_SHORT_CMD, 2);
 					*sp2 = *sp0;
 					*sp0 = 0;
@@ -2155,8 +2168,8 @@ unsigned char CheckRemoteKeypad (unsigned char * sp0, unsigned char * sp1, unsig
 						*sp2 = button_remote;
 						ShowNumbers(button_remote);
 					}
-
-					SirenCommands(SIREN_SHORT_CMD);
+					if (unlock_by_remote)
+						SirenCommands(SIREN_SHORT_CMD);
 					BuzzerCommands(BUZZER_SHORT_CMD, 1);
 					remote_keypad_state = RK_RECEIVING_E;
 					interdigit_timeout = 1000;
@@ -2187,7 +2200,8 @@ unsigned char CheckRemoteKeypad (unsigned char * sp0, unsigned char * sp1, unsig
 				if (button_remote == REM_B10)
 				{
 					ShowNumbers(DISPLAY_NONE);
-					SirenCommands(SIREN_HALF_CMD);
+					if (unlock_by_remote)
+						SirenCommands(SIREN_HALF_CMD);
 					BuzzerCommands(BUZZER_HALF_CMD, 1);
 					remote_keypad_state = RK_CANCEL;
 				}
@@ -2196,7 +2210,8 @@ unsigned char CheckRemoteKeypad (unsigned char * sp0, unsigned char * sp1, unsig
 				if (button_remote == REM_B12)
 				{
 					ShowNumbers(DISPLAY_LINE);
-					SirenCommands(SIREN_SHORT_CMD);
+					if (unlock_by_remote)
+						SirenCommands(SIREN_SHORT_CMD);
 					BuzzerCommands(BUZZER_SHORT_CMD, 2);
 					*posi = *sp0 * 100 + *sp1 * 10 + *sp2;
 					remote_keypad_state = RK_NUMBER_FINISH;
@@ -2444,14 +2459,29 @@ void UpdateBattery (void)
 			//me fijo si hago toggle
 			if (bat_counter > 370)
 			{
+				//CON TENSION AC
+				//titila rapido
 				if (LED)
 					LED_OFF;
 				else
 					LED_ON;
 			}
 			else
-				LED_ON;
+			{
+				//SIN TENSION AC
+				//titila lento
+				if (!slow_toggle)
+				{
+					slow_toggle = 2;
+					if (LED)
+						LED_OFF;
+					else
+						LED_ON;
+				}
+				else
+					slow_toggle--;
 
+			}
 			bat_counter = 0;
 		}
 	}
