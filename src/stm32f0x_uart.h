@@ -62,8 +62,8 @@
 #define USARTx_RX_AF                     GPIO_AF_0
 */
 
-#define USARTx_RX_ENA	USARTx->CR1 &= 0xfffffffb
-#define USARTx_RX_DISA	USARTx->CR1 |= 0x04
+#define USARTx_RX_DISA	USARTx->CR1 &= 0xfffffffb
+#define USARTx_RX_ENA	USARTx->CR1 |= 0x04
 
 //--- Exported functions ---//
 //void UpdateUart(void);
