@@ -1258,8 +1258,10 @@ unsigned char FuncAlarm (void)
 			break;
 
 		case ALARM_BUTTON2:		//solo enciendo reflectores
+#ifndef NO_OUTPUT_BUTTON2
 			F12PLUS_ON;
 			FPLUS_ON;
+#endif
 			alarm_state++;
 #ifdef HT6P20B2_FOURTH_BUTTON
 			button_timer = 4;	//4 segundos overdrive
