@@ -1258,10 +1258,9 @@ unsigned char FuncAlarm (void)
 			break;
 
 		case ALARM_BUTTON2:		//solo enciendo reflectores
-#ifndef NO_OUTPUT_BUTTON2
-			F12PLUS_ON;
+//			F12PLUS_ON;
 			FPLUS_ON;
-#endif
+
 			alarm_state++;
 #ifdef HT6P20B2_FOURTH_BUTTON
 			button_timer = 4;	//4 segundos overdrive
@@ -1395,6 +1394,7 @@ unsigned char FuncAlarm (void)
 		case ALARM_BUTTON3:
 			F12PLUS_ON;
 			FPLUS_ON;
+			F5PLUS_ON;
 			//SirenCommands(SIREN_SINGLE_CMD);
 			SirenCommands(SIREN_SINGLE_CHOPP_CMD);
 			//button_timer = 5;	//5 segundos suena seguro EVITA PROBLEMAS EN LA VUELTA

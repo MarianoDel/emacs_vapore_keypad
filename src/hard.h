@@ -14,9 +14,6 @@
 // VER RWS317.H LO QUE TIENE QUE VER CON CODIGOS Y CONTROLES
 #define CON_BLOQUEO_DE_KEYPAD
 
-//No activa salidas con Boton 2
-#define NO_OUTPUT_BUTTON2
-
 #define SPI_MASTER
 //para GPIO 1 solo bit uso Port bit set/reset register (GPIOx_BSRR) (x=A..G)
 
