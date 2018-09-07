@@ -151,7 +151,7 @@ unsigned char RxCode (void)
 			bitstate = WAIT_FOR_SILENT;
 			errorcode = ERR_CONTINUE;
 			pilot_code = PILOT_CODE_MS;		//el timer descuenta directamente
-			F5PLUS_ON;
+//			F5PLUS_ON;
 			code_state++;
 			break;
 
@@ -164,7 +164,7 @@ unsigned char RxCode (void)
 					code_state++;
 					//destrabo la interrupcion
 					bitstate = FIRST_HIGH;
-					F5PLUS_OFF;
+//					F5PLUS_OFF;
 					TIM14->CNT = 0;
 				}
 			}
@@ -185,7 +185,7 @@ unsigned char RxCode (void)
 		case ENDED:
 			if (errorcode == ERR_FINISH_OK)
 			{
-				F5PLUS_OFF;
+//				F5PLUS_OFF;
 				sprintf(str, "Ended OK: %04X %04X\r\n", code0, code1);
 				USARTx_Send(str);
 				code_state = ENDED_OK;
@@ -236,13 +236,13 @@ void Timer_Interrupt_Handler (unsigned short tpm1)
 
 	lastC0V = tpm1;
 
-	if (on_receipt)
-	{
-		if (F5PLUS)
-			F5PLUS_OFF;
-		else
-			F5PLUS_ON;
-	}
+//	if (on_receipt)
+//	{
+//		if (F5PLUS)
+//			F5PLUS_OFF;
+//		else
+//			F5PLUS_ON;
+//	}
 
 
 #ifdef WITHOUT_ABSOLUTE_VALUE_CTROL_NEW

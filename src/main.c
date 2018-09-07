@@ -1170,9 +1170,9 @@ unsigned char FuncAlarm (void)
 			break;
 
 		case ALARM_BUTTON1:
-			F12PLUS_ON;
 			FPLUS_ON;
 			F5PLUS_ON;
+			F12PLUS_ON;
 			SirenCommands(SIREN_MULTIPLE_UP_CMD);
 			alarm_state++;
 			break;
@@ -1241,9 +1241,9 @@ unsigned char FuncAlarm (void)
 			USARTx_Send(str);
 
 			SirenCommands(SIREN_STOP_CMD);
-			F12PLUS_OFF;
 			FPLUS_OFF;
 			F5PLUS_OFF;
+			F12PLUS_OFF;
 
 			PositionToSpeak(last_one_or_three);
 			alarm_state++;
@@ -1258,7 +1258,6 @@ unsigned char FuncAlarm (void)
 			break;
 
 		case ALARM_BUTTON2:		//solo enciendo reflectores
-//			F12PLUS_ON;
 			FPLUS_ON;
 
 			alarm_state++;
@@ -1386,15 +1385,14 @@ unsigned char FuncAlarm (void)
 			break;
 
 		case ALARM_BUTTON2_FINISH:
-			F12PLUS_OFF;
 			FPLUS_OFF;
 			return END_OK;
 			break;
 
 		case ALARM_BUTTON3:
-			F12PLUS_ON;
 			FPLUS_ON;
-			F5PLUS_ON;
+//			F5PLUS_ON;
+//			F12PLUS_ON;
 			//SirenCommands(SIREN_SINGLE_CMD);
 			SirenCommands(SIREN_SINGLE_CHOPP_CMD);
 			//button_timer = 5;	//5 segundos suena seguro EVITA PROBLEMAS EN LA VUELTA
@@ -1496,7 +1494,7 @@ unsigned char FuncAlarm (void)
 			USARTx_Send(str);
 
 			SirenCommands(SIREN_STOP_CMD);
-			F12PLUS_OFF;
+//			F12PLUS_OFF;
 			FPLUS_OFF;
 
 			PositionToSpeak(last_one_or_three);
