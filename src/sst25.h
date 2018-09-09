@@ -40,7 +40,6 @@
 #define SST25_H
 
 #include "hard.h"
-//#include "main.h"
 
 #define SST25_SPRE              0x6                     // Secondary Prescaler 2:1
 #define SST25_PPRE              0x2                     // Primary Prescaler 4:1

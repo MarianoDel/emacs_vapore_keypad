@@ -14,14 +14,19 @@
   */
 
 /* Includes ------------------------------------------------------------------*/
-#include "main.h"
-
 #include "hard.h"
 #include "comm.h"
 #include <string.h>
 #include "flash_program.h"
 
+//desde que saque main.h
+#include "stm32f0xx_usart.h"
+#include "stm32f0x_uart.h"
+#include "stm32f0xx_misc.h"
+#include "stm32f0xx_gpio.h"
+#include "stm32f0xx_rcc.h"
 
+//desde que saque main.h
 
 
 //--- Private typedef ---//

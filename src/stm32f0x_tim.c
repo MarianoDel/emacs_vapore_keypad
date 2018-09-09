@@ -14,14 +14,17 @@
   */
 
 /* Includes ------------------------------------------------------------------*/
-#include "main.h"
-
 #include "stm32f0x_tim.h"
 #include "stm32f0xx_tim.h"
 #include "stm32f0xx_misc.h"
 #include "stm32f0x_uart.h"
 #include "hard.h"
 #include "rws317.h"
+
+//desde que saque main.h
+#include "stm32f0xx_gpio.h"
+//fin desde que saque main.h
+
 
 //--- VARIABLES EXTERNAS ---//
 extern volatile unsigned char timer_1seg;

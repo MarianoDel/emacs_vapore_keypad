@@ -1,9 +1,15 @@
 
-#include "main.h"
+
 #include "rws317.h"
 #include "hard.h"
 #include "flash_program.h"
 #include "sst25codes.h"
+
+//desde que saque main.h
+#include "stm32f0xx.h"
+#include <stdio.h>
+#include "stm32f0x_uart.h"
+//desde que saque main.h
 
 
 //-------------------------- EXTERNAL VARIABLES ------------------------

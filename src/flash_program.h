@@ -1,7 +1,6 @@
 #ifndef FLASH_PROGRAM_H_
 #define FLASH_PROGRAM_H_
 
-//#include "main.h"
 //typedef unsigned int uint32_t;
 #include <stdint.h>
 

@@ -14,8 +14,8 @@
   */
 
 /* Includes ------------------------------------------------------------------*/
+#include "stm32f0xx.h"
 #include "hard.h"
-#include "main.h"
 #include "spi.h"
 #include "sst25.h"
 #include "comm.h"
@@ -24,6 +24,19 @@
 #include "rws317.h"
 #include "flash_program.h"
 #include "sst25codes.h"
+
+//desde que saque main.h
+
+#include "stm32f0x_gpio.h"
+#include "stm32f0x_uart.h"
+#include <stdio.h>
+#include <string.h>
+#include "stm32f0xx_it.h"
+
+// #include "stm32f0xx_spi.h"
+// #include "stm32f0xx_rcc.h"
+
+//fin desde que saque main.h
 
 //#include <stdio.h>
 //#include <string.h>
@@ -1818,6 +1831,7 @@ unsigned char ReadSwitches (void)
 	return last_internals;
 }
 
+#define SPIx                             SPI1
 unsigned char ReadSwitches_Internals (void)
 {
 	unsigned short sw = 0;

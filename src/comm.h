@@ -16,7 +16,7 @@
 #define CMD_DISPLAY	15
 #define KEEP_ALIVE	16
 
-#define ERROR	50
+// #define ERROR	50
 
 //funciones
 unsigned char InterpretarMsg (unsigned char, char *);

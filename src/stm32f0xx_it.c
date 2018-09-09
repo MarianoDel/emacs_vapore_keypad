@@ -28,7 +28,7 @@
   */
 
 /* Includes ------------------------------------------------------------------*/
-#include "main.h"
+
 #include "stm32f0xx_it.h"
 
 /** @addtogroup STM32F0xx_StdPeriph_Examples
@@ -45,7 +45,7 @@
 /* Private variables ---------------------------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
-
+extern void TimingDelay_Decrement(void);
 //extern volatile unsigned char TxBuffer_SPI [];
 //extern volatile unsigned char RxBuffer_SPI [];
 extern volatile unsigned char *pspi_tx;

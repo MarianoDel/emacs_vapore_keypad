@@ -6,6 +6,60 @@
 #define SPI_BSY		0x0080
 #define SPI_OVR		0x0040
 
+// desde que saque main.h
+/* Uncomment the line below if you will use the SPI peripheral as a Master */
+#define SPI_MASTER
+/* Uncomment the line below if you will use the SPI peripheral as a Slave */
+//#define SPI_SLAVE
+
+/* Uncomment the size of data to be transmetted (only one data size must be selected) */
+#define SPI_DATASIZE_8
+//#define SPI_DATASIZE_7
+//#define SPI_DATASIZE_6
+//#define SPI_DATASIZE_5
+
+/* Communication boards SPIx Interface */
+// #define SPIx                             SPI1
+#define SPIx_CLK                         RCC_APB2Periph_SPI1
+#define SPIx_IRQn                        SPI1_IRQn
+#define SPIx_IRQHandler                  SPI1_IRQHandler
+
+#define SPIx_SCK_PIN                     GPIO_Pin_3
+#define SPIx_SCK_GPIO_PORT               GPIOB
+#define SPIx_SCK_GPIO_CLK                RCC_AHBPeriph_GPIOB
+#define SPIx_SCK_SOURCE                  GPIO_PinSource3
+#define SPIx_SCK_AF                      GPIO_AF_0
+
+#define SPIx_MISO_PIN                    GPIO_Pin_4
+#define SPIx_MISO_GPIO_PORT              GPIOB
+#define SPIx_MISO_GPIO_CLK               RCC_AHBPeriph_GPIOB
+#define SPIx_MISO_SOURCE                 GPIO_PinSource4
+#define SPIx_MISO_AF                     GPIO_AF_0
+
+#define SPIx_MOSI_PIN                    GPIO_Pin_5
+#define SPIx_MOSI_GPIO_PORT              GPIOB
+#define SPIx_MOSI_GPIO_CLK               RCC_AHBPeriph_GPIOB
+#define SPIx_MOSI_SOURCE                 GPIO_PinSource5
+#define SPIx_MOSI_AF                     GPIO_AF_0
+
+/* Define data size and data masks */
+#ifdef SPI_DATASIZE_8
+ #define SPI_DATASIZE                     SPI_DataSize_8b
+ #define SPI_DATAMASK                     (uint8_t)0xFF
+#elif defined (SPI_DATASIZE_7)
+ #define SPI_DATASIZE                     SPI_DataSize_7b
+ #define SPI_DATAMASK                     (uint8_t)0x7F
+#elif defined (SPI_DATASIZE_6)
+ #define SPI_DATASIZE                     SPI_DataSize_6b
+ #define SPI_DATAMASK                     (uint8_t)0x3F
+#elif defined (SPI_DATASIZE_5)
+ #define SPI_DATASIZE                     SPI_DataSize_5b
+ #define SPI_DATAMASK                     (uint8_t)0x1F
+#else
+ #error " Select at least one data size in spi.h file "
+#endif
+// fin desde que saque main.h
+
 //-------- Functions -------------
 void SPI_Config(void);
 void Send_SPI (unsigned char * , unsigned char);

@@ -358,4 +358,13 @@ enum TestStateEnum
 #define SIREN_HALF_TIMEOUT	400
 #define SIREN_LONG_TIMEOUT	1000
 
+
+enum end_states
+{
+	WORKING = 1,
+	END_OK,
+	END_ERROR,
+	END_TIMEOUT
+};
+
 #endif /* HARD_H_ */

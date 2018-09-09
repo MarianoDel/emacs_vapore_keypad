@@ -1,11 +1,13 @@
 #include "spi.h"
-#include "main.h"
-
 #include "stm32f0xx.h"
 
+//desde que saque main.h
+#include "stm32f0xx_gpio.h"
+#include "stm32f0xx_spi.h"
+#include "stm32f0xx_rcc.h"
 
-
-
+#define SPIx                             SPI1
+//fin desde que saque main.h
 
 
 //-------------------------- EXTERNAL VARIABLES ------------------------

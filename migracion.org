@@ -39,6 +39,8 @@
 ** TODO Achicar todo lo posible el program luego de quitar LibST
    - switches de segmentos pueden transformarse a vectores con un wrapper de error del caso no disponible
    - con alguna macro para revisar el tamanio del vector
+   - revisar con nm donde vale la pena recortar codigo para anar bytes
+   - quitar -g en gcc para achicar tamanio bin
 
 * Opcion 1
 ** Agrandar el tiempo de espera de control a 1 minuto
