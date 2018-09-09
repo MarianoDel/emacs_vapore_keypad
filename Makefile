@@ -1,5 +1,5 @@
 #
-#       !!!! Do NOT edit this makefile with an editor which replace tabs by spaces !!!!   
+#       !!!! Do NOT edit this makefile with an editor which replace tabs by spaces !!!!
 #
 ##############################################################################################
 #
@@ -24,190 +24,211 @@ AS   = $(TRGT)gcc -x assembler-with-cpp
 HEX  = $(CP) -O ihex
 BIN  = $(CP) -O binary -S
 MCU  = cortex-m0
- 
+
 # List all default C defines here, like -D_DEBUG=1
 #DDEFS = -DSTM32F10X_HD -DUSE_STDPERIPH_DRIVER -DUSE_STM3210E_EVAL
-#DDEFS = -DSTM32F10X_HD -DUSE_STDPERIPH_DRIVER -DUSE_STM3210E_EVAL -D__GNUC__
+#para el micro STM32F103RC
+# DDEFS = -DSTM32F10X_HD
+#para el micro STM32F030K6T6
+DDEFS = -DSTM32F030
+
 # List all default ASM defines here, like -D_DEBUG=1
 DADEFS =
- 
+
+
 # List all default directories to look for include files here
-DINCDIR = .\src
- 
+DINCDIR = ./src
+
 # List the default directory to look for the libraries here
 DLIBDIR =
- 
+
 # List all default libraries here
 DLIBS =
- 
+
 #
 # End of default section
 ##############################################################################################
- 
+
 ##############################################################################################
 # Start of user section
 #
- 
+
 #
 # Define project name and Ram = 0/Flash = 1 mode here
 PROJECT        = Template_F030
-RUN_FROM_FLASH = 1
- 
+
 # List all user C define here, like -D_DEBUG=1
 UDEFS =
- 
+
 # Define ASM defines here
 UADEFS =
- 
+
 # List C source files here
-LIBSDIR    = ..\STM32F0xx_StdPeriph_Lib_V1.3.1\Libraries\STM32F0xx_StdPeriph_Driver
-CORELIBDIR = .\cmsis_core
-DEVDIR  =	.\cmsis_boot
- 
-			
-STMSPDDIR    = .\stm_lib
+LIBSDIR    = ../../STM32F0xx_StdPeriph_Lib_V1.3.1/Libraries/STM32F0xx_StdPeriph_Driver
+CORELIBDIR = ./cmsis_core
+DEVDIR  =	./cmsis_boot
 
-STMSPSRCDDIR = $(LIBSDIR)\src
-STMSPINCDDIR = $(LIBSDIR)\inc
-#STMSPSRCDDIR = $(STMSPDDIR)\src
-#STMSPINCDDIR = $(STMSPDDIR)\inc
 
-#DISCOVERY    = ..\STM32F0-Discovery_FW_V1.0.0\Utilities\STM32F0-Discovery
+STMSPDDIR    = ./stm_lib
 
-LINKER = .\cmsis_boot\startup
+STMSPSRCDDIR = $(LIBSDIR)/src
+STMSPINCDDIR = $(LIBSDIR)/inc
+#STMSPSRCDDIR = $(STMSPDDIR)/src
+#STMSPINCDDIR = $(STMSPDDIR)/inc
 
-SRC  = .\src\main.c
-SRC += $(DEVDIR)\system_stm32f0xx.c
-SRC += $(DEVDIR)\syscalls\syscalls.c
-SRC += $(STMSPSRCDDIR)\stm32f0xx_adc.c
-#SRC += $(STMSPSRCDDIR)\stm32f0xx_can.c
-#SRC += $(STMSPSRCDDIR)\stm32f0xx_cec.c
-#SRC += $(STMSPSRCDDIR)\stm32f0xx_comp.c
-#SRC += $(STMSPSRCDDIR)\stm32f0xx_crc.c
-#SRC += $(STMSPSRCDDIR)\stm32f0xx_crs.c
-#SRC += $(STMSPSRCDDIR)\stm32f0xx_dac.c
-#SRC += $(STMSPSRCDDIR)\stm32f0xx_dbgmcu.c
-#SRC += $(STMSPSRCDDIR)\stm32f0xx_dma.c
-#SRC += $(STMSPSRCDDIR)\stm32f0xx_exti.c
-SRC += $(STMSPSRCDDIR)\stm32f0xx_flash.c
-SRC += $(STMSPSRCDDIR)\stm32f0xx_gpio.c
-#SRC += $(STMSPSRCDDIR)\stm32f0xx_i2c.c
-#SRC += $(STMSPSRCDDIR)\stm32f0xx_iwdg.c
-SRC += $(STMSPSRCDDIR)\stm32f0xx_misc.c
-#SRC += $(STMSPSRCDDIR)\stm32f0xx_pwr.c
-SRC += $(STMSPSRCDDIR)\stm32f0xx_rcc.c
-#SRC += $(STMSPSRCDDIR)\stm32f0xx_rtc.c
-SRC += $(STMSPSRCDDIR)\stm32f0xx_spi.c
-#SRC += $(STMSPSRCDDIR)\stm32f0xx_syscfg.c
-SRC += $(STMSPSRCDDIR)\stm32f0xx_tim.c
-SRC += $(STMSPSRCDDIR)\stm32f0xx_usart.c
-#SRC += $(STMSPSRCDDIR)\stm32f0xx_wwdg.c
-SRC += .\src\stm32f0xx_it.c
-SRC += .\src\stm32f0x_gpio.c
-SRC += .\src\stm32f0x_tim.c
-SRC += .\src\spi.c
-SRC += .\src\sst25.c
-SRC += .\src\comm.c
-SRC += .\src\stm32f0x_uart.c
-SRC += .\src\rws317.c
-SRC += .\src\flash_program.c
-SRC += .\src\sst25codes.c
-## System Support
-#SRC += .\cmsis_boot\system_stm32f0xx.c
-#SRC += $(DISCOVERY)\stm32f0_discovery.c
-#SRC += .\src\Sim900.c
+#DISCOVERY    = ../STM32F0-Discovery_FW_V1.0.0/Utilities/STM32F0-Discovery
+
+LINKER = ./cmsis_boot/startup
+
+SRC  = ./src/main.c
+SRC += $(DEVDIR)/system_stm32f0xx.c
+SRC += $(DEVDIR)/syscalls/syscalls.c
+## Libs de ST V1.3 o V1.5
+SRC += $(STMSPSRCDDIR)/stm32f0xx_adc.c
+#SRC += $(STMSPSRCDDIR)/stm32f0xx_can.c
+#SRC += $(STMSPSRCDDIR)/stm32f0xx_cec.c
+#SRC += $(STMSPSRCDDIR)/stm32f0xx_comp.c
+#SRC += $(STMSPSRCDDIR)/stm32f0xx_crc.c
+#SRC += $(STMSPSRCDDIR)/stm32f0xx_crs.c
+#SRC += $(STMSPSRCDDIR)/stm32f0xx_dac.c
+#SRC += $(STMSPSRCDDIR)/stm32f0xx_dbgmcu.c
+#SRC += $(STMSPSRCDDIR)/stm32f0xx_dma.c
+# SRC += $(STMSPSRCDDIR)/stm32f0xx_exti.c
+SRC += $(STMSPSRCDDIR)/stm32f0xx_flash.c
+SRC += $(STMSPSRCDDIR)/stm32f0xx_gpio.c
+#SRC += $(STMSPSRCDDIR)/stm32f0xx_i2c.c
+#SRC += $(STMSPSRCDDIR)/stm32f0xx_iwdg.c
+SRC += $(STMSPSRCDDIR)/stm32f0xx_misc.c
+#SRC += $(STMSPSRCDDIR)/stm32f0xx_pwr.c
+SRC += $(STMSPSRCDDIR)/stm32f0xx_rcc.c
+#SRC += $(STMSPSRCDDIR)/stm32f0xx_rtc.c
+SRC += $(STMSPSRCDDIR)/stm32f0xx_spi.c
+#SRC += $(STMSPSRCDDIR)/stm32f0xx_syscfg.c
+SRC += $(STMSPSRCDDIR)/stm32f0xx_tim.c
+SRC += $(STMSPSRCDDIR)/stm32f0xx_usart.c
+#SRC += $(STMSPSRCDDIR)/stm32f0xx_wwdg.c
+
+## nuevos modulos revisar
+# SRC += ./src/adc.c
+# SRC += ./src/dsp.c
+# SRC += ./src/flash_program.c
+# # SRC += ./src/gpio.c
+# SRC += ./src/hard.c
+# SRC += ./src/it.c
+# SRC += ./src/tim.c
+# # SRC += ./src/spi.c
+# SRC += ./src/uart.c
+# SRC += ./src/dma.c
+## fin nuevos modulos revisar
+
+## anteriores del Makefile_bkp
+SRC += ./src/stm32f0xx_it.c
+SRC += ./src/stm32f0x_gpio.c
+SRC += ./src/stm32f0x_tim.c
+SRC += ./src/spi.c
+SRC += ./src/sst25.c
+SRC += ./src/comm.c
+SRC += ./src/stm32f0x_uart.c
+SRC += ./src/rws317.c
+SRC += ./src/flash_program.c
+SRC += ./src/sst25codes.c
+## fin anteriores del Makefile_bkp
+
+
 ## Core Support
-#SRC += .\startup_src\syscalls.c
-SRC += $(CORELIBDIR)\core_cm0.c
-## used parts of the STM-Library
+SRC += $(CORELIBDIR)/core_cm0.c
+
+
+## Other Peripherals libraries
 
 # List ASM source files here
-ASRC = .\cmsis_boot\startup\startup_stm32f0xx.s
- 
+ASRC = ./cmsis_boot/startup/startup_stm32f0xx.s
+
 # List all user directories here
 UINCDIR = $(DEVDIR) \
           $(CORELIBDIR) \
           $(STMSPINCDDIR) \
           $(DISCOVERY)    \
-          .\inc  \
-          .\cmsis_boot
+          ./inc  \
+          ./cmsis_boot
+			 #../paho.mqtt.embedded-c/MQTTPacket/src
+
 # List the user directory to look for the libraries here
 ULIBDIR =
- 
+
 # List all user libraries here
 ULIBS =
- 
-# Define optimisation level here 
+
+# Define optimisation level here
 # O1 optimiza size no significativo
 # O2 size mas fuerte
 # Os (size mas fuerte que O2)
 # O3 el mas fuerte, seguro despues no corre
-# O0 (no optimiza casi nada, mejor para debug) 
+# O0 (no optimiza casi nada, mejor para debug)
 OPT = -O0
- 
+
 #
 # End of user defines
 ##############################################################################################
 #
 # Define linker script file here
 #
-ifeq ($(RUN_FROM_FLASH), 0)
-LDSCRIPT = $(LINKER)\stm32_flash.ld
-FULL_PRJ = $(PROJECT)_ram
-else
-LDSCRIPT = $(LINKER)\stm32_flash.ld
+LDSCRIPT = $(LINKER)/stm32_flash.ld
 FULL_PRJ = $(PROJECT)_rom
-endif
- 
+
 INCDIR  = $(patsubst %,-I%,$(DINCDIR) $(UINCDIR))
 LIBDIR  = $(patsubst %,-L%,$(DLIBDIR) $(ULIBDIR))
- 
-ifeq ($(RUN_FROM_FLASH), 0)
-DEFS    = $(DDEFS) $(UDEFS) -DRUN_FROM_FLASH=0 -DVECT_TAB_SRAM
-else
-DEFS    = $(DDEFS) $(UDEFS) -DRUN_FROM_FLASH=1
-endif
- 
+
 ADEFS   = $(DADEFS) $(UADEFS)
-OBJS  = $(ASRC:.s=.o) $(SRC:.c=.o)
+
 LIBS    = $(DLIBS) $(ULIBS)
 MCFLAGS = -mcpu=$(MCU)
- 
+
 ASFLAGS = $(MCFLAGS) -g -gdwarf-2 -mthumb  -Wa,-amhls=$(<:.s=.lst) $(ADEFS)
 
 # SIN INFO DEL DEBUGGER
-#CPFLAGS = $(MCFLAGS) $(OPT) -gdwarf-2 -mthumb -fomit-frame-pointer -Wall -fdata-sections -ffunction-sections -fverbose-asm -Wa,-ahlms=$(<:.c=.lst) $(DEFS)
+#CPFLAGS = $(MCFLAGS) $(OPT) -gdwarf-2 -mthumb   -fomit-frame-pointer -Wall -Wstrict-prototypes -fverbose-asm -Wa,-ahlms=$(<:.c=.lst) $(DEFS)
 
-# CON INFO PARA DEBUGGER 
+# CON INFO PARA DEBUGGER
 #CPFLAGS = $(MCFLAGS) $(OPT) -g -gdwarf-2 -mthumb -fomit-frame-pointer -Wall -fverbose-asm -Wa,-ahlms=$(<:.c=.lst) $(DEFS)
 
-# CON INFO PARA DEBUGGER + STRIP CODE 
-CPFLAGS = $(MCFLAGS) $(OPT) -g -gdwarf-2 -mthumb -fomit-frame-pointer -Wall -fdata-sections -ffunction-sections -fverbose-asm -Wa,-ahlms=$(<:.c=.lst) $(DEFS)
+# CON INFO PARA DEBUGGER + STRIP CODE
+CPFLAGS = $(MCFLAGS) $(OPT) -g -gdwarf-2 -mthumb -fomit-frame-pointer -Wall -fdata-sections -ffunction-sections -fverbose-asm -Wa,-ahlms=$(<:.c=.lst)
 
 # SIN DEAD CODE, hace el STRIP
-LDFLAGS = $(MCFLAGS) -mthumb --specs=nano.specs -Wl,--gc-sections -nostartfiles -T$(LDSCRIPT) -Wl,-Map=$(FULL_PRJ).map,--cref,--no-warn-mismatch $(LIBDIR)
+LDFLAGS = $(MCFLAGS) -mthumb -lm --specs=nano.specs -Wl,--gc-sections -nostartfiles -T$(LDSCRIPT) -Wl,-Map=$(FULL_PRJ).map,--cref,--no-warn-mismatch $(LIBDIR)
 # CON DEAD CODE
 #LDFLAGS = $(MCFLAGS) -mthumb --specs=nano.specs -nostartfiles -T$(LDSCRIPT) -Wl,-Map=$(FULL_PRJ).map,--cref,--no-warn-mismatch $(LIBDIR)
 #LDFLAGS = $(MCFLAGS) -mthumb -T$(LDSCRIPT) -Wl,-Map=$(FULL_PRJ).map,--cref,--no-warn-mismatch $(LIBDIR)
- 
-# Generate dependency information
-CPFLAGS += -MD -MP -MF .dep\$(@F).d
- 
+
+#
+# OPENOCD Command Options
+#
+OCDCMN = -c "program $(FULL_PRJ).bin verify reset exit"
+#OCDCMN = -c "flash probe 0"
+# OCDCMN += -c "stm32f1x mass_erase 0"
+# OCDCMN += -c "flash write_bank 0 $(FULL_PRJ).bin 0"
+# OCDCMN += -c "reset run"
+
 #
 # makefile rules
 #
- 
-all: $(OBJS) $(FULL_PRJ).elf  $(FULL_PRJ).hex $(FULL_PRJ).bin
-ifeq ($(RUN_FROM_FLASH), 0)
-	$(TRGT)size $(PROJECT)_ram.elf
-else
-	$(TRGT)size $(PROJECT)_rom.elf
-endif
- 
- %o: %c
-	$(CC) -c $(CPFLAGS) -I . $(INCDIR) $< -o $@
 
-%o: %s
+assemblersources = $(ASRC)
+sources = $(SRC)
+OBJS  = $(SRC:.c=.o) $(ASRC:.s=.o)
+
+objects = $(sources:.c=.o)
+assobjects = $(assemblersources:.s=.o)
+
+all: $(objects) $(assobjects) $(FULL_PRJ).elf $(FULL_PRJ).bin
+	arm-none-eabi-size $(FULL_PRJ).elf
+	gtags -q
+
+$(objects): %.o: %.c
+	$(CC) -c $(CPFLAGS) -I. $(INCDIR) $< -o $@
+
+$(assobjects): %.o: %.s
 	$(AS) -c $(ASFLAGS) $< -o $@
 
 %elf: $(OBJS)
@@ -215,29 +236,31 @@ endif
 
 %hex: %elf
 	$(HEX) $< $@
-	
+
 %bin: %elf
 	$(BIN)  $< $@
-	
+
+flash:
+	sudo openocd -f stm32f0_flash.cfg
+
+flash_lock:
+	sudo openocd -f stm32f0_flash_lock.cfg
+
+gdb:
+	sudo openocd -f stm32f0_gdb.cfg
+
+reset:
+	sudo openocd -f stm32f0_reset.cfg
+
 clean:
-	del $(OBJS)
-	del $(FULL_PRJ).elf
-	del $(FULL_PRJ).map
-	del $(FULL_PRJ).hex
-	del $(FULL_PRJ).bin
-#	del $(SRC:.c=.c.bak)
-	del $(SRC:.c=.lst)
-#   del $(ASRC:.s=.s.bak)
-	del $(ASRC:.s=.lst)
-	rmdir  .dep /S /Q
-    
-# OJO clean no esta borrando los objetos de libreria de cmsis_boot, cmsis_core
-    
-# 
-# Include the dependency files, should be the last of the makefile
-#
-#-include $(shell mkdir .dep 2>/dev/null) $(wildcard .dep/*)
-#23-July-2012 /dev/null gives an error on Win 7 64-bit : Hussam
--include $(shell mkdir .dep) $(wildcard .dep/*)
+	rm -f $(OBJS)
+	rm -f $(FULL_PRJ).elf
+	rm -f $(FULL_PRJ).map
+	rm -f $(FULL_PRJ).hex
+	rm -f $(FULL_PRJ).bin
+#	rm $(SRC:.c=.c.bak)
+	rm -f $(SRC:.c=.lst)
+#   rm $(ASRC:.s=.s.bak)
+	rm -f $(ASRC:.s=.lst)
 
 # *** EOF ***

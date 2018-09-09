@@ -1,0 +1,45 @@
+* Migrar Programa Vapore eclipse -> emacs
+** DONE diferencias en archivos
+   CLOSED: [2018-09-09 Sun 15:18]
+   - entre eclipse_vapore_remota_keypad y clone_vapore
+     main.c
+     rws317.h
+
+** DONE Crear primero nuevo bin y revisar tamanios
+   CLOSED: [2018-09-09 Sun 15:51]
+   - tamanio en windows/eclipse original
+     text:28904 data:128 bss:2516 dec:31548 hex: 7b3c Template_F030_rom.elf
+   - usar PROGRAMA_NORMAL en rws317.h
+   - primera migracion a linux
+      text    data     bss     dec     hex filename
+      29244     124    2524   31892    7c94 Template_F030_rom.elf
+
+** DONE Utilizar nuevo Makefile
+   CLOSED: [2018-09-09 Sun 16:04]
+   - usar global
+   - cargar todos los archivos para flash de micro
+   - utilizar configuracion del README de blue pill
+   - revisar diferencias .gitignore
+
+** TODO Upgrade del repositorio remoto GitHub
+   - pasar a emacs...
+
+** TODO Quitar Lib STM32
+   - hacer upgrade y quitar clone_vapore
+
+** TODO Armar nuevos modelos de archivos en modulos
+   - .h .c con nuevo modelo
+
+** TODO Achicar todo lo posible el program luego de quitar LibST
+   - switches de segmentos pueden transformarse a vectores con un wrapper de error del caso no disponible
+   - con alguna macro para revisar el tamanio del vector
+
+* Opcion 1
+** Agrandar el tiempo de espera de control a 1 minuto
+   - param_struct.wait_for_code
+
+* Opcion 2
+** TODO Armar programa que deje grabar controles con incremento automatico
+
+* Opcion 3
+** TODO Ver de meter el programa de grabacion de audios y conf en el mismo principal

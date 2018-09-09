@@ -185,6 +185,9 @@ int main(void)
 	unsigned char main_state = 0;
 	unsigned short dummy16 = 0;
 	//unsigned char i;	//, j;
+#ifdef PROGRAMA_FACTORY_TEST
+	unsigned char last_switches = 0;
+#endif
 	char str [40];
 
 	unsigned short position, mass_erase_position;
@@ -236,8 +239,10 @@ int main(void)
 		 }
 	 }
 
-	 Wait_ms(2000);
 
+#ifndef PROGRAMA_FACTORY_TEST
+	 Wait_ms(2000);
+#endif
 
 		//TIM Configuration.
 	 	 //para audio y sirena
@@ -267,13 +272,121 @@ int main(void)
 	  Wait_ms(100);
 	  USARTx_Send((char *) "Sistema de Alarma ALERTA VECINAL\r\n");
 	  Wait_ms(100);
-#ifdef PORGRAMA_NORMAL
+#ifdef PROGRAMA_NORMAL
 	  USARTx_Send((char *) "Panel Normal\r\n");
 #endif
 
 #ifdef PROGRAMA_DE_BUCLE
 	  USARTx_Send((char *) "Panel con Programa para Bucle\r\n");
 #endif
+
+#ifdef PROGRAMA_FACTORY_TEST
+	  USARTx_Send((char *) "Panel con Programa de testeo en fabrica\r\n");
+#endif
+
+	  //--- EMPIEZO PROGRAMA DE PRUEBAS EN FABRICA ---//
+#ifdef PROGRAMA_FACTORY_TEST
+	  main_state = TEST_INIT;
+
+	  while (1)
+	  {
+		  switch (main_state)
+		  {
+			  case TEST_INIT:
+				  ShowNumbers(3);
+				  BuzzerCommands(BUZZER_SHORT_CMD, 2);
+				  TimingDelay = 900;
+				  main_state++;
+				  break;
+
+			  case TEST_CHECK_BUZZER:
+				  if ((!TimingDelay) && (buzzer_state == BUZZER_INIT)) //espero que termine de enviar el buzzer
+				  {
+					  main_state++;
+				  }
+				  break;
+
+			  case TEST_CHECK_MEMORY_WRITE:
+				  if (WriteCodeToMemory_SST(100, 0x5555) == PASSED)
+				  {
+					  TimingDelay = 900;
+					  main_state++;
+				  }
+				  else
+					  main_state = TEST_ERROR;
+
+				  ShowNumbers(2);
+//				  main_state++;
+				  break;
+
+			  case TEST_CHECK_MEMORY_READ:
+				  if (!TimingDelay)			//grabo memoria
+				  {
+					  if (CheckIndexInMemory_SST(100) == 0x5555)
+					  {
+						  ShowNumbers(0);
+						  TimingDelay = 900;
+						  main_state++;
+					  }
+					  else
+						  main_state = TEST_ERROR;
+
+					  ShowNumbers(1);
+				  }
+				  break;
+
+			  case TEST_CHECK_KEYPAD:
+				  if (!TimingDelay)
+				  {
+					  switches = ReadSwitches();
+
+					  if (switches == NO_KEY)
+					  {
+						  ShowNumbers(DISPLAY_NONE);
+						  last_switches = switches;
+					  }
+					  else
+					  {
+						  if (last_switches != switches)
+						  {
+							  last_switches = switches;
+							  if (switches == ZERO_KEY)
+								  ShowNumbers(10);
+							  else if (switches == STAR_KEY)
+								  ShowNumbers(DISPLAY_SQR_UP);
+							  else if (switches == POUND_KEY)
+								  ShowNumbers(DISPLAY_SQR_DOWN);
+							  else
+							  {
+								  ShowNumbers(switches);
+							  }
+							  BuzzerCommands(BUZZER_SHORT_CMD, 1);
+						  }
+					  }
+				  }
+				  break;
+
+			  case TEST_ERROR:
+				  if (!TimingDelay)			//me quedo trabado mostrando el error
+				  {
+					  BuzzerCommands(BUZZER_SHORT_CMD, 1);
+					  TimingDelay = 700;
+				  }
+				  break;
+
+
+			  default:
+				  main_state = TEST_INIT;
+				  break;
+		  }
+
+		  UpdateBuzzer();
+
+	  }
+
+#endif
+	  //--- TERMINA PROGRAMA DE PRUEBAS EN FABRICA ---//
+
 
 	  UpdateDisplay();	//para setear puntero
 	  UpdateDisplay();
@@ -1611,7 +1724,7 @@ void ShowNumbers (unsigned char number)	//del 1 al 9; 10 es cero; 11 es punto; 0
 	//number = number & 0x0F;
 	//switch (number)
 	last_digit = number;
-	switch (number & 0x0F)
+	switch (number)
 	{
 		case 10:
 			//number = 0x3F;
@@ -1636,6 +1749,11 @@ void ShowNumbers (unsigned char number)	//del 1 al 9; 10 es cero; 11 es punto; 0
 		case DISPLAY_REMOTE:
 			//cuadro superior
 			number = 0x9C;
+			break;
+
+		case DISPLAY_SQR_DOWN:
+			//cuadro inferior
+			number = 0xA3;
 			break;
 
 		case 1:
@@ -1690,7 +1808,7 @@ void ShowNumbers (unsigned char number)	//del 1 al 9; 10 es cero; 11 es punto; 0
 unsigned char ReadSwitches (void)
 {
 	//funciona tipo Zero Order Hold con tiempo de muestreo SWITCHES_INTERNALS_TIMEOUT
-	//revisa los switches cada 50ms, le da tiempo al diplay para mostrar los numeros
+	//revisa los switches cada 50ms, le da tiempo al display para mostrar los numeros
 	if (!switches_internals_timeout)
 	{
 		last_internals = ReadSwitches_Internals ();
