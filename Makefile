@@ -64,7 +64,7 @@ UDEFS =
 UADEFS =
 
 # List C source files here
-LIBSDIR    = ../../STM32F0xx_StdPeriph_Lib_V1.3.1/Libraries/STM32F0xx_StdPeriph_Driver
+LIBSDIR    = ../STM32F0xx_StdPeriph_Lib_V1.3.1/Libraries/STM32F0xx_StdPeriph_Driver
 CORELIBDIR = ./cmsis_core
 DEVDIR  =	./cmsis_boot
 

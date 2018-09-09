@@ -21,7 +21,8 @@
    - utilizar configuracion del README de blue pill
    - revisar diferencias .gitignore
 
-** TODO Upgrade del repositorio remoto GitHub
+** DONE Upgrade del repositorio remoto GitHub
+   CLOSED: [2018-09-09 Sun 16:30]
    - pasar a emacs...
 
 ** TODO Quitar Lib STM32
