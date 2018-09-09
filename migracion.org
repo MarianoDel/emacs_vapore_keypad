@@ -1,5 +1,5 @@
 * Migrar Programa Vapore eclipse -> emacs
-** DONE diferencias en archivos
+** DONE Corregir diferencias en Archivos
    CLOSED: [2018-09-09 Sun 15:18]
    - entre eclipse_vapore_remota_keypad y clone_vapore
      main.c
