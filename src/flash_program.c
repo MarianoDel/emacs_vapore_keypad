@@ -213,7 +213,9 @@ void LoadConfiguration (void)
 
 	//ahora los tiempos internos	TODO: por ahora no se configuran
 	param_struct.interdigit = 3000;
-	param_struct.wait_for_code = 10000;
+        //modificacion 09-09-18 doy mas tiempo para recibir un codigo en programacion
+	// param_struct.wait_for_code = 10000;
+	param_struct.wait_for_code = 60000;        
 
 }
 #endif

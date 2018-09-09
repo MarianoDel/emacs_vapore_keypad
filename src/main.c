@@ -72,7 +72,7 @@ parameters_typedef param_struct;
 #endif
 //parameters_typedef * p_params;
 
-#define CON_MODIFICACION_DIODO_BATERIA
+
 
 volatile short v_samples1[16];
 volatile short v_samples2[16];

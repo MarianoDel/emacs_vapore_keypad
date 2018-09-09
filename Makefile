@@ -84,7 +84,7 @@ SRC  = ./src/main.c
 SRC += $(DEVDIR)/system_stm32f0xx.c
 SRC += $(DEVDIR)/syscalls/syscalls.c
 ## Libs de ST V1.3 o V1.5
-SRC += $(STMSPSRCDDIR)/stm32f0xx_adc.c
+# SRC += $(STMSPSRCDDIR)/stm32f0xx_adc.c
 #SRC += $(STMSPSRCDDIR)/stm32f0xx_can.c
 #SRC += $(STMSPSRCDDIR)/stm32f0xx_cec.c
 #SRC += $(STMSPSRCDDIR)/stm32f0xx_comp.c
@@ -94,7 +94,7 @@ SRC += $(STMSPSRCDDIR)/stm32f0xx_adc.c
 #SRC += $(STMSPSRCDDIR)/stm32f0xx_dbgmcu.c
 #SRC += $(STMSPSRCDDIR)/stm32f0xx_dma.c
 # SRC += $(STMSPSRCDDIR)/stm32f0xx_exti.c
-SRC += $(STMSPSRCDDIR)/stm32f0xx_flash.c
+# SRC += $(STMSPSRCDDIR)/stm32f0xx_flash.c
 SRC += $(STMSPSRCDDIR)/stm32f0xx_gpio.c
 #SRC += $(STMSPSRCDDIR)/stm32f0xx_i2c.c
 #SRC += $(STMSPSRCDDIR)/stm32f0xx_iwdg.c

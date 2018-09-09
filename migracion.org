@@ -27,6 +27,11 @@
 
 ** TODO Quitar Lib STM32
    - hacer upgrade y quitar clone_vapore
+*** Pruebo objetos de LIBST desde el makefile
+    - no utiliza funciones del adc
+    - no utiliza funciones de flash
+    - de misc utiliza NVIC
+    - de rcc utiliza RCC_APB2Perph y RCC_AHBPerip
 
 ** TODO Armar nuevos modelos de archivos en modulos
    - .h .c con nuevo modelo
@@ -38,7 +43,7 @@
 * Opcion 1
 ** Agrandar el tiempo de espera de control a 1 minuto
    - param_struct.wait_for_code
-
+     
 * Opcion 2
 ** TODO Armar programa que deje grabar controles con incremento automatico
 
