@@ -42,6 +42,14 @@
    - revisar con nm donde vale la pena recortar codigo para anar bytes
    - quitar -g en gcc para achicar tamanio bin
 
+*** empiezo por quitar lib en spi
+    - uso spi de atom_dexel_rgb/src/spi.c spi.h
+    - tengo que habilitar los pines en gpio.c
+    - spi.h es muy parecido despues quitar las definiciones al pedo de la lib
+    - agregar los encabezados como lo nuevo
+
+** TODO Agregar Welcome code la version del HARD
+
 * Opcion 1
 ** Agrandar el tiempo de espera de control a 1 minuto
    - param_struct.wait_for_code

@@ -6,6 +6,11 @@
 #define SPI_BSY		0x0080
 #define SPI_OVR		0x0040
 
+//Clock Peripherals
+#define RCC_SPI1_CLK 			(RCC->APB2ENR & 0x00001000)
+#define RCC_SPI1_CLK_ON 		RCC->APB2ENR |= 0x00001000
+#define RCC_SPI1_CLK_OFF		RCC->APB2ENR &= ~0x00001000
+
 // desde que saque main.h
 /* Uncomment the line below if you will use the SPI peripheral as a Master */
 #define SPI_MASTER
