@@ -42,11 +42,22 @@
    - revisar con nm donde vale la pena recortar codigo para anar bytes
    - quitar -g en gcc para achicar tamanio bin
 
-*** empiezo por quitar lib en spi
+*** DONE empiezo por quitar lib en spi
+    CLOSED: [2018-09-10 Mon 14:27]
     - uso spi de atom_dexel_rgb/src/spi.c spi.h
     - tengo que habilitar los pines en gpio.c
-    - spi.h es muy parecido despues quitar las definiciones al pedo de la lib
+    - spi.h es muy parecido despues quitar las definiciones no necesarias de la lib
     - agregar los encabezados como lo nuevo
+
+    - Traba el programa pruebo con rutina anterior y va bien
+
+    - cambio hard spi nuevo rutina de seteo vieja
+
+    - Hard spi nuevo ok, tiene que ser la configuracion
+
+    - procedieminto de deshabilitacion en pag 654 del manual
+    - finalmente el problema era el bit SPI_CR1_SSI que no estaba seteado
+
 
 ** TODO Agregar Welcome code la version del HARD
 
