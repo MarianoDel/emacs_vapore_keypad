@@ -104,7 +104,7 @@ SRC += $(STMSPSRCDDIR)/stm32f0xx_rcc.c
 #SRC += $(STMSPSRCDDIR)/stm32f0xx_rtc.c
 # SRC += $(STMSPSRCDDIR)/stm32f0xx_spi.c
 #SRC += $(STMSPSRCDDIR)/stm32f0xx_syscfg.c
-SRC += $(STMSPSRCDDIR)/stm32f0xx_tim.c
+# SRC += $(STMSPSRCDDIR)/stm32f0xx_tim.c
 # SRC += $(STMSPSRCDDIR)/stm32f0xx_usart.c
 #SRC += $(STMSPSRCDDIR)/stm32f0xx_wwdg.c
 
@@ -124,7 +124,7 @@ SRC += $(STMSPSRCDDIR)/stm32f0xx_tim.c
 ## anteriores del Makefile_bkp
 SRC += ./src/it.c
 SRC += ./src/stm32f0x_gpio.c
-SRC += ./src/stm32f0x_tim.c
+SRC += ./src/tim.c
 SRC += ./src/spi.c
 SRC += ./src/sst25.c
 SRC += ./src/comm.c

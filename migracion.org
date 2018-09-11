@@ -75,6 +75,11 @@
 *** Migro RWS317
     - faltan cosas, habria que quitar los codigos de la memoria flash
 
+*** DONE empiezo a migrar tim
+    CLOSED: [2018-09-11 Tue 14:10]
+    - usa poco de la lib, generalmente en los init TIM_1_Init()
+    - usa TIM1 para audio y sirena; TIM14 para codigos
+
 ** TODO Agregar Welcome code la version del HARD
 
 * Opcion 1

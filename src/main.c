@@ -25,8 +25,7 @@
 #include "flash_program.h"
 #include "sst25codes.h"
 #include "usart.h"
-
-//desde que saque main.h
+#include "tim.h"
 
 #include "stm32f0x_gpio.h"
 // #include "stm32f0x_uart.h"
@@ -34,13 +33,6 @@
 #include <string.h>
 #include "it.h"
 
-// #include "stm32f0xx_spi.h"
-// #include "stm32f0xx_rcc.h"
-
-//fin desde que saque main.h
-
-//#include <stdio.h>
-//#include <string.h>
 
 
 
@@ -266,10 +258,10 @@ int main(void)
 
 		//TIM Configuration.
 	 	 //para audio y sirena
-		Timer_1_Init();
+		TIM_1_Init();
 		//para codigo
 		RxCode();	//trabo la interrupcion
-		Timer_2_Init();
+		TIM_14_Init();
 
 		//Timer_3_Init();
 		//Timer_4_Init();

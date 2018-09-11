@@ -21,7 +21,7 @@
 
 //desde que saque main.h
 #include "usart.h"
-#include "stm32f0x_tim.h"
+#include "tim.h"
 #include <stdio.h>
 //desde que saque main.h
 

@@ -14,7 +14,7 @@
 #include "flash_program.h"
 
 #include "usart.h"
-#include "stm32f0x_tim.h"
+#include "tim.h"
 
 #include <stdio.h>
 

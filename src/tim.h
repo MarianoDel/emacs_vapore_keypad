@@ -1,21 +1,14 @@
-/**
-  ******************************************************************************
-  * @file    Template_2/main.h
-  * @author  Nahuel
-  * @version V1.0
-  * @date    22-August-2014
-  * @brief   Header for tim module
-  ******************************************************************************
-  * @attention
-  *
-  *
-  *
-  ******************************************************************************
-  */
-
-/* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __STM32F0X_TIM_H
-#define __STM32F0X_TIM_H
+//---------------------------------------------
+// ##
+// ## @Author: Med
+// ## @Editor: Emacs - ggtags
+// ## @TAGS:   Global
+// ## @CPU:    STM32F030
+// ##
+// #### TIM.H ################################
+//---------------------------------------------
+#ifndef _TIM_H_
+#define _TIM_H_
 
 //--- Exported types ---//
 //--- Exported constants ---//
@@ -68,12 +61,6 @@
 #define TIM14_CH1_AF			GPIO_AF_4
 
 
-#define Timer_1_Init() TIM_1_Init()
-#define Timer_1b_Init()	TIM_3_Init()
-#define Timer_2_Init() TIM_14_Init()
-#define Timer_3_Init() TIM_16_Init()
-#define Timer_4_Init() TIM_17_Init()
-
 #define FREQ_1000HZ	1000
 #define FREQ_800HZ	1250
 
@@ -108,8 +95,7 @@ void LoadSine(short *);
 #define CodeInterruptDisa() TIM14_IC_CH1_OFF()
 #define CodeInterruptEna() TIM14_IC_CH1_ON()
 
-#endif
-//--- End ---//
+#endif    /* _TIM_H_ */
 
+//--- end of file ---//
 
-//--- END OF FILE ---//

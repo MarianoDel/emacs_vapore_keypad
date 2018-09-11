@@ -11,8 +11,7 @@
 #define _RWS317_H_
 
 // Additional Includes for Configuration ------------------------------
-#include "stm32f0x_tim.h"
-#include "flash_program.h"
+#include "flash_program.h"    //info in sst or info in flash
 
 
 //------ FUNCIONAMIENTO GENERAL DEL EQUIPO ------//
