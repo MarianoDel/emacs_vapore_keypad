@@ -108,20 +108,6 @@ SRC += $(DEVDIR)/syscalls/syscalls.c
 # SRC += $(STMSPSRCDDIR)/stm32f0xx_usart.c
 #SRC += $(STMSPSRCDDIR)/stm32f0xx_wwdg.c
 
-## nuevos modulos revisar
-# SRC += ./src/adc.c
-# SRC += ./src/dsp.c
-# SRC += ./src/flash_program.c
-# # SRC += ./src/gpio.c
-# SRC += ./src/hard.c
-# SRC += ./src/it.c
-# SRC += ./src/tim.c
-# # SRC += ./src/spi.c
-# SRC += ./src/uart.c
-# SRC += ./src/dma.c
-## fin nuevos modulos revisar
-
-## anteriores del Makefile_bkp
 SRC += ./src/it.c
 SRC += ./src/gpio.c
 SRC += ./src/tim.c
@@ -132,7 +118,7 @@ SRC += ./src/usart.c
 SRC += ./src/rws317.c
 SRC += ./src/flash_program.c
 SRC += ./src/sst25codes.c
-## fin anteriores del Makefile_bkp
+
 
 
 ## Core Support

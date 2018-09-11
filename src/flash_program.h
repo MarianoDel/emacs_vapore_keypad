@@ -1,11 +1,26 @@
-#ifndef FLASH_PROGRAM_H_
-#define FLASH_PROGRAM_H_
+//---------------------------------------------
+// ##
+// ## @Author: Med
+// ## @Editor: Emacs - ggtags
+// ## @TAGS:   Global
+// ## @CPU:    STM32F030
+// ##
+// #### FLASH_PROGRAM.H #######################
+//---------------------------------------------
+#ifndef _FLASH_PROGRAM_H_
+#define _FLASH_PROGRAM_H_
 
-//typedef unsigned int uint32_t;
+// Additional Includes for Configuration ------------------------------
+#include "stm32f0xx.h"
 #include <stdint.h>
 
 #define INFO_IN_SST
 //#define INFO_IN_FLASH
+
+// Exported Macros and Defines ----------------------------------------
+
+
+// Exported Module Functions ------------------------------------------
 
 #ifdef INFO_IN_SST
 #define CONFIGURATION_IN_SST
@@ -42,6 +57,42 @@
 #define PAGE30			((uint32_t)0x08007800)
 #define PAGE31			((uint32_t)0x08007C00)
 
+#define PAGE63			((uint32_t)0x0800FC00)
+
+//de libreria st las tiene #include "stm32f0xx_flash.h"
+/**
+  * @brief  FLASH Status
+  */
+typedef enum
+{
+  FLASH_BUSY = 1,
+  FLASH_ERROR_WRP,
+  FLASH_ERROR_PROGRAM,
+  FLASH_COMPLETE,
+  FLASH_TIMEOUT
+}FLASH_Status;
+
+/** @defgroup FLASH_Timeout_definition
+  * @{
+  */
+#define FLASH_ER_PRG_TIMEOUT         ((uint32_t)0x000B0000)
+
+/** @defgroup FLASH_Flags
+  * @{
+  */
+
+#define FLASH_FLAG_BSY                 FLASH_SR_BSY     /*!< FLASH Busy flag */
+#define FLASH_FLAG_PGERR               FLASH_SR_PGERR   /*!< FLASH Programming error flag */
+#define FLASH_FLAG_WRPERR              FLASH_SR_WRPERR  /*!< FLASH Write protected error flag */
+#define FLASH_FLAG_EOP                 FLASH_SR_EOP     /*!< FLASH End of Programming flag */
+
+#define IS_FLASH_CLEAR_FLAG(FLAG) ((((FLAG) & (uint32_t)0xFFFFFFCB) == 0x00000000) && ((FLAG) != 0x00000000))
+
+#define IS_FLASH_GET_FLAG(FLAG)  (((FLAG) == FLASH_FLAG_BSY) || ((FLAG) == FLASH_FLAG_PGERR) || \
+                                  ((FLAG) == FLASH_FLAG_WRPERR) || ((FLAG) == FLASH_FLAG_EOP))
+
+
+// Exported Typdef ----------------------------------------
 typedef union mem_bkp {
 		unsigned int v_bkp [FLASH_PAGE_SIZE_DIV4];
 		unsigned char v_bkp_8u [FLASH_PAGE_SIZE];
@@ -125,4 +176,14 @@ void ShowFileSystem(void);
 void LoadConfiguration (void);
 void ShowConfiguration (void);
 
-#endif
+//de libreria st las tiene #include "stm32f0xx_flash.h"
+void FLASH_Unlock(void);
+FLASH_Status FLASH_ErasePage(uint32_t Page_Address);
+void FLASH_Lock(void);
+FLASH_Status FLASH_ProgramWord(uint32_t Address, uint32_t Data);
+FLASH_Status FLASH_WaitForLastOperation(uint32_t Timeout);
+FLASH_Status FLASH_GetStatus(void);
+
+#endif    /* _FLASH_PROGRAM_H_ */
+
+//--- end of file ---//

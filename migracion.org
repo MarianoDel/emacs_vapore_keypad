@@ -95,7 +95,8 @@
 **** modulo comm
      - me faltaria relacionarlo con el puerto serie con algun update desde main.c
 
-**** modulo flash_program
+**** DONE modulo flash_program
+     CLOSED: [2018-09-11 Tue 15:06]
 
 ** TODO Agregar Welcome code la version del HARD
 
