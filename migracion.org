@@ -84,6 +84,16 @@
     CLOSED: [2018-09-11 Tue 14:27]
     - uso emacs_micro_booster
 
+*** DONE empiezo a migrar los misc y rcc
+    CLOSED: [2018-09-11 Tue 14:30]
+
+*** DONE ya migre todo, ahora quito todos los headers a la libST
+    CLOSED: [2018-09-11 Tue 14:35]
+    - ahora esta todo compila ok sin la libST
+
+*** Faltan arreglar un par de archivos mas
+    - modulo comm
+    - modulo flash_program
 
 ** TODO Agregar Welcome code la version del HARD
 
