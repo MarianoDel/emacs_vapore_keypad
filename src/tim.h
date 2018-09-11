@@ -40,27 +40,6 @@
 #define TIM3_ARR 666
 #define TIM1_ARR 666
 
-//en PA7 y PA8
-#define TIM1_CH1N_PIN			GPIO_Pin_7
-#define TIM1_CH1N_GPIO_PORT		GPIOA
-#define TIM1_CH1N_GPIO_CLK		RCC_AHBPeriph_GPIOA
-#define TIM1_CH1N_SOURCE		GPIO_PinSource7
-#define TIM1_CH1N_AF			GPIO_AF_2
-
-#define TIM1_CH1_PIN			GPIO_Pin_8
-#define TIM1_CH1_GPIO_PORT		GPIOA
-#define TIM1_CH1_GPIO_CLK		RCC_AHBPeriph_GPIOA
-#define TIM1_CH1_SOURCE			GPIO_PinSource8
-#define TIM1_CH1_AF				GPIO_AF_2
-
-//en PA4
-#define TIM14_CH1_PIN			GPIO_Pin_4
-#define TIM14_CH1_GPIO_PORT		GPIOA
-#define TIM14_CH1_GPIO_CLK		RCC_AHBPeriph_GPIOA
-#define TIM14_CH1_SOURCE		GPIO_PinSource4
-#define TIM14_CH1_AF			GPIO_AF_4
-
-
 #define FREQ_1000HZ	1000
 #define FREQ_800HZ	1250
 

@@ -95,7 +95,7 @@ SRC += $(DEVDIR)/syscalls/syscalls.c
 #SRC += $(STMSPSRCDDIR)/stm32f0xx_dma.c
 # SRC += $(STMSPSRCDDIR)/stm32f0xx_exti.c
 # SRC += $(STMSPSRCDDIR)/stm32f0xx_flash.c
-SRC += $(STMSPSRCDDIR)/stm32f0xx_gpio.c
+# SRC += $(STMSPSRCDDIR)/stm32f0xx_gpio.c
 #SRC += $(STMSPSRCDDIR)/stm32f0xx_i2c.c
 #SRC += $(STMSPSRCDDIR)/stm32f0xx_iwdg.c
 SRC += $(STMSPSRCDDIR)/stm32f0xx_misc.c
@@ -123,7 +123,7 @@ SRC += $(STMSPSRCDDIR)/stm32f0xx_rcc.c
 
 ## anteriores del Makefile_bkp
 SRC += ./src/it.c
-SRC += ./src/stm32f0x_gpio.c
+SRC += ./src/gpio.c
 SRC += ./src/tim.c
 SRC += ./src/spi.c
 SRC += ./src/sst25.c

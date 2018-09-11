@@ -80,6 +80,11 @@
     - usa poco de la lib, generalmente en los init TIM_1_Init()
     - usa TIM1 para audio y sirena; TIM14 para codigos
 
+*** DONE empiezo a migrar gpio
+    CLOSED: [2018-09-11 Tue 14:27]
+    - uso emacs_micro_booster
+
+
 ** TODO Agregar Welcome code la version del HARD
 
 * Opcion 1

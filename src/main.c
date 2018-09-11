@@ -16,6 +16,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f0xx.h"
 #include "hard.h"
+#include "gpio.h"
 #include "spi.h"
 #include "sst25.h"
 #include "comm.h"
@@ -27,8 +28,6 @@
 #include "usart.h"
 #include "tim.h"
 
-#include "stm32f0x_gpio.h"
-// #include "stm32f0x_uart.h"
 #include <stdio.h>
 #include <string.h>
 #include "it.h"
