@@ -1,17 +1,13 @@
-/**
-  ******************************************************************************
-  * @file    Template_2/main.c
-  * @author  Nahuel
-  * @version V1.0
-  * @date    22-August-2014
-  * @brief   Main program body
-  ******************************************************************************
-  * @attention
-  *
-  * Use this template for new projects with stm32f0xx family.
-  *
-  ******************************************************************************
-  */
+//------------------------------------------------------
+// #### PROYECTO PANEL ALARMA VAPORE - Custom Board ####
+// ##
+// ## @Author: Med
+// ## @Editor: Emacs - ggtags
+// ## @TAGS:   Global
+// ## @CPU:    STM32F030
+// ##
+// #### MAIN.C #########################################
+//------------------------------------------------------
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f0xx.h"
@@ -31,6 +27,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "it.h"
+#include "display_7seg.h"
 
 
 
@@ -43,6 +40,9 @@ volatile unsigned short timer_standby = 0;
 volatile unsigned short timer_led_comm = 0;
 volatile unsigned short timer_keypad_enabled = 0;
 volatile unsigned short wait_ms_var = 0;
+
+// ------- Externals para el Display -------
+volatile unsigned short display_timeout;
 
 
 // ------- Externals del Puerto serie  -------
@@ -94,7 +94,7 @@ volatile unsigned char buff_in_use = 1;
 static __IO uint32_t TimingDelay;
 
 unsigned short counter = TIM3_ARR;
-unsigned char last_digit = 0;
+
 unsigned char last_internals = 0;
 unsigned char buzzer_state = 0;
 unsigned char buzz_multiple = 0;
@@ -102,16 +102,13 @@ unsigned char siren_state = 0;
 unsigned short freq_us = 0;
 unsigned char siren_steps = 0;
 
-unsigned char display_state = 0;
-unsigned char numbers[LAST_NUMBER];
-unsigned char * p_numbers;
 
 volatile unsigned char binary_full = 0;
 volatile unsigned char switches_internals_timeout = 0;
 volatile unsigned short wait_for_code_timeout;
 volatile unsigned short interdigit_timeout;
 volatile unsigned short buzzer_timeout;
-volatile unsigned short display_timeout;
+
 volatile unsigned short siren_timeout;
 
 volatile unsigned char button_timer;
@@ -166,13 +163,7 @@ unsigned char ReadSwitches (void);
 unsigned char ReadSwitches_Internals (void);
 unsigned char CheckKeypad (unsigned char *, unsigned char *, unsigned char *, unsigned short *);
 unsigned char CheckRemoteKeypad (unsigned char *, unsigned char *, unsigned char *, unsigned short *);
-// ------- del display -------
-void ConvertPositionToDisplay (unsigned short);
-void UpdateDisplay (void);
-void VectorToDisplay (unsigned char);
-void ShowNumbers (unsigned char);
-void SendSegment (unsigned char);
-void ShowNumbersAgain (void);
+
 // ------- del buzzer --------
 void BuzzerCommands(unsigned char, unsigned char);
 void UpdateBuzzer (void);
@@ -193,1031 +184,1047 @@ void UpdateBattery (void);
 //------------------------------------------//
 int main(void)
 {
-	unsigned char main_state = 0;
-	unsigned short dummy16 = 0;
-	//unsigned char i;	//, j;
+    unsigned char main_state = 0;
+    unsigned short dummy16 = 0;
+    //unsigned char i;	//, j;
 #ifdef PROGRAMA_FACTORY_TEST
-	unsigned char last_switches = 0;
+    unsigned char last_switches = 0;
 #endif
-	char str [40];
+    char str [40];
 
-	unsigned short position, mass_erase_position;
-	unsigned short code_position;
-	unsigned int code;
-	unsigned char switches, switches_posi0, switches_posi1, switches_posi2;
-	//unsigned char switches_last;
-	unsigned char result;
-	//unsigned int file_size = 0;
-	//unsigned short * p_mem_dump;
-	//unsigned char button_remote = 0;
-	unsigned char digit_remote = 0;
+    unsigned short position, mass_erase_position;
+    unsigned short code_position;
+    unsigned int code;
+    unsigned char switches, switches_posi0, switches_posi1, switches_posi2;
+    //unsigned char switches_last;
+    unsigned char result;
+    //unsigned int file_size = 0;
+    //unsigned short * p_mem_dump;
+    //unsigned char button_remote = 0;
+    unsigned char digit_remote = 0;
 
-	//!< At this stage the microcontroller clock setting is already configured,
+    //!< At this stage the microcontroller clock setting is already configured,
     //   this is done through SystemInit() function which is called from startup
     //   file (startup_stm32f0xx.s) before to branch to application main.
     //   To reconfigure the default setting of SystemInit() function, refer to
     //   system_stm32f0xx.c file
 
-	//GPIO Configuration.
-	GPIO_Config();
-	CE_OFF;
-	WP_OFF;
-	PS_OFF;
-	OE_OFF;
-	FPLUS_OFF;
-	F12PLUS_OFF;
-	F5PLUS_OFF;
-	BUZZER_OFF;
-	LED_OFF;
+    //GPIO Configuration.
+    GPIO_Config();
+    CE_OFF;
+    WP_OFF;
+    PS_OFF;
+    OE_OFF;
+    FPLUS_OFF;
+    F12PLUS_OFF;
+    F5PLUS_OFF;
+    BUZZER_OFF;
+    LED_OFF;
 
-//SENSAR TEMPERATURA 	((OK))
-//ENVIAR ONE WIRE		((OK))
+    //ACTIVAR SYSTICK TIMER
+    if (SysTick_Config(48000))
+    {
+        while (1)	/* Capture error */
+        {
+            if (LED)
+                LED_OFF;
+            else
+                LED_ON;
 
-	//ACTIVAR SYSTICK TIMER
-	 if (SysTick_Config(48000))
-	 {
-		 while (1)	/* Capture error */
-		 {
-			 if (LED)
-				 LED_OFF;
-			 else
-				 LED_ON;
-
-			 for (dummy16 = 0; dummy16 < 65000; dummy16++)
-			 {
-				 asm("nop");
-			 }
-		 }
-	 }
+            for (dummy16 = 0; dummy16 < 65000; dummy16++)
+            {
+                asm("nop");
+            }
+        }
+    }
 
 
 #ifndef PROGRAMA_FACTORY_TEST
-	 Wait_ms(2000);
+    Wait_ms(2000);
 #endif
 
-		//TIM Configuration.
-	 	 //para audio y sirena
-		TIM_1_Init();
-		//para codigo
-		RxCode();	//trabo la interrupcion
-		TIM_14_Init();
+    /* TIMs configuration ------------------------------------------------------*/
+    //para audio y sirena
+    TIM_1_Init();
+    //para codigo
+    RxCode();	//trabo la interrupcion
+    TIM_14_Init();
 
-		//Timer_3_Init();
-		//Timer_4_Init();
+    Update_TIM1_CH1(100);
+    Power_Ampli_Disa();
 
-		Update_TIM1_CH1(100);
-		Power_Ampli_Disa();
-		//UART configuration.
-		//USART_Config();
+    /* SPI configuration ------------------------------------------------------*/
+    SPI_Config();		//activo sin interrupcion
 
+    /* USART configuration ------------------------------------------------------*/
+    Usart1Config();    //activo con int priority 5
 
-	  /* SPI configuration ------------------------------------------------------*/
-	  SPI_Config();		//activo sin interrupcion
-
-	  /* USART configuration ------------------------------------------------------*/
-          Usart1Config();    //activo con int priority 5
-
-	  //Usart1Send((char *) (const char *) "Prueba RS232 STM32F030K6\r\n");
-	  Usart1Send((char *) " - Kirno Technology - STM32F030K6\r\n");
-	  Wait_ms(100);
-	  Usart1Send((char *) "Sistema de Alarma ALERTA VECINAL\r\n");
-	  Wait_ms(100);
+    //Usart1Send((char *) (const char *) "Prueba RS232 STM32F030K6\r\n");
+    Usart1Send((char *) " - Kirno Technology - STM32F030K6\r\n");
+    Wait_ms(100);
+    Usart1Send((char *) "Sistema de Alarma ALERTA VECINAL\r\n");
+    Wait_ms(100);
 #ifdef PROGRAMA_NORMAL
-	  Usart1Send((char *) "Panel Normal\r\n");
+    Usart1Send((char *) "Panel Normal\r\n");
 #endif
 
 #ifdef PROGRAMA_DE_BUCLE
-	  Usart1Send((char *) "Panel con Programa para Bucle\r\n");
+    Usart1Send((char *) "Panel con Programa para Bucle\r\n");
 #endif
 
 #ifdef PROGRAMA_FACTORY_TEST
-	  Usart1Send((char *) "Panel con Programa de testeo en fabrica\r\n");
+    Usart1Send((char *) "Panel con Programa de testeo en fabrica\r\n");
 #endif
 
-	  //--- EMPIEZO PROGRAMA DE PRUEBAS EN FABRICA ---//
+    //--- EMPIEZO PROGRAMA DE PRUEBAS EN FABRICA ---//
+
+    UpdateDisplayResetSM();
+    dummy16 = 0;
+    while (1)
+    {
+        if (!timer_standby)
+        {
+            timer_standby = 5000;
+            BuzzerCommands(BUZZER_SHORT_CMD, 1);
+            if (dummy16 < 1000)
+            {
+                ConvertPositionToDisplay(dummy16);
+                dummy16++;
+            }
+            else
+                dummy16 = 0;
+        }
+
+        UpdateBuzzer();
+        UpdateDisplaySM();
+    }
+
 #ifdef PROGRAMA_FACTORY_TEST
-	  main_state = TEST_INIT;
+    main_state = TEST_INIT;
 
-	  while (1)
-	  {
-		  switch (main_state)
-		  {
-			  case TEST_INIT:
-				  ShowNumbers(3);
-				  BuzzerCommands(BUZZER_SHORT_CMD, 2);
-				  TimingDelay = 900;
-				  main_state++;
-				  break;
+    while (1)
+    {
+        switch (main_state)
+        {
+        case TEST_INIT:
+            ShowNumbers(3);
+            BuzzerCommands(BUZZER_SHORT_CMD, 2);
+            TimingDelay = 900;
+            main_state++;
+            break;
 
-			  case TEST_CHECK_BUZZER:
-				  if ((!TimingDelay) && (buzzer_state == BUZZER_INIT)) //espero que termine de enviar el buzzer
-				  {
-					  main_state++;
-				  }
-				  break;
+        case TEST_CHECK_BUZZER:
+            if ((!TimingDelay) && (buzzer_state == BUZZER_INIT)) //espero que termine de enviar el buzzer
+            {
+                main_state++;
+            }
+            break;
 
-			  case TEST_CHECK_MEMORY_WRITE:
-				  if (SST_WriteCodeToMemory(100, 0x5555) == PASSED)
-				  {
-					  TimingDelay = 900;
-					  main_state++;
-				  }
-				  else
-					  main_state = TEST_ERROR;
+        case TEST_CHECK_MEMORY_WRITE:
+            if (SST_WriteCodeToMemory(100, 0x5555) == PASSED)
+            {
+                TimingDelay = 900;
+                main_state++;
+            }
+            else
+                main_state = TEST_ERROR;
 
-				  ShowNumbers(2);
+            ShowNumbers(2);
 //				  main_state++;
-				  break;
+            break;
 
-			  case TEST_CHECK_MEMORY_READ:
-				  if (!TimingDelay)			//grabo memoria
-				  {
-					  if (SST_CheckIndexInMemory(100) == 0x5555)
-					  {
-						  ShowNumbers(0);
-						  TimingDelay = 900;
-						  main_state++;
-					  }
-					  else
-						  main_state = TEST_ERROR;
+        case TEST_CHECK_MEMORY_READ:
+            if (!TimingDelay)			//grabo memoria
+            {
+                if (SST_CheckIndexInMemory(100) == 0x5555)
+                {
+                    ShowNumbers(0);
+                    TimingDelay = 900;
+                    main_state++;
+                }
+                else
+                    main_state = TEST_ERROR;
 
-					  ShowNumbers(1);
-				  }
-				  break;
+                ShowNumbers(1);
+            }
+            break;
 
-			  case TEST_CHECK_KEYPAD:
-				  if (!TimingDelay)
-				  {
-					  switches = ReadSwitches();
+        case TEST_CHECK_KEYPAD:
+            if (!TimingDelay)
+            {
+                switches = ReadSwitches();
 
-					  if (switches == NO_KEY)
-					  {
-						  ShowNumbers(DISPLAY_NONE);
-						  last_switches = switches;
-					  }
-					  else
-					  {
-						  if (last_switches != switches)
-						  {
-							  last_switches = switches;
-							  if (switches == ZERO_KEY)
-								  ShowNumbers(10);
-							  else if (switches == STAR_KEY)
-								  ShowNumbers(DISPLAY_SQR_UP);
-							  else if (switches == POUND_KEY)
-								  ShowNumbers(DISPLAY_SQR_DOWN);
-							  else
-							  {
-								  ShowNumbers(switches);
-							  }
-							  BuzzerCommands(BUZZER_SHORT_CMD, 1);
-						  }
-					  }
-				  }
-				  break;
+                if (switches == NO_KEY)
+                {
+                    ShowNumbers(DISPLAY_NONE);
+                    last_switches = switches;
+                }
+                else
+                {
+                    if (last_switches != switches)
+                    {
+                        last_switches = switches;
+                        if (switches == ZERO_KEY)
+                            ShowNumbers(DISPLAY_ZERO);
+                        else if (switches == STAR_KEY)
+                            ShowNumbers(DISPLAY_SQR_UP);
+                        else if (switches == POUND_KEY)
+                            ShowNumbers(DISPLAY_SQR_DOWN);
+                        else
+                        {
+                            ShowNumbers(switches);
+                        }
+                        BuzzerCommands(BUZZER_SHORT_CMD, 1);
+                    }
+                }
+            }
+            break;
 
-			  case TEST_ERROR:
-				  if (!TimingDelay)			//me quedo trabado mostrando el error
-				  {
-					  BuzzerCommands(BUZZER_SHORT_CMD, 1);
-					  TimingDelay = 700;
-				  }
-				  break;
+        case TEST_ERROR:
+            if (!TimingDelay)			//me quedo trabado mostrando el error
+            {
+                BuzzerCommands(BUZZER_SHORT_CMD, 1);
+                TimingDelay = 700;
+            }
+            break;
 
 
-			  default:
-				  main_state = TEST_INIT;
-				  break;
-		  }
+        default:
+            main_state = TEST_INIT;
+            break;
+        }
 
-		  UpdateBuzzer();
+        UpdateBuzzer();
 
-	  }
+    }
 
 #endif
-	  //--- TERMINA PROGRAMA DE PRUEBAS EN FABRICA ---//
+    //--- FIN PROGRAMA DE PRUEBAS EN FABRICA ---//
 
+    //--- INICIO PROGRAMA DE PRODUCCION ---//
+    //reset a la SM del display
+    UpdateDisplayResetSM();
+    BuzzerCommands(BUZZER_LONG_CMD, 2);
 
-	  UpdateDisplay();	//para setear puntero
-	  UpdateDisplay();
-	  BuzzerCommands(BUZZER_LONG_CMD, 2);
+    p_numbers_speak = numbers_speak;	//seteo puntero
 
-	  p_numbers_speak = numbers_speak;	//seteo puntero
+    //Power_Ampli_Ena();
+    //Ampli_to_Sirena();
+    //SirenCommands(SIREN_MULTIPLE_UP_CMD);
+    //SirenCommands(SIREN_MULTIPLE_DOWN_CMD);
 
-	  //Power_Ampli_Ena();
-	  //Ampli_to_Sirena();
-	  //SirenCommands(SIREN_MULTIPLE_UP_CMD);
-	  //SirenCommands(SIREN_MULTIPLE_DOWN_CMD);
+    //cargo los valores de memoria
+    LoadFilesIndex();
+    ShowFileSystem();
 
-	  //cargo los valores de memoria
-	  LoadFilesIndex();
-	  ShowFileSystem();
-
-	  //reviso si esta grabada la memoria
-	  if (files.posi0 == 0xFFFFFFFF)
-	  {
-		  //memoria no grabada
-		  ShowNumbers(DISPLAY_ERROR);
-		  BuzzerCommands(BUZZER_LONG_CMD, 10);
-		  while (1)
-			  UpdateBuzzer();
-	  }
+    //reviso si esta grabada la memoria
+    if (files.posi0 == 0xFFFFFFFF)
+    {
+        //memoria no grabada
+        ShowNumbers(DISPLAY_ERROR);
+        BuzzerCommands(BUZZER_LONG_CMD, 10);
+        while (1)
+            UpdateBuzzer();
+    }
 
 #ifdef CONFIGURATION_IN_FLASH
-		 b1t = param_struct.b1t;
-		 b1r = param_struct.b1r;
-		 b2t = param_struct.b2t;
-		 b2r = param_struct.b2r;
-		 b3t = param_struct.b3t;
-		 b3r = param_struct.b3r;
-		 b4t = param_struct.b4t;
-		 b4r = param_struct.b4r;
+    b1t = param_struct.b1t;
+    b1r = param_struct.b1r;
+    b2t = param_struct.b2t;
+    b2r = param_struct.b2r;
+    b3t = param_struct.b3t;
+    b3r = param_struct.b3r;
+    b4t = param_struct.b4t;
+    b4r = param_struct.b4r;
 #endif
 
 #ifdef CONFIGURATION_IN_SST
-	  LoadConfiguration();
-	  //reviso configuracion de memoria
-	  if (param_struct.b1t == 0xFF)
-	  {
-		  //memoria no configurada
-		  ShowNumbers(DISPLAY_ERROR2);
-		  BuzzerCommands(BUZZER_LONG_CMD, 10);
-		  while (1)
-			  UpdateBuzzer();
-	  }
-	  ShowConfiguration();
+    LoadConfiguration();
+    //reviso configuracion de memoria
+    if (param_struct.b1t == 0xFF)
+    {
+        //memoria no configurada
+        ShowNumbers(DISPLAY_ERROR2);
+        BuzzerCommands(BUZZER_LONG_CMD, 10);
+        while (1)
+            UpdateBuzzer();
+    }
+    ShowConfiguration();
 #endif
 
-	  //si esta todo bien configurado prendo el led
-	  LED_ON;
+    //si esta todo bien configurado prendo el led
+    LED_ON;
 
-	  //Usart1Send(s_bienvenida);
-	  //RxCode_Enable();
+    //Usart1Send(s_bienvenida);
+    //RxCode_Enable();
 
-	  //--- PRUEBA USART
-	  /*
-	  Usart1Send((const char *) "Prueba RS232 STM32F030K6\r\n");
-	  while (1)
-	  {
-		  //Usart1Send((const char *) "Funciona\r\n");
-		  //USARTx->TDR = 'M';
-		  //Wait_ms(1000);
+    //--- PRUEBA USART
+    /*
+      Usart1Send((const char *) "Prueba RS232 STM32F030K6\r\n");
+      while (1)
+      {
+      //Usart1Send((const char *) "Funciona\r\n");
+      //USARTx->TDR = 'M';
+      //Wait_ms(1000);
 
-		  if (buffrx_ready)
-		  {
-			  j = InterpretarMsg(pbuffrx);
-			  buffrx_ready = 0;
-			  if (j != ERROR)
-				  Usart1Send((const char *) "OK\r\n");
-		  }
-	  }
-	  */
-  	  //--- FIN PRUEBA USART
-
-
-
-		/*
-		while(1)
-		{
-			PS_ON;
-			Wait_ms(1);
-			PS_OFF;
-			Wait_ms(1);
-		}
-		*/
-
-	  //--- PRUEBA DE SEGMENTOS
-	  /*
-	  while (1)
-	  {
-		  segment = 1;
-		  i = 0;
-		  do
-		  {
-			  seg_neg =  ~segment;
-			  SendSegment(seg_neg);
-			  segment <<= 1;
-			  i++;
-			  Wait_ms(1000);
-		  }
-		  while (i < 8);
-
-		  Wait_ms(5000);
-	  }
-	  */
-	  //--- FIN PRUEBA DE SEGMENTOS
-
-	  //--- PRUEBA DE NUMEROS DEL 0 AL 9
-	  /*
-	  while (1)
-	  {
-			if (LED)
-				LED_OFF;
-			else
-				LED_ON;
-
-			for (i = 0; i < 11; i++)
-			{
-				ShowNumbers(i);
-				Wait_ms(1000);
-
-			}
-			Wait_ms(5000);
-	  }
-	  */
-	  //--- FIN PRUEBA DE NUMEROS DEL 0 AL 9
-
-	  //--- PRUEBA DE NUMEROS DEL 0 AL 9 + TACT SWITCHES
-	  /*
-	  while (1)
-	  {
-		  switches = ReadSwitches();
-
-		  if (switches != NO_KEY)
-		  {
-				LED_ON;
-				ShowNumbers(switches);
-		  }
-		  else
-		  {
-			  //ShowNumbers(DISPLAY_NONE);
-			  LED_OFF;
-		  }
-	  }
-	*/
-	  //--- FIN PRUEBA DE NUMEROS DEL 0 AL 9 + TACT SWITCHES
-
-	  //--- PRUEBA DE CODIGOS
-	  /*
-	  SirenCommands(SIREN_MULTIPLE_UP_CMD);
-	  while (1)
-	  {
-		  RxCode();
-		  UpdateSiren();
-	  }
-	*/
-	  //--- FIN PRUEBA DE CODIGOS
+      if (buffrx_ready)
+      {
+      j = InterpretarMsg(pbuffrx);
+      buffrx_ready = 0;
+      if (j != ERROR)
+      Usart1Send((const char *) "OK\r\n");
+      }
+      }
+    */
+    //--- FIN PRUEBA USART
 
 
-	  while (1)
-	  {
-		  switch (main_state)
-		  {
-			  case MAIN_INIT:
 
-				  switches_posi0 = 0;
-				  switches_posi1 = 0;
-				  switches_posi2 = 0;
-				  position = 0;
-				  //code = 0;
+    /*
+      while(1)
+      {
+      PS_ON;
+      Wait_ms(1);
+      PS_OFF;
+      Wait_ms(1);
+      }
+    */
+
+    //--- PRUEBA DE SEGMENTOS
+    /*
+      while (1)
+      {
+      segment = 1;
+      i = 0;
+      do
+      {
+      seg_neg =  ~segment;
+      SendSegment(seg_neg);
+      segment <<= 1;
+      i++;
+      Wait_ms(1000);
+      }
+      while (i < 8);
+
+      Wait_ms(5000);
+      }
+    */
+    //--- FIN PRUEBA DE SEGMENTOS
+
+    //--- PRUEBA DE NUMEROS DEL 0 AL 9
+    /*
+      while (1)
+      {
+      if (LED)
+      LED_OFF;
+      else
+      LED_ON;
+
+      for (i = 0; i < 11; i++)
+      {
+      ShowNumbers(i);
+      Wait_ms(1000);
+
+      }
+      Wait_ms(5000);
+      }
+    */
+    //--- FIN PRUEBA DE NUMEROS DEL 0 AL 9
+
+    //--- PRUEBA DE NUMEROS DEL 0 AL 9 + TACT SWITCHES
+    /*
+      while (1)
+      {
+      switches = ReadSwitches();
+
+      if (switches != NO_KEY)
+      {
+      LED_ON;
+      ShowNumbers(switches);
+      }
+      else
+      {
+      //ShowNumbers(DISPLAY_NONE);
+      LED_OFF;
+      }
+      }
+    */
+    //--- FIN PRUEBA DE NUMEROS DEL 0 AL 9 + TACT SWITCHES
+
+    //--- PRUEBA DE CODIGOS
+    /*
+      SirenCommands(SIREN_MULTIPLE_UP_CMD);
+      while (1)
+      {
+      RxCode();
+      UpdateSiren();
+      }
+    */
+    //--- FIN PRUEBA DE CODIGOS
+
+    while (1)
+    {
+        switch (main_state)
+        {
+        case MAIN_INIT:
+
+            switches_posi0 = 0;
+            switches_posi1 = 0;
+            switches_posi2 = 0;
+            position = 0;
+            //code = 0;
 
 #ifdef CON_BLOQUEO_DE_KEYPAD
-				  if (!interdigit_timeout)
-					  main_state = MAIN_MAIN;
+            if (!interdigit_timeout)
+                main_state = MAIN_MAIN;
 #else
-				  main_state = MAIN_UNLOCK;
+            main_state = MAIN_UNLOCK;
 #endif
-				  break;
+            break;
 
-			  case MAIN_MAIN:
-				  //si termine alguna operacion y estaba con unlock
-				  if (timer_keypad_enabled)
-					  main_state = MAIN_TO_UNLOCK;
+        case MAIN_MAIN:
+            //si termine alguna operacion y estaba con unlock
+            if (timer_keypad_enabled)
+                main_state = MAIN_TO_UNLOCK;
 
-				  if (CheckKeypad(&switches_posi0, &switches_posi1, &switches_posi2, &position) == KNUMBER_FINISH)
-				  {
-					  if (position == 951)
-					  {
-						  Usart1Send("Master Unlock\r\n");
-						  main_state = MAIN_TO_UNLOCK;
-					  }
-					  else
-					  {
-						  if ((unsigned short) SST_CheckIndexInMemory(1000) == 0xFFFF)
-						  {
-							  if (position == 416)
-							  {
-								  Usart1Send("User default Unlock\r\n");
-								  main_state = MAIN_TO_UNLOCK;
-							  }
-						  }
-						  else if (position == (unsigned short) SST_CheckIndexInMemory(1000))
-						  {
-							  Usart1Send("User Unlock\r\n");
-							  main_state = MAIN_TO_UNLOCK;
-						  }
-					  }
-					  //position = (unsigned short) SST_CheckIndexInMemory(1000);
-					  //sprintf(str, "user code: %03d\r\n", position);
-					  //Usart1Send(str);
-				  }
+            if (CheckKeypad(&switches_posi0, &switches_posi1, &switches_posi2, &position) == KNUMBER_FINISH)
+            {
+                if (position == 951)
+                {
+                    Usart1Send("Master Unlock\r\n");
+                    main_state = MAIN_TO_UNLOCK;
+                }
+                else
+                {
+                    if ((unsigned short) SST_CheckIndexInMemory(1000) == 0xFFFF)
+                    {
+                        if (position == 416)
+                        {
+                            Usart1Send("User default Unlock\r\n");
+                            main_state = MAIN_TO_UNLOCK;
+                        }
+                    }
+                    else if (position == (unsigned short) SST_CheckIndexInMemory(1000))
+                    {
+                        Usart1Send("User Unlock\r\n");
+                        main_state = MAIN_TO_UNLOCK;
+                    }
+                }
+                //position = (unsigned short) SST_CheckIndexInMemory(1000);
+                //sprintf(str, "user code: %03d\r\n", position);
+                //Usart1Send(str);
+            }
 
-				  switches = CheckRemoteKeypad(&switches_posi0, &switches_posi1, &switches_posi2, &position);
-				  if (switches == RK_MUST_BE_CONTROL)
-				  {
-					  alarm_state = ALARM_START;	//resetea la maquina de estados de FuncAlarm()
-					  main_state = MAIN_IN_ALARM;
-				  }
-				  else if (switches == RK_NUMBER_FINISH)
-				  {
-					  if (position == 951)
-					  {
-						  Usart1Send("Master Remote Unlock\r\n");
-						  main_state = MAIN_TO_UNLOCK;
-						  unlock_by_remote = 1;
-					  }
-					  else
-					  {
-						  if ((unsigned short) SST_CheckIndexInMemory(1000) == 0xFFFF)
-						  {
-							  if (position == 416)
-							  {
-								  Usart1Send("User default Remote Unlock\r\n");
-								  main_state = MAIN_TO_UNLOCK;
-								  unlock_by_remote = 1;
-							  }
-						  }
-						  else if (position == (unsigned short) SST_CheckIndexInMemory(1000))
-						  {
-							  Usart1Send("User Remote Unlock\r\n");
-							  main_state = MAIN_TO_UNLOCK;
-							  unlock_by_remote = 1;
-						  }
-					  }
-				  }
-				  break;
+            switches = CheckRemoteKeypad(&switches_posi0, &switches_posi1, &switches_posi2, &position);
+            if (switches == RK_MUST_BE_CONTROL)
+            {
+                alarm_state = ALARM_START;	//resetea la maquina de estados de FuncAlarm()
+                main_state = MAIN_IN_ALARM;
+            }
+            else if (switches == RK_NUMBER_FINISH)
+            {
+                if (position == 951)
+                {
+                    Usart1Send("Master Remote Unlock\r\n");
+                    main_state = MAIN_TO_UNLOCK;
+                    unlock_by_remote = 1;
+                }
+                else
+                {
+                    if ((unsigned short) SST_CheckIndexInMemory(1000) == 0xFFFF)
+                    {
+                        if (position == 416)
+                        {
+                            Usart1Send("User default Remote Unlock\r\n");
+                            main_state = MAIN_TO_UNLOCK;
+                            unlock_by_remote = 1;
+                        }
+                    }
+                    else if (position == (unsigned short) SST_CheckIndexInMemory(1000))
+                    {
+                        Usart1Send("User Remote Unlock\r\n");
+                        main_state = MAIN_TO_UNLOCK;
+                        unlock_by_remote = 1;
+                    }
+                }
+            }
+            break;
 
-			  case MAIN_TO_UNLOCK:
-				  timer_keypad_enabled = 60000;
-				  //si se esta mostrando algo espero
-				  if (numbers[0] == '\0')
-				  {
-					  ShowNumbers(DISPLAY_REMOTE);
-					  digit_remote = 1;
-				  }
-				  else
-					  digit_remote = 0;
+        case MAIN_TO_UNLOCK:
+            timer_keypad_enabled = 60000;
 
-				  main_state = MAIN_UNLOCK;
-				  break;
+            //si se esta mostrando algo espero
+            if (DisplayIsFree())
+            {
+                ShowNumbers(DISPLAY_REMOTE);
+                digit_remote = 1;
+            }
+            else
+                digit_remote = 0;
 
-			  case MAIN_UNLOCK:
+            main_state = MAIN_UNLOCK;
+            break;
 
-				  switches = CheckKeypad(&switches_posi0, &switches_posi1, &switches_posi2, &position);
-				  if (switches == KNUMBER_FINISH)
-				  {
-					  if (position == 800)
-					  {
-						  main_state = MAIN_TO_CHANGE_USER_PASSWORD;
-						  Usart1Send("Change User Password\r\n");
-						  wait_for_code_timeout = param_struct.wait_for_code;
-					  }
-					  else
-					  {
-						  main_state = MAIN_TO_SAVE_AT_LAST;
-						  wait_for_code_timeout = param_struct.wait_for_code;
-						  sprintf(str, "Guardar en: %03d\r\n", position);
-						  Usart1Send(str);
-					  }
-				  }
+        case MAIN_UNLOCK:
 
-				  if (!digit_remote)
-				  {
-					  if (numbers[0] == '\0')
-					  {
-						  ShowNumbers(DISPLAY_REMOTE);
-						  digit_remote = 1;
-					  }
-				  }
+            switches = CheckKeypad(&switches_posi0, &switches_posi1, &switches_posi2, &position);
+            if (switches == KNUMBER_FINISH)
+            {
+                if (position == 800)
+                {
+                    main_state = MAIN_TO_CHANGE_USER_PASSWORD;
+                    Usart1Send("Change User Password\r\n");
+                    wait_for_code_timeout = param_struct.wait_for_code;
+                }
+                else
+                {
+                    main_state = MAIN_TO_SAVE_AT_LAST;
+                    wait_for_code_timeout = param_struct.wait_for_code;
+                    sprintf(str, "Guardar en: %03d\r\n", position);
+                    Usart1Send(str);
+                }
+            }
+
+            if (!digit_remote)
+            {
+                if (DisplayIsFree())
+                {
+                    ShowNumbers(DISPLAY_REMOTE);
+                    digit_remote = 1;
+                }
+            }
 
 
-				  switches = CheckRemoteKeypad(&switches_posi0, &switches_posi1, &switches_posi2, &position);
-				  if (switches == RK_MUST_BE_CONTROL)
-				  {
-					  alarm_state = ALARM_START;	//resetea la maquina de estados de FuncAlarm()
-					  main_state = MAIN_IN_ALARM;
-				  }
-				  else if (switches == RK_NUMBER_FINISH)
-				  {
-					  main_state = MAIN_TO_SAVE_REMOTE_AT_LAST;
-					  wait_for_code_timeout = param_struct.wait_for_code;
-					  sprintf(str, "Keypad Remoto guardar en: %03d\r\n", position);
-					  Usart1Send(str);
-				  }
+            switches = CheckRemoteKeypad(&switches_posi0, &switches_posi1, &switches_posi2, &position);
+            if (switches == RK_MUST_BE_CONTROL)
+            {
+                alarm_state = ALARM_START;	//resetea la maquina de estados de FuncAlarm()
+                main_state = MAIN_IN_ALARM;
+            }
+            else if (switches == RK_NUMBER_FINISH)
+            {
+                main_state = MAIN_TO_SAVE_REMOTE_AT_LAST;
+                wait_for_code_timeout = param_struct.wait_for_code;
+                sprintf(str, "Keypad Remoto guardar en: %03d\r\n", position);
+                Usart1Send(str);
+            }
 
 #ifdef CON_BLOQUEO_DE_KEYPAD
-				  if (!timer_keypad_enabled)
-				  {
-					  Usart1Send("Keypad Locked\r\n");
-					  main_state = MAIN_MAIN;
-					  unlock_by_remote = 0;
-					  ShowNumbers(DISPLAY_NONE);
-				  }
+            if (!timer_keypad_enabled)
+            {
+                Usart1Send("Keypad Locked\r\n");
+                main_state = MAIN_MAIN;
+                unlock_by_remote = 0;
+                ShowNumbers(DISPLAY_NONE);
+            }
 #endif
-				  break;
+            break;
 
-			  case MAIN_TO_CHANGE_USER_PASSWORD:
-				  switches = CheckKeypad(&switches_posi0, &switches_posi1, &switches_posi2, &position);
-				  if (switches == KNUMBER_FINISH)
-				  {
-					  SST_WriteCodeToMemory(1000, position);
-					  Usart1Send("User Password changed\r\n");
-					  BuzzerCommands(BUZZER_SHORT_CMD, 7);
-					  main_state = MAIN_TO_MAIN_WAIT_5SEGS;
-				  }
+        case MAIN_TO_CHANGE_USER_PASSWORD:
+            switches = CheckKeypad(&switches_posi0, &switches_posi1, &switches_posi2, &position);
+            if (switches == KNUMBER_FINISH)
+            {
+                SST_WriteCodeToMemory(1000, position);
+                Usart1Send("User Password changed\r\n");
+                BuzzerCommands(BUZZER_SHORT_CMD, 7);
+                main_state = MAIN_TO_MAIN_WAIT_5SEGS;
+            }
 
-				  if (switches == KCANCEL)
-				  {
-					  main_state = MAIN_TO_MAIN_CANCEL;
-				  }
+            if (switches == KCANCEL)
+            {
+                main_state = MAIN_TO_MAIN_CANCEL;
+            }
 
-				  if (!wait_for_code_timeout)
-					  main_state = MAIN_TO_MAIN_TIMEOUT;
+            if (!wait_for_code_timeout)
+                main_state = MAIN_TO_MAIN_TIMEOUT;
 
-				  break;
+            break;
 
-			  case MAIN_IN_ALARM:
-				  result = FuncAlarm();
-				  //if ((result == ENDED_OK) || (result == NO_CODE))
-				  if (result == END_OK)
-				  {
-					  main_state = MAIN_TO_MAIN_WAIT_5SEGS;
-				  }
-				  break;
+        case MAIN_IN_ALARM:
+            result = FuncAlarm();
+            //if ((result == ENDED_OK) || (result == NO_CODE))
+            if (result == END_OK)
+            {
+                main_state = MAIN_TO_MAIN_WAIT_5SEGS;
+            }
+            break;
 
-			  case MAIN_TO_SAVE_AT_LAST:
+        case MAIN_TO_SAVE_AT_LAST:
 
-				  //me quedo esperando un código de control valido para guardarlo en posi
-				  switches = CheckRemoteKeypad(&switches_posi0, &switches_posi1, &switches_posi2, &position);
-				  if (switches == RK_MUST_BE_CONTROL)
-				  {
-					  code = code0;
-					  code <<= 16;
-					  code |= code1;
-					  code_position = CheckCodeInMemory(code);
-					  if (code_position == 0xFFFF)
-					  {
-						  //el codigo no se habia utilizado
-						  if (Write_Code_To_Memory(position, code) != 0)
-							  Usart1Send((char *) "Codigo Guardado OK\r\n");
-						  else
-							  Usart1Send((char *) "Error al guardar\r\n");
+            //me quedo esperando un código de control valido para guardarlo en posi
+            switches = CheckRemoteKeypad(&switches_posi0, &switches_posi1, &switches_posi2, &position);
+            if (switches == RK_MUST_BE_CONTROL)
+            {
+                code = code0;
+                code <<= 16;
+                code |= code1;
+                code_position = CheckCodeInMemory(code);
+                if (code_position == 0xFFFF)
+                {
+                    //el codigo no se habia utilizado
+                    if (Write_Code_To_Memory(position, code) != 0)
+                        Usart1Send((char *) "Codigo Guardado OK\r\n");
+                    else
+                        Usart1Send((char *) "Error al guardar\r\n");
 
-						  ConvertPositionToDisplay(position);
-						  BuzzerCommands(BUZZER_SHORT_CMD, 7);
-					  }
-					  else
-					  {
-						  //se habia utilizado en otra posicion
-						  sprintf(str, "Error codigo ya esta en: %03d\r\n", code_position);
-						  Usart1Send(str);
+                    ConvertPositionToDisplay(position);
+                    BuzzerCommands(BUZZER_SHORT_CMD, 7);
+                }
+                else
+                {
+                    //se habia utilizado en otra posicion
+                    sprintf(str, "Error codigo ya esta en: %03d\r\n", code_position);
+                    Usart1Send(str);
 
-						  ConvertPositionToDisplay(code_position);
-						  BuzzerCommands(BUZZER_HALF_CMD, 2);
-					  }
-					  main_state = MAIN_TO_MAIN_WAIT_5SEGS;
-				  }
+                    ConvertPositionToDisplay(code_position);
+                    BuzzerCommands(BUZZER_HALF_CMD, 2);
+                }
+                main_state = MAIN_TO_MAIN_WAIT_5SEGS;
+            }
 
-				  //Como tengo que conocer los tres juntos
-				  mass_erase_position = position;
-				  switches = CheckKeypad(&switches_posi0, &switches_posi1, &switches_posi2, &position);
-				  if (switches == KCANCEL)
-				  {
-					  main_state = MAIN_TO_MAIN_CANCEL;
-				  }
+            //Como tengo que conocer los tres juntos
+            mass_erase_position = position;
+            switches = CheckKeypad(&switches_posi0, &switches_posi1, &switches_posi2, &position);
+            if (switches == KCANCEL)
+            {
+                main_state = MAIN_TO_MAIN_CANCEL;
+            }
 
-				  if ((switches == KNUMBER_FINISH) && (position == 0))	//termino el numero y era 0
-				  {
-					  //se va a borrar la posicion con teclado local
-					  position = mass_erase_position;	//update de posicion del control
-					  main_state = MAIN_TO_DEL_CODE;
-				  }
+            if ((switches == KNUMBER_FINISH) && (position == 0))	//termino el numero y era 0
+            {
+                //se va a borrar la posicion con teclado local
+                position = mass_erase_position;	//update de posicion del control
+                main_state = MAIN_TO_DEL_CODE;
+            }
 
-				  if ((switches == KNUMBER_FINISH) && (position == 999) && (mass_erase_position == 0))	//termino el numero y era 999
-				  {
-					  //se va a hacer un blanqueo completo
-					  Usart1Send((char *) "\r\n- CUIDADO entrando en Blanqueo Completo -\r\n");
-					  main_state = MAIN_TO_MASS_ERASE_AT_LAST;
-				  }
+            if ((switches == KNUMBER_FINISH) && (position == 999) && (mass_erase_position == 0))	//termino el numero y era 999
+            {
+                //se va a hacer un blanqueo completo
+                Usart1Send((char *) "\r\n- CUIDADO entrando en Blanqueo Completo -\r\n");
+                main_state = MAIN_TO_MASS_ERASE_AT_LAST;
+            }
 
-				  if (!wait_for_code_timeout)
-					  main_state = MAIN_TO_MAIN_TIMEOUT;
+            if (!wait_for_code_timeout)
+                main_state = MAIN_TO_MAIN_TIMEOUT;
 
-				  break;
+            break;
 
-			  case MAIN_TO_SAVE_REMOTE_AT_LAST:
+        case MAIN_TO_SAVE_REMOTE_AT_LAST:
 
-				  mass_erase_position = position;
-				  switches = CheckRemoteKeypad(&switches_posi0, &switches_posi1, &switches_posi2, &position);
-				  if (switches == RK_CANCEL)
-				  {
-					  main_state = MAIN_TO_MAIN_CANCEL;
-				  }
+            mass_erase_position = position;
+            switches = CheckRemoteKeypad(&switches_posi0, &switches_posi1, &switches_posi2, &position);
+            if (switches == RK_CANCEL)
+            {
+                main_state = MAIN_TO_MAIN_CANCEL;
+            }
 
-				  if ((switches == RK_NUMBER_FINISH) && (position == 0))	//termino el numero y era 0
-				  {
-					  //se va a borrar la posicion con teclado remoto
-					  position = mass_erase_position;	//update de posicion del control
-					  main_state = MAIN_TO_DEL_REMOTE_CODE;
-				  }
+            if ((switches == RK_NUMBER_FINISH) && (position == 0))	//termino el numero y era 0
+            {
+                //se va a borrar la posicion con teclado remoto
+                position = mass_erase_position;	//update de posicion del control
+                main_state = MAIN_TO_DEL_REMOTE_CODE;
+            }
 
-				  if (switches == RK_MUST_BE_CONTROL)
-				  {
-					  code = code0;
-					  code <<= 16;
-					  code |= code1;
-					  code_position = CheckCodeInMemory(code);
-					  if (code_position == 0xFFFF)
-					  {
-						  //el codigo no se habia utilizado
-						  if (Write_Code_To_Memory(position, code) != 0)
-								Usart1Send((char *) "Codigo Guardado OK\r\n");
-						  else
-								Usart1Send((char *) "Error al guardar\r\n");
+            if (switches == RK_MUST_BE_CONTROL)
+            {
+                code = code0;
+                code <<= 16;
+                code |= code1;
+                code_position = CheckCodeInMemory(code);
+                if (code_position == 0xFFFF)
+                {
+                    //el codigo no se habia utilizado
+                    if (Write_Code_To_Memory(position, code) != 0)
+                        Usart1Send((char *) "Codigo Guardado OK\r\n");
+                    else
+                        Usart1Send((char *) "Error al guardar\r\n");
 
-						  ConvertPositionToDisplay(position);
-						  BuzzerCommands(BUZZER_SHORT_CMD, 7);
-						  SirenCommands(SIREN_CONFIRM_OK_CMD);
-					  }
-					  else
-					  {
-						  //se habia utilizado en otra posicion
-						  sprintf(str, "Error codigo ya esta en: %03d\r\n", code_position);
-						  Usart1Send(str);
+                    ConvertPositionToDisplay(position);
+                    BuzzerCommands(BUZZER_SHORT_CMD, 7);
+                    SirenCommands(SIREN_CONFIRM_OK_CMD);
+                }
+                else
+                {
+                    //se habia utilizado en otra posicion
+                    sprintf(str, "Error codigo ya esta en: %03d\r\n", code_position);
+                    Usart1Send(str);
 
-						  ConvertPositionToDisplay(code_position);
-						  BuzzerCommands(BUZZER_HALF_CMD, 2);
-						  SirenCommands(SIREN_HALF_CMD);
-					  }
-					  main_state = MAIN_TO_MAIN_WAIT_5SEGS;
-				  }
-				  if (!wait_for_code_timeout)
-					  main_state = MAIN_TO_MAIN_TIMEOUT;
+                    ConvertPositionToDisplay(code_position);
+                    BuzzerCommands(BUZZER_HALF_CMD, 2);
+                    SirenCommands(SIREN_HALF_CMD);
+                }
+                main_state = MAIN_TO_MAIN_WAIT_5SEGS;
+            }
+            if (!wait_for_code_timeout)
+                main_state = MAIN_TO_MAIN_TIMEOUT;
 
-				  break;
+            break;
 
-			  case MAIN_TO_DEL_CODE:
-				  if (Write_Code_To_Memory(position, 0xFFFFFFFF) != 0)
-				  {
-					  Usart1Send((char *) "Codigo Borrado OK\r\n");
-					  VectorToDisplay(DISPLAY_ZERO);
-					  VectorToDisplay(DISPLAY_POINT);	//agrego punto
-					  VectorToDisplay(DISPLAY_NONE);
-					  BuzzerCommands(BUZZER_SHORT_CMD, 7);
-				  }
-				  else
-				  {
-					  Usart1Send((char *) "Error al borrar\r\n");
-					  ShowNumbers(DISPLAY_NONE);
-					  BuzzerCommands(BUZZER_HALF_CMD, 1);
-				  }
+        case MAIN_TO_DEL_CODE:
+            if (Write_Code_To_Memory(position, 0xFFFFFFFF) != 0)
+            {
+                Usart1Send((char *) "Codigo Borrado OK\r\n");
+                // VectorToDisplay(DISPLAY_ZERO);
+                // VectorToDisplay(DISPLAY_POINT);	//agrego punto
+                // VectorToDisplay(DISPLAY_NONE);
+                VectorToDisplayStr("0.");
+                BuzzerCommands(BUZZER_SHORT_CMD, 7);
+            }
+            else
+            {
+                Usart1Send((char *) "Error al borrar\r\n");
+                ShowNumbers(DISPLAY_NONE);
+                BuzzerCommands(BUZZER_HALF_CMD, 1);
+            }
 
-				  main_state = MAIN_TO_MAIN_OK;
+            main_state = MAIN_TO_MAIN_OK;
 
-				  /*
-				  if (prog_remote)
-				  {
-					  if (RxCode() == ENDED_OK)
-					  {
-						  //en code0 y code1 tengo lo recibido
-						  button_remote = CheckButtonRemote(code0, code1);
+            /*
+              if (prog_remote)
+              {
+              if (RxCode() == ENDED_OK)
+              {
+              //en code0 y code1 tengo lo recibido
+              button_remote = CheckButtonRemote(code0, code1);
 
-						  //se cancelo la operacion
-						  if (button_remote == REM_B10)
-						  {
-							  ShowNumbers(DISPLAY_NONE);
-							  SirenCommands(SIREN_HALF_CMD);
-							  BuzzerCommands(BUZZER_HALF_CMD, 1);
-							  main_state = MAIN_TO_MAIN_CANCEL;
-						  }
+              //se cancelo la operacion
+              if (button_remote == REM_B10)
+              {
+              ShowNumbers(DISPLAY_NONE);
+              SirenCommands(SIREN_HALF_CMD);
+              BuzzerCommands(BUZZER_HALF_CMD, 1);
+              main_state = MAIN_TO_MAIN_CANCEL;
+              }
 
-						  //es la confirmacion
-						  if (button_remote == REM_B12)
-						  {
-							  if (Write_Code_To_Memory(position, 0xFFFFFFFF) != 0)
-							  {
-								  Usart1Send((char *) "Codigo Borrado OK\r\n");
-								  VectorToDisplay(DISPLAY_ZERO);
-								  VectorToDisplay(DISPLAY_POINT);	//agrego punto
-								  VectorToDisplay(DISPLAY_NONE);
-								  SirenCommands(SIREN_CONFIRM_OK_CMD);
-								  BuzzerCommands(BUZZER_SHORT_CMD, 7);
-							  }
-							  else
-							  {
-								  Usart1Send((char *) "Error al borrar\r\n");
-								  ShowNumbers(DISPLAY_NONE);
-								  SirenCommands(SIREN_HALF_CMD);
-								  BuzzerCommands(BUZZER_HALF_CMD, 1);
-							  }
-							  main_state = MAIN_TO_MAIN_OK;
-						  }
-					  }
+              //es la confirmacion
+              if (button_remote == REM_B12)
+              {
+              if (Write_Code_To_Memory(position, 0xFFFFFFFF) != 0)
+              {
+              Usart1Send((char *) "Codigo Borrado OK\r\n");
+              VectorToDisplay(DISPLAY_ZERO);
+              VectorToDisplay(DISPLAY_POINT);	//agrego punto
+              VectorToDisplay(DISPLAY_NONE);
+              SirenCommands(SIREN_CONFIRM_OK_CMD);
+              BuzzerCommands(BUZZER_SHORT_CMD, 7);
+              }
+              else
+              {
+              Usart1Send((char *) "Error al borrar\r\n");
+              ShowNumbers(DISPLAY_NONE);
+              SirenCommands(SIREN_HALF_CMD);
+              BuzzerCommands(BUZZER_HALF_CMD, 1);
+              }
+              main_state = MAIN_TO_MAIN_OK;
+              }
+              }
 
-				  }
-				    */
-				  break;
+              }
+            */
+            break;
 
-			  case MAIN_TO_DEL_REMOTE_CODE:
-				  if (Write_Code_To_Memory(position, 0xFFFFFFFF) != 0)
-				  {
-					  Usart1Send((char *) "Codigo Borrado OK\r\n");
-					  VectorToDisplay(DISPLAY_ZERO);
-					  VectorToDisplay(DISPLAY_POINT);	//agrego punto
-					  VectorToDisplay(DISPLAY_NONE);
-					  SirenCommands(SIREN_CONFIRM_OK_CMD);
-					  BuzzerCommands(BUZZER_SHORT_CMD, 7);
-				  }
-				  else
-				  {
-					  Usart1Send((char *) "Error al borrar\r\n");
-					  ShowNumbers(DISPLAY_NONE);
-					  SirenCommands(SIREN_HALF_CMD);
-					  BuzzerCommands(BUZZER_HALF_CMD, 1);
-				  }
+        case MAIN_TO_DEL_REMOTE_CODE:
+            if (Write_Code_To_Memory(position, 0xFFFFFFFF) != 0)
+            {
+                Usart1Send((char *) "Codigo Borrado OK\r\n");
+                // VectorToDisplay(DISPLAY_ZERO);
+                // VectorToDisplay(DISPLAY_POINT);	//agrego punto
+                // VectorToDisplay(DISPLAY_NONE);
+                VectorToDisplayStr("0.");
+                SirenCommands(SIREN_CONFIRM_OK_CMD);
+                BuzzerCommands(BUZZER_SHORT_CMD, 7);
+            }
+            else
+            {
+                Usart1Send((char *) "Error al borrar\r\n");
+                ShowNumbers(DISPLAY_NONE);
+                SirenCommands(SIREN_HALF_CMD);
+                BuzzerCommands(BUZZER_HALF_CMD, 1);
+            }
 
-				  main_state = MAIN_TO_MAIN_OK;
-				  break;
+            main_state = MAIN_TO_MAIN_OK;
+            break;
 
-			  case MAIN_TO_MASS_ERASE_AT_LAST:
-				  //se va a borrar la memoria
-				  if (EraseAllMemory() != 0)
-				  {
-					  Usart1Send((char *) "Memoria Completa Borrada OK\r\n");
-					  VectorToDisplay(DISPLAY_ZERO);
-					  VectorToDisplay(DISPLAY_POINT);	//agrego punto
-					  VectorToDisplay(DISPLAY_NONE);
-					  BuzzerCommands(BUZZER_SHORT_CMD, 7);
-					  main_state = MAIN_TO_MAIN_WAIT_5SEGS;
-				  }
-				  else
-				  {
-					  Usart1Send((char *) "Error al borrar memoria\r\n");
-					  ShowNumbers(DISPLAY_NONE);
-					  BuzzerCommands(BUZZER_HALF_CMD, 1);
-					  main_state = MAIN_TO_MAIN_CANCEL;
-				  }
-				  break;
+        case MAIN_TO_MASS_ERASE_AT_LAST:
+            //se va a borrar la memoria
+            if (EraseAllMemory() != 0)
+            {
+                Usart1Send((char *) "Memoria Completa Borrada OK\r\n");
+                // VectorToDisplay(DISPLAY_ZERO);
+                // VectorToDisplay(DISPLAY_POINT);	//agrego punto
+                // VectorToDisplay(DISPLAY_NONE);
+                VectorToDisplayStr("0.");
+                BuzzerCommands(BUZZER_SHORT_CMD, 7);
+                main_state = MAIN_TO_MAIN_WAIT_5SEGS;
+            }
+            else
+            {
+                Usart1Send((char *) "Error al borrar memoria\r\n");
+                ShowNumbers(DISPLAY_NONE);
+                BuzzerCommands(BUZZER_HALF_CMD, 1);
+                main_state = MAIN_TO_MAIN_CANCEL;
+            }
+            break;
 
-			  case MAIN_TO_MAIN_CANCEL:
-				  Usart1Send((char *) "Opereta cancelada\r\n");
-				  main_state = MAIN_INIT;
-				  interdigit_timeout = 300;	//espero que se limpien las teclas
-				  break;
+        case MAIN_TO_MAIN_CANCEL:
+            Usart1Send((char *) "Opereta cancelada\r\n");
+            main_state = MAIN_INIT;
+            interdigit_timeout = 300;	//espero que se limpien las teclas
+            break;
 
-			  case MAIN_TO_MAIN_TIMEOUT:
-				  Usart1Send((char *) "Timeout\r\n");
-				  main_state = MAIN_INIT;
-				  interdigit_timeout = 300;	//espero que se limpien las teclas
-				  break;
+        case MAIN_TO_MAIN_TIMEOUT:
+            Usart1Send((char *) "Timeout\r\n");
+            main_state = MAIN_INIT;
+            interdigit_timeout = 300;	//espero que se limpien las teclas
+            break;
 
-			  case MAIN_TO_MONITORING:
-				  Usart1Send((char *) "Goto 115200 confirmed\r\n");
-				  main_state++;
-				  interdigit_timeout = 300;	//espero que se limpien los buffers
-				  break;
+        case MAIN_TO_MONITORING:
+            Usart1Send((char *) "Goto 115200 confirmed\r\n");
+            main_state++;
+            interdigit_timeout = 300;	//espero que se limpien los buffers
+            break;
 
-			  case MAIN_TO_MONITORINGA:
-				  if (!interdigit_timeout)
-				  {
-					  ShowNumbers(DISPLAY_REMOTE);
-					  USART1->CR1 &= ~USART_CR1_UE;
-					  USART1->BRR = USART_115200;
-					  USART1->CR1 |= USART_CR1_UE;
-					  main_state++;
-				  }
-				  break;
+        case MAIN_TO_MONITORINGA:
+            if (!interdigit_timeout)
+            {
+                ShowNumbers(DISPLAY_REMOTE);
+                USART1->CR1 &= ~USART_CR1_UE;
+                USART1->BRR = USART_115200;
+                USART1->CR1 |= USART_CR1_UE;
+                main_state++;
+            }
+            break;
 
-			  case MAIN_TO_MONITORINGB:
-				  Usart1Send((char *) "Monitoring confirmed\r\n");	//enviado a 115200
-				  main_state++;
-				  break;
+        case MAIN_TO_MONITORINGB:
+            Usart1Send((char *) "Monitoring confirmed\r\n");	//enviado a 115200
+            main_state++;
+            break;
 
-			  case MAIN_TO_MONITORINGC:
+        case MAIN_TO_MONITORINGC:
 
-				  break;
+            break;
 
 
-			  case MAIN_TO_MONITORING_LEAVE:
-				  Usart1Send((char *) "Goto 9600 confirmed\r\n");
-				  main_state++;
-				  interdigit_timeout = 300;	//espero que se limpien los buffers
-				  break;
+        case MAIN_TO_MONITORING_LEAVE:
+            Usart1Send((char *) "Goto 9600 confirmed\r\n");
+            main_state++;
+            interdigit_timeout = 300;	//espero que se limpien los buffers
+            break;
 
-			  case MAIN_TO_MONITORINGE:
-				  if (!interdigit_timeout)
-				  {
-					  ShowNumbers(DISPLAY_NONE);
-					  USART1->CR1 &= ~USART_CR1_UE;
-					  USART1->BRR = USART_9600;
-					  USART1->CR1 |= USART_CR1_UE;
-					  main_state = MAIN_TO_MAIN_OK;
-				  }
-				  break;
+        case MAIN_TO_MONITORINGE:
+            if (!interdigit_timeout)
+            {
+                ShowNumbers(DISPLAY_NONE);
+                USART1->CR1 &= ~USART_CR1_UE;
+                USART1->BRR = USART_9600;
+                USART1->CR1 |= USART_CR1_UE;
+                main_state = MAIN_TO_MAIN_OK;
+            }
+            break;
 
-			  case MAIN_TO_MAIN_WAIT_5SEGS:
-				  interdigit_timeout = ACT_DESACT_IN_MSECS;	//espero 5 segundos luego del codigo grabado OK
-				  main_state = MAIN_TO_MAIN_WAIT_5SEGSA;
-				  break;
+        case MAIN_TO_MAIN_WAIT_5SEGS:
+            interdigit_timeout = ACT_DESACT_IN_MSECS;	//espero 5 segundos luego del codigo grabado OK
+            main_state = MAIN_TO_MAIN_WAIT_5SEGSA;
+            break;
 
-			  case MAIN_TO_MAIN_WAIT_5SEGSA:
-				  if (!interdigit_timeout)
-					  main_state = MAIN_TO_MAIN_OK;
-				  break;
+        case MAIN_TO_MAIN_WAIT_5SEGSA:
+            if (!interdigit_timeout)
+                main_state = MAIN_TO_MAIN_OK;
+            break;
 
-			  case MAIN_TO_MAIN_OK:
-				  main_state = MAIN_INIT;
-				  break;
+        case MAIN_TO_MAIN_OK:
+            main_state = MAIN_INIT;
+            break;
 
-			  case MAIN_MEMORY_DUMP:
-					//cargo 256 numeros al vector de 1024 posiciones
-				  SST_MemoryDump (OFFSET_CODES_256);
-				  main_state = MAIN_INIT;
-				  break;
+        case MAIN_MEMORY_DUMP:
+            //cargo 256 numeros al vector de 1024 posiciones
+            SST_MemoryDump (OFFSET_CODES_256);
+            main_state = MAIN_INIT;
+            break;
 
-			  case MAIN_MEMORY_DUMP2:
-					//cargo 256 numeros al vector de 1024 posiciones
-				  SST_MemoryDump (OFFSET_CODES_512);
-				  main_state = MAIN_INIT;
-				  break;
+        case MAIN_MEMORY_DUMP2:
+            //cargo 256 numeros al vector de 1024 posiciones
+            SST_MemoryDump (OFFSET_CODES_512);
+            main_state = MAIN_INIT;
+            break;
 
-			  default:
-				  main_state = MAIN_INIT;
-				  break;
+        default:
+            main_state = MAIN_INIT;
+            break;
 
-		  }
-		  /*
-			if (LED)
-			{
-				LED_OFF;
-				FPLUS_OFF;
-				F12PLUS_OFF;
-				F5PLUS_OFF;
-				//BUZZER_OFF;
-				//WP_ON;
-				//CE_ON;
-				Power_Ampli_Ena();
-			}
-			else
-			{
-				LED_ON;
-				FPLUS_ON;
-				F12PLUS_ON;
-				F5PLUS_ON;
-				//BUZZER_ON;
-				//WP_OFF;
-				//CE_OFF;
-				Power_Ampli_Disa();
-			}
-		   */
-		  /*
-			i = (unsigned char) ReadSwitches();
-			ShowNumbers(i);
-			//Wait_ms(50);
-			if (buffrx_ready)
-			{
-				j = InterpretarMsg(pbuffrx);
-				buffrx_ready = 0;
-				if (j != ERROR)
-					Usart1Send((const char *) "OK\r\n");
-			}
+        }
+        /*
+          if (LED)
+          {
+          LED_OFF;
+          FPLUS_OFF;
+          F12PLUS_OFF;
+          F5PLUS_OFF;
+          //BUZZER_OFF;
+          //WP_ON;
+          //CE_ON;
+          Power_Ampli_Ena();
+          }
+          else
+          {
+          LED_ON;
+          FPLUS_ON;
+          F12PLUS_ON;
+          F5PLUS_ON;
+          //BUZZER_ON;
+          //WP_OFF;
+          //CE_OFF;
+          Power_Ampli_Disa();
+          }
+        */
+        /*
+          i = (unsigned char) ReadSwitches();
+          ShowNumbers(i);
+          //Wait_ms(50);
+          if (buffrx_ready)
+          {
+          j = InterpretarMsg(pbuffrx);
+          buffrx_ready = 0;
+          if (j != ERROR)
+          Usart1Send((const char *) "OK\r\n");
+          }
 
-			if (RxCode() == ENDED_OK)
-			{
-				code = code0;
-				code <<= 16;
-				code |= code1;
+          if (RxCode() == ENDED_OK)
+          {
+          code = code0;
+          code <<= 16;
+          code |= code1;
 
-				dummy16 = CheckCodeInMemory (code);
-				if (dummy16 != 0xffff)
-				{
-					sprintf(str, "Code Finded in: %04d\r\n", dummy16);
-					Usart1Send(str);
-				}
-				else
-				{
-					sprintf(str, "Code: %04X %04X not finded\r\n", code0, code1);
-					Usart1Send(str);
-				}
-			}
-			*/
+          dummy16 = CheckCodeInMemory (code);
+          if (dummy16 != 0xffff)
+          {
+          sprintf(str, "Code Finded in: %04d\r\n", dummy16);
+          Usart1Send(str);
+          }
+          else
+          {
+          sprintf(str, "Code: %04X %04X not finded\r\n", code0, code1);
+          Usart1Send(str);
+          }
+          }
+        */
 
-			/*
-			Wait_ms(2000);
-			if (ReadMem())
-				Usart1Send((const char *) "Mem OK\r\n");
-			else
-				Usart1Send((const char *) "Mem NOK!!\r\n");
-			*/
+        /*
+          Wait_ms(2000);
+          if (ReadMem())
+          Usart1Send((const char *) "Mem OK\r\n");
+          else
+          Usart1Send((const char *) "Mem NOK!!\r\n");
+        */
 
-			/*
-			if (j == 0)
-			{
-				dummy16 = Write_Code_To_Memory(512, 0x4D08064A);
-				j = 1;
-				if (dummy16 == 0)
-					Usart1Send((const char *) "No grabo\r\n");
-				else
-					Usart1Send((const char *) "Grabado OK\r\n");
-			}
-			while(1);
-			*/
-		  UpdateBuzzer();
-		  UpdateDisplay();
-		  UpdateSiren();
-		  UpdateAudio();
+        /*
+          if (j == 0)
+          {
+          dummy16 = Write_Code_To_Memory(512, 0x4D08064A);
+          j = 1;
+          if (dummy16 == 0)
+          Usart1Send((const char *) "No grabo\r\n");
+          else
+          Usart1Send((const char *) "Grabado OK\r\n");
+          }
+          while(1);
+        */
+        UpdateBuzzer();
+        UpdateDisplaySM();
+        UpdateSiren();
+        UpdateAudio();
 #ifdef CON_MODIFICACION_DIODO_BATERIA
-		  UpdateBattery();
+        UpdateBattery();
 #endif
-		  //OJO esta rutina puede cambiar el estado del programa principal
-		  main_state = UpdateUart(main_state);
-	  }
+        //OJO esta rutina puede cambiar el estado del programa principal
+        main_state = UpdateUart(main_state);
+    }
 
-	  //--- FIN PRUEBA DE NUMEROS DEL 0 AL 9 y TACT SWITCHES
+    //--- FIN PRUEBA DE NUMEROS DEL 0 AL 9 y TACT SWITCHES
 
-	  //--- PRUEBA DE SALIDAS A TRANSISTOR
-	 /*
-	  while (1)
-	  {
-		  FPLUS_ON;
-		  F12PLUS_ON;
-		  F5PLUS_ON;
-		  LED_ON;
-		  BUZZER_ON;
+    //--- PRUEBA DE SALIDAS A TRANSISTOR
+    /*
+      while (1)
+      {
+      FPLUS_ON;
+      F12PLUS_ON;
+      F5PLUS_ON;
+      LED_ON;
+      BUZZER_ON;
 
-		  Wait_ms(1000);
+      Wait_ms(1000);
 
-		  FPLUS_OFF;
-		  F12PLUS_OFF;
-		  F5PLUS_OFF;
-		  LED_OFF;
-		  BUZZER_OFF;
+      FPLUS_OFF;
+      F12PLUS_OFF;
+      F5PLUS_OFF;
+      LED_OFF;
+      BUZZER_OFF;
 
-		  Wait_ms(1000);
-	  }
-	*/
-	  //--- FIN PRUEBA DE SALIDAS A TRANSISTOR
+      Wait_ms(1000);
+      }
+    */
+    //--- FIN PRUEBA DE SALIDAS A TRANSISTOR
 
-	  //--- PRUEBA LEER MEMORIA
-	  /*
-	  while (1)
-	  {
-			if (LED)
-				LED_OFF;
-			else
-				LED_ON;
+    //--- PRUEBA LEER MEMORIA
+    /*
+      while (1)
+      {
+      if (LED)
+      LED_OFF;
+      else
+      LED_ON;
 
-			if (readJEDEC())
-			//if (readStatusNVM())
-				Wait_ms(50);
-			else
-				Wait_ms(500);
-	  }
-	  */
-	  //--- FIN PRUEBA LEER MEMORIA
-
-
-
-	  //FIN PRUEBA DE SPI
+      if (readJEDEC())
+      //if (readStatusNVM())
+      Wait_ms(50);
+      else
+      Wait_ms(500);
+      }
+    */
+    //--- FIN PRUEBA LEER MEMORIA
 
 
-	//--- PRUEBAS PWM
-	  /*
-	//Update_PWM(1024);
-	 Update_PWM(666, 333, 1);
-	 while (1)
-	 {
-			if (LED)
-			{
-				LED_OFF;
-				Update_PWM(1000, 500, 1);
-			}
-			else
-			{
-				LED_ON;
-				Update_PWM(500, 250, 1);
-			}
+
+    //FIN PRUEBA DE SPI
 
 
-			Wait_ms(800);
+    //--- PRUEBAS PWM
+    /*
+    //Update_PWM(1024);
+    Update_PWM(666, 333, 1);
+    while (1)
+    {
+    if (LED)
+    {
+    LED_OFF;
+    Update_PWM(1000, 500, 1);
+    }
+    else
+    {
+    LED_ON;
+    Update_PWM(500, 250, 1);
+    }
 
-	 }
-	 */
-	 //--- FIN PRUEBAS PWM
 
-	//ADC configuration.
-	//if (ADC_Conf() == 0)
-	//{
-	//	while (1)
-	//	{
-	//		if (LED)
-	//			LED_OFF;
-	//		else
-	//			LED_ON;
-	//	}
-	//}
+    Wait_ms(800);
 
-	return 0;
+    }
+    */
+    //--- FIN PRUEBAS PWM
+
+    //ADC configuration.
+    //if (ADC_Conf() == 0)
+    //{
+    //	while (1)
+    //	{
+    //		if (LED)
+    //			LED_OFF;
+    //		else
+    //			LED_ON;
+    //	}
+    //}
+
+    return 0;
 }
 //--- End of Main ---//
 
@@ -1704,116 +1711,6 @@ void SendSegment (unsigned char segment)
 }
 */
 
-void SendSegment (unsigned char segment)
-{
-	OE_OFF;
-    if (segment & 0x80)
-    	Send_SPI_Single (0x01);
-    else
-    	Send_SPI_Single (0x00);
-
-    segment <<= 1;
-    Send_SPI_Single (segment);
-	OE_ON;
-}
-
-void ShowNumbersAgain (void)
-{
-	ShowNumbers (last_digit);
-}
-
-//		dp g f e d c b a
-//bits   7 6 5 4 3 2 1 0
-//negados
-void ShowNumbers (unsigned char number)	//del 1 al 9; 10 es cero; 11 es punto; 0, 12, 13, 14, 15 apagar
-{
-	//unsigned char a;
-	//me fijo si lo saco con punto
-	//if (number > 128)
-
-	//number = number & 0x0F;
-	//switch (number)
-	last_digit = number;
-	switch (number)
-	{
-		case 10:
-			//number = 0x3F;
-			number = 0xC0;
-			break;
-
-		case DISPLAY_ERROR:
-			//E
-			number = 0x06;
-			break;
-
-		case DISPLAY_ERROR2:
-			//E inv
-			number = 0xB0;
-			break;
-
-		case DISPLAY_LINE:
-			//raya media
-			number = 0xBF;
-			break;
-
-		case DISPLAY_REMOTE:
-			//cuadro superior
-			number = 0x9C;
-			break;
-
-		case DISPLAY_SQR_DOWN:
-			//cuadro inferior
-			number = 0xA3;
-			break;
-
-		case 1:
-			//number = 0x06;
-			number = 0xF9;
-			break;
-		case 2:
-			//number = 0x5B;
-			number = 0xA4;
-			break;
-		case 3:
-			//number = 0x4F;
-			number = 0xB0;
-			break;
-		case 4:
-			//number = 0x66;
-			number = 0x99;
-			break;
-		case 5:
-			//number = 0x6D;
-			number = 0x92;
-			break;
-		case 6:
-			//number = 0x7D;
-			number = 0x82;
-			break;
-		case 7:
-			//number = 0x07;
-			number = 0xF8;
-			break;
-		case 8:
-			//number = 0x7F;
-			number = 0x80;
-			break;
-		case 9:
-			//number = 0x67;
-			number = 0x98;
-			break;
-		case 11:
-			//number = 0x80;	//solo punto
-			number = 0x7F;	//solo punto
-			break;
-
-		default:
-			//apagar el display
-			number = 0xFF;
-			break;
-	}
-	SendSegment (number);
-}
 
 unsigned char ReadSwitches (void)
 {
@@ -2363,25 +2260,6 @@ unsigned char CheckRemoteKeypad (unsigned char * sp0, unsigned char * sp1, unsig
 	return remote_keypad_state;
 }
 
-//carga los numeros a mostrar en secuencia en un vector
-//del 1 al 9; 10 es cero; 11 es punto; 0, 12, 13, 14, 15 apagar
-void VectorToDisplay (unsigned char new_number)
-{
-	unsigned char i;
-	//me fijo si hay espacio
-	if (p_numbers < &numbers[LAST_NUMBER])
-	{
-		//busco la primer posicion vacia y pongo el nuevo numero
-		for (i = 0; i < LAST_NUMBER; i++)
-		{
-			if (numbers[i] == 0)
-			{
-				numbers[i] = new_number;
-				i = LAST_NUMBER;
-			}
-		}
-	}
-}
 
 //caraga la posicion con VectorToSpeak
 void PositionToSpeak(unsigned short posi)
@@ -2617,54 +2495,6 @@ void UpdateBattery (void)
 }
 #endif
 
-//muestra numeros en secuencia llamando a ShowNumbers
-//los numeros se cargan con VectorToDisplay()
-void UpdateDisplay (void)
-{
-
-	switch (display_state)
-	{
-		case DISPLAY_INIT:
-
-			if (*p_numbers != '\0')		//ojo ver esto que no son char
-				display_state++;
-			else
-			{
-				//llegue al final
-				p_numbers = numbers;
-				memset (numbers, '\0', sizeof(numbers));
-			}
-			break;
-
-		case DISPLAY_SENDING:
-			ShowNumbers(*p_numbers);
-			p_numbers++;
-			display_state++;
-			display_timeout = DISPLAY_TIMER_IN_ON;
-			break;
-
-		case DISPLAY_SHOWING:
-			if (!display_timeout)
-			{
-				ShowNumbers(DISPLAY_NONE);
-				display_timeout = DISPLAY_TIMER_IN_OFF;
-				display_state++;
-			}
-			break;
-
-		case DISPLAY_WAITING:
-			if (!display_timeout)
-			{
-				display_state = DISPLAY_INIT;
-			}
-			break;
-
-		default:
-			display_state = DISPLAY_INIT;
-			break;
-	}
-
-}
 
 void SirenCommands(unsigned char command)
 {
@@ -2965,61 +2795,53 @@ void UpdateBuzzer (void)
 
 void ConvertPositionToDisplay (unsigned short pos)
 {
-	unsigned char p0, p1, p2;
+    char buff [6] = { '\0' };
+    
+    if (pos > 999)
+        return;
 
-	p0 = pos / 100;
+    sprintf(buff, "%03d.", pos);
+    VectorToDisplayStr(buff);
+    
+	// unsigned char p0, p1, p2;
 
-	if (p0 == 0)
-		VectorToDisplay(10);
-	else
-		VectorToDisplay(p0);
+	// p0 = pos / 100;
 
-	p1 = (pos - p0 * 100) / 10;
+	// if (p0 == 0)
+	// 	VectorToDisplay(10);
+	// else
+	// 	VectorToDisplay(p0);
 
-	if (p1 == 0)
-		VectorToDisplay(10);
-	else
-		VectorToDisplay(p1);
+	// p1 = (pos - p0 * 100) / 10;
 
-	p2 = pos - p0 * 100 - p1 * 10;
+	// if (p1 == 0)
+	// 	VectorToDisplay(10);
+	// else
+	// 	VectorToDisplay(p1);
 
-	if (p2 == 0)
-		VectorToDisplay(10);
-	else
-		VectorToDisplay(p2);
+	// p2 = pos - p0 * 100 - p1 * 10;
 
-	VectorToDisplay(11);	//agrego punto
-	VectorToDisplay(0);
+	// if (p2 == 0)
+	// 	VectorToDisplay(10);
+	// else
+	// 	VectorToDisplay(p2);
+
+	// VectorToDisplay(11);	//agrego punto
+	// VectorToDisplay(0);
 
 }
-/**
-  * @brief  Inserts a delay time.
-  * @param  nTime: specifies the delay time length, in milliseconds.
-  * @retval None
-  */
-void Delay(__IO uint32_t nTime)
-{
-  TimingDelay = nTime;
 
-  while(TimingDelay != 0);
-}
-
-/**
-  * @brief  Decrements the TimingDelay variable.	ESTA ES LA QUE LLAMA SYSTICK CADA 1MSEG
-  * @param  None
-  * @retval None
-  */
-
-
+//One_ms Interrupt
 void TimingDelay_Decrement(void)
 {
 	if (TimingDelay != 0x00)
-	{
 		TimingDelay--;
-	}
 
 	if (wait_ms_var)
 		wait_ms_var--;
+
+        if (timer_standby)
+		timer_standby--;
 
 	if (pilot_code)
 		pilot_code--;
@@ -3063,3 +2885,4 @@ void TimingDelay_Decrement(void)
 	}
 }
 
+//--- end of file ---//
