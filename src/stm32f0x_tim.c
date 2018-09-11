@@ -17,7 +17,7 @@
 #include "stm32f0x_tim.h"
 #include "stm32f0xx_tim.h"
 #include "stm32f0xx_misc.h"
-#include "stm32f0x_uart.h"
+#include "usart.h"
 #include "hard.h"
 #include "rws317.h"
 
@@ -155,7 +155,7 @@ void Wait_ms (unsigned short wait)
 void TIM3_IRQHandler (void)	//1 ms
 {
 
-	Usart_Time_1ms ();
+	// Usart_Time_1ms ();
 
 	if (timer_1seg)
 	{

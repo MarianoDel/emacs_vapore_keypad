@@ -10,7 +10,7 @@
 #include "sst25.h"
 #include "flash_program.h"
 
-#include "stm32f0x_uart.h"
+#include "usart.h"
 #include "stm32f0x_tim.h"
 
 #include <stdio.h>
@@ -45,7 +45,7 @@ void MemoryDump (unsigned int address)
 				*(p_mem_dump + 6), *(p_mem_dump + 7));
 		p_mem_dump += 8;
 
-		USARTx_Send(str);
+		Usart1Send(str);
 		Wait_ms(200);
 	}
 }
@@ -124,7 +124,7 @@ unsigned short CheckBaseMask_SST (unsigned int code_to_find, unsigned int mask)
 	p_mem = memory_backup.v_bkp;
 
 	//sprintf(str, "\r\ncomparo %08X %08X", *p_mem, code_to_find);
-	//USARTx_Send(str);
+	//Usart1Send(str);
 	//Wait_ms(200);
 	//if ((*p_mem & mask) == code_to_find)
 	//	return 1;

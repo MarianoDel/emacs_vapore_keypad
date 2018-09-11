@@ -20,7 +20,7 @@
 #include "sst25.h"
 
 //desde que saque main.h
-#include "stm32f0x_uart.h"
+#include "usart.h"
 #include "stm32f0x_tim.h"
 #include <stdio.h>
 //desde que saque main.h
@@ -91,48 +91,48 @@ void ShowFileSystem(void)
 {
 	char str [100];
 
-	  USARTx_Send((char *) "File System:\r\n");
+	  Usart1Send((char *) "File System:\r\n");
 	  Wait_ms(100);
 	  //LoadFilesIndex();
 
 	  sprintf(str, "num0: %08x %08x %d\r\n", files.posi0, files.lenght0, files.lenght0);
-	  USARTx_Send(str);
+	  Usart1Send(str);
 	  Wait_ms(100);
 
 	  sprintf(str, "num1: %08x %08x %d\r\n", files.posi1, files.lenght1, files.lenght1);
-	  USARTx_Send(str);
+	  Usart1Send(str);
 	  Wait_ms(100);
 
 	  sprintf(str, "num2: %08x %08x %d\r\n", files.posi2, files.lenght2, files.lenght2);
-	  USARTx_Send(str);
+	  Usart1Send(str);
 	  Wait_ms(100);
 
 	  sprintf(str, "num3: %08x %08x %d\r\n", files.posi3, files.lenght3, files.lenght3);
-	  USARTx_Send(str);
+	  Usart1Send(str);
 	  Wait_ms(100);
 
 	  sprintf(str, "num4: %08x %08x %d\r\n", files.posi4, files.lenght4, files.lenght4);
-	  USARTx_Send(str);
+	  Usart1Send(str);
 	  Wait_ms(100);
 
 	  sprintf(str, "num5: %08x %08x %d\r\n", files.posi5, files.lenght5, files.lenght5);
-	  USARTx_Send(str);
+	  Usart1Send(str);
 	  Wait_ms(100);
 
 	  sprintf(str, "num6: %08x %08x %d\r\n", files.posi6, files.lenght6, files.lenght6);
-	  USARTx_Send(str);
+	  Usart1Send(str);
 	  Wait_ms(100);
 
 	  sprintf(str, "num7: %08x %08x %d\r\n", files.posi7, files.lenght7, files.lenght7);
-	  USARTx_Send(str);
+	  Usart1Send(str);
 	  Wait_ms(100);
 
 	  sprintf(str, "num8: %08x %08x %d\r\n", files.posi8, files.lenght8, files.lenght8);
-	  USARTx_Send(str);
+	  Usart1Send(str);
 	  Wait_ms(100);
 
 	  sprintf(str, "num9: %08x %08x %d\r\n", files.posi9, files.lenght9, files.lenght9);
-	  USARTx_Send(str);
+	  Usart1Send(str);
 	  Wait_ms(100);
 }
 
@@ -229,42 +229,42 @@ void ShowConfiguration(void)
 {
 	char str [100];
 
-	  USARTx_Send((char *) "Configuration:\r\n");
+	  Usart1Send((char *) "Configuration:\r\n");
 #ifdef CONFIGURATION_IN_SST
 	  LoadFilesIndex();
 
 	  sprintf(str, "B1T: %d, B1R: %d\r\n", param_struct.b1t, param_struct.b1r);
-	  USARTx_Send(str);
+	  Usart1Send(str);
 	  Wait_ms(100);
 
 	  sprintf(str, "B2T: %d, B2R: %d\r\n", param_struct.b2t, param_struct.b2r);
-	  USARTx_Send(str);
+	  Usart1Send(str);
 	  Wait_ms(100);
 
 	  sprintf(str, "B3T: %d, B3R: %d\r\n", param_struct.b3t, param_struct.b3r);
-	  USARTx_Send(str);
+	  Usart1Send(str);
 	  Wait_ms(100);
 
 	  sprintf(str, "B4T: %d, B4R: %d\r\n", param_struct.b4t, param_struct.b4r);
-	  USARTx_Send(str);
+	  Usart1Send(str);
 	  Wait_ms(100);
 #endif
 
 #ifdef CONFIGURATION_IN_FLASH
 	  sprintf(str, "B1T: %d, B1R: %d\r\n", b1t, b1r);
-	  USARTx_Send(str);
+	  Usart1Send(str);
 	  Wait_ms(100);
 
 	  sprintf(str, "B2T: %d, B2R: %d\r\n", b2t, b2r);
-	  USARTx_Send(str);
+	  Usart1Send(str);
 	  Wait_ms(100);
 
 	  sprintf(str, "B3T: %d, B3R: %d\r\n", b3t, b3r);
-	  USARTx_Send(str);
+	  Usart1Send(str);
 	  Wait_ms(100);
 
 	  sprintf(str, "B4T: %d, B4R: %d\r\n", b4t, b4r);
-	  USARTx_Send(str);
+	  Usart1Send(str);
 	  Wait_ms(100);
 #endif
 }

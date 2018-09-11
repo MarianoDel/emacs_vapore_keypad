@@ -58,6 +58,12 @@
     - procedieminto de deshabilitacion en pag 654 del manual
     - finalmente el problema era el bit SPI_CR1_SSI que no estaba seteado
 
+    
+*** DONE empiezo a migrar usart
+    CLOSED: [2018-09-11 Tue 10:20]
+    - uso emacs_micro_booster como base
+    - tiene un error en el clk de USART1??? AHBENR y debe ser APB2ENR!!!! REVISAR MICRO-BOOSTER
+
 
 ** TODO Agregar Welcome code la version del HARD
 

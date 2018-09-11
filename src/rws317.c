@@ -8,7 +8,7 @@
 //desde que saque main.h
 #include "stm32f0xx.h"
 #include <stdio.h>
-#include "stm32f0x_uart.h"
+#include "usart.h"
 //desde que saque main.h
 
 
@@ -193,7 +193,7 @@ unsigned char RxCode (void)
 			{
 //				F5PLUS_OFF;
 				sprintf(str, "Ended OK: %04X %04X\r\n", code0, code1);
-				USARTx_Send(str);
+				Usart1Send(str);
 				code_state = ENDED_OK;
 
 				//si tengo un codigo bueno trabo la interrrupcion
@@ -204,17 +204,17 @@ unsigned char RxCode (void)
 				code_state = START;
 				 if (errorcode == ERR_FIRST_HIGH)
 				 {
-					 USARTx_Send((char *)"Error First High\r\n");
+					 Usart1Send((char *)"Error First High\r\n");
 				 }
 				 else if (errorcode == ERR_BIT_NEXT)
 				 {
 					 sprintf(str, "Error in bit: %d\r\n", bitcount);
-					 USARTx_Send(str);
+					 Usart1Send(str);
 					 code_state = START;
 				 }
 				 else
 				 {
-					 USARTx_Send((char *)"Error other??\r\n");
+					 Usart1Send((char *)"Error other??\r\n");
 				 }
 			}
 			break;
@@ -270,7 +270,7 @@ void Timer_Interrupt_Handler (unsigned short tpm1)
 			{
 				bitstate++;
 				ctrol_new = 1;
-				USARTx_Send((char *)"new ");
+				Usart1Send((char *)"new ");
 			}
 			else
 			{
@@ -392,13 +392,13 @@ void Timer_Interrupt_Handler (unsigned short tpm1)
 			{
 				bitstate = CHECK0;
 				on_receipt = 1;
-				USARTx_Send((char *)"ev1527_0");
+				Usart1Send((char *)"ev1527_0");
 			}
 			else if ((duration > ALPHA3_MIN) && (duration < ALPHA3_MAX))	//tengo mi primer first high, ahora vienen los bits
 			{
 				bitstate = CHECK1;
 				on_receipt = 1;
-				USARTx_Send((char *)"ev1527_1");
+				Usart1Send((char *)"ev1527_1");
 			}
 			else
 			{
@@ -516,13 +516,13 @@ void Timer_Interrupt_Handler (unsigned short tpm1)
 			{
 				bitstate = CHECK0;
 				ctrol_new = 1;
-				USARTx_Send((char *)"ev1527_0");
+				Usart1Send((char *)"ev1527_0");
 			}
 			else if ((duration > PILOT_MIN1_NEW) && (duration < PILOT_MAX1_NEW))	//tengo mi primer first high, ahora vienen los bits
 			{
 				bitstate = CHECK1;
 				ctrol_new = 1;
-				USARTx_Send((char *)"ev1527_1");
+				Usart1Send((char *)"ev1527_1");
 			}
 			else
 			{
@@ -639,7 +639,7 @@ void Timer_Interrupt_Handler (unsigned short tpm1)
 				bitstate = NEXT_HT;
 				on_receipt = 1;
 				ctrol_new = CTRL_HT;
-				USARTx_Send((char *)"ht6__");
+				Usart1Send((char *)"ht6__");
 			}
 			else if ((duration >= ALPHA1_MIN) && (duration < PILOT_HT_MAX))
 			{
@@ -653,7 +653,7 @@ void Timer_Interrupt_Handler (unsigned short tpm1)
 				bitstate = CHECK0_PT;
 				on_receipt = 1;
 				ctrol_new = CTRL_PT;
-				USARTx_Send((char *)"pt2264__");
+				Usart1Send((char *)"pt2264__");
 			}
 			else
 			{
@@ -669,14 +669,14 @@ void Timer_Interrupt_Handler (unsigned short tpm1)
 				//puede ser un 0
 				bitstate = CHECK0_HT;
 				ctrol_new = CTRL_HT;
-				USARTx_Send((char *)"ht6_0");
+				Usart1Send((char *)"ht6_0");
 			}
 			else if ((duration > LAMBDA2_MIN) && (duration < LAMBDA2_MAX))
 			{
 				//puede ser un 1
 				bitstate = CHECK1_HT;
 				ctrol_new = CTRL_HT;
-				USARTx_Send((char *)"ht6_1");
+				Usart1Send((char *)"ht6_1");
 			}
 			else if ((duration > ALPHA3_MIN) && (duration < ALPHA3_MAX))
 			{
@@ -892,14 +892,14 @@ void Timer_Interrupt_Handler (unsigned short tpm1)
 				bitstate = CHECK0;
 				ctrol_new = 1;
 				on_receipt = 1;
-				USARTx_Send((char *)"pt2264_0");
+				Usart1Send((char *)"pt2264_0");
 			}
 			else if ((duration > PILOT_MIN1_NEW) && (duration < PILOT_MAX1_NEW))	//tengo mi primer first high, ahora vienen los bits
 			{
 				bitstate = CHECK1;
 				ctrol_new = 1;
 				on_receipt = 1;
-				USARTx_Send((char *)"pt2264_1");
+				Usart1Send((char *)"pt2264_1");
 			}
 			else
 			{

@@ -1,28 +1,36 @@
-/**
-  ******************************************************************************
-  * @file    Template_2/main.h
-  * @author  Nahuel
-  * @version V1.0
-  * @date    22-August-2014
-  * @brief   Header for gpio module
-  ******************************************************************************
-  * @attention
-  *
-  *
-  *
-  ******************************************************************************
-  */
+//---------------------------------------------
+// ##
+// ## @Author: Med
+// ## @Editor: Emacs - ggtags
+// ## @TAGS:   Global
+// ## @CPU:    STM32F030
+// ##
+// #### USART.H ################################
+//---------------------------------------------
+#ifndef _USART_H_
+#define _USART_H_
 
-/* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __STM32F0X_UART_H
-#define __STM32F0X_UART_H
+//----------- Defines For Configuration --------------//
+//----------- Some USART Configurations ----------------//
+#define SIZEOF_DATA    128
+#define BUFFRX_DIM SIZEOF_DATA
+#define BUFFTX_DIM SIZEOF_DATA
+
+//----------- End of USART Configurations --------------//
 
 //--- Exported types ---//
 //--- Exported constants ---//
+#define USART_9600		5000
+#define USART_115200		416
+#define USART_250000		192
+
 //--- Exported macro ---//
-#define USART1_CLK (RCC->AHBENR & 0x00004000)
-#define USART1_CLK_ON RCC->AHBENR |= 0x00004000
-#define USART1_CLK_OFF RCC->AHBENR &= ~0x00004000
+#define USART1_CLK (RCC->APB2ENR & 0x00004000)
+#define USART1_CLK_ON RCC->APB2ENR |= 0x00004000
+#define USART1_CLK_OFF RCC->APB2ENR &= ~0x00004000
+
+#define USART1_RX_DISA	USART1->CR1 &= 0xfffffffb
+#define USART1_RX_ENA	USART1->CR1 |= 0x04
 
 
 #define USARTx                           USART1
@@ -45,8 +53,6 @@
 #define USARTx_RX_SOURCE                 GPIO_PinSource10
 #define USARTx_RX_AF                     GPIO_AF_1
 
-#define BAUD_9600		5000
-#define BAUD_115200		416
 /*
 //en PB6 y PB7
 #define USARTx_TX_PIN                    GPIO_Pin_6
@@ -62,20 +68,19 @@
 #define USARTx_RX_AF                     GPIO_AF_0
 */
 
-#define USARTx_RX_DISA	USARTx->CR1 &= 0xfffffffb
-#define USARTx_RX_ENA	USARTx->CR1 |= 0x04
 
-//--- Exported functions ---//
-//void UpdateUart(void);
+//--- Exported Module Functions ------------
 unsigned char UpdateUart(unsigned char);
 void USART_Config(void);
 //void USARTx_receive (void);
 unsigned char USARTx_Send(char *);
 void Usart_Time_1ms (void);
-void USARTx_Send_UINT(unsigned char *, unsigned short);
-void UsartRxBinary(void);
+void USART1_IRQHandler(void);
+void Usart1SendUnsigned(unsigned char *, unsigned char);
+void Usart1Send (char *);
+void Usart1Config (void);
 
-#endif //--- End ---//
+#endif /* _USART_H_ */
 
+//--- end of file ---//
 
-//--- END OF FILE ---//

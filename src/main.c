@@ -24,11 +24,12 @@
 #include "rws317.h"
 #include "flash_program.h"
 #include "sst25codes.h"
+#include "usart.h"
 
 //desde que saque main.h
 
 #include "stm32f0x_gpio.h"
-#include "stm32f0x_uart.h"
+// #include "stm32f0x_uart.h"
 #include <stdio.h>
 #include <string.h>
 #include "stm32f0xx_it.h"
@@ -44,15 +45,20 @@
 
 
 
-//--- VARIABLES EXTERNAS ---//
+/* Externals ------------------------------------------------------------------*/
+// ------- Externals para timers -------
 volatile unsigned char timer_1seg = 0;
 volatile unsigned short timer_standby = 0;
 volatile unsigned short timer_led_comm = 0;
 volatile unsigned short timer_keypad_enabled = 0;
-//volatile unsigned char buffrx_ready = 0;
-volatile unsigned char *pbuffrx;
 volatile unsigned short wait_ms_var = 0;
-volatile unsigned char pilot_code = 0;
+
+
+// ------- Externals del Puerto serie  -------
+volatile unsigned char tx1buff[SIZEOF_DATA];
+volatile unsigned char rx1buff[SIZEOF_DATA];
+volatile unsigned char usart1_have_data = 0;
+
 
 mem_bkp_typedef memory_backup;
 filesystem_typedef files;
@@ -61,6 +67,7 @@ filesystem_typedef files;
 unsigned char next_pckt = 0;
 unsigned char file_done = 0;
 
+volatile unsigned char pilot_code = 0;
 volatile unsigned short code0 = 0;
 volatile unsigned short code1 = 0;
 volatile unsigned char errorcode = 0;
@@ -92,7 +99,7 @@ volatile short v_samples2[16];
 volatile unsigned char update_samples = 0;
 volatile unsigned char buff_in_use = 1;
 
-//--- VARIABLES GLOBALES ---//
+/* Globals ------------------------------------------------------------------*/
 static __IO uint32_t TimingDelay;
 
 unsigned short counter = TIM3_ARR;
@@ -154,7 +161,7 @@ const char s_ok [] = {"OK\r\n"};
 //const char s_bienvenida [] = {"Prueba RS232 STM32F030K6\r\n"};
 //SPI_InitTypeDef  SPI_InitStructure;
 
-//--- FUNCIONES DEL MODULO ---//
+/* Module Functions -----------------------------------------------------------*/
 void Delay(__IO uint32_t nTime);
 void TimingDelay_Decrement(void);
 
@@ -272,29 +279,28 @@ int main(void)
 		//UART configuration.
 		//USART_Config();
 
- 	 //PRUEBA DE SPI
 
 	  /* SPI configuration ------------------------------------------------------*/
 	  SPI_Config();		//activo sin interrupcion
 
 	  /* USART configuration ------------------------------------------------------*/
-	  //TODO: Revisar prioridad de la interrupcion
-	  USART_Config();
-	  //USARTx_Send((char *) (const char *) "Prueba RS232 STM32F030K6\r\n");
-	  USARTx_Send((char *) " - Kirno Technology - STM32F030K6\r\n");
+          Usart1Config();    //activo con int priority 5
+
+	  //Usart1Send((char *) (const char *) "Prueba RS232 STM32F030K6\r\n");
+	  Usart1Send((char *) " - Kirno Technology - STM32F030K6\r\n");
 	  Wait_ms(100);
-	  USARTx_Send((char *) "Sistema de Alarma ALERTA VECINAL\r\n");
+	  Usart1Send((char *) "Sistema de Alarma ALERTA VECINAL\r\n");
 	  Wait_ms(100);
 #ifdef PROGRAMA_NORMAL
-	  USARTx_Send((char *) "Panel Normal\r\n");
+	  Usart1Send((char *) "Panel Normal\r\n");
 #endif
 
 #ifdef PROGRAMA_DE_BUCLE
-	  USARTx_Send((char *) "Panel con Programa para Bucle\r\n");
+	  Usart1Send((char *) "Panel con Programa para Bucle\r\n");
 #endif
 
 #ifdef PROGRAMA_FACTORY_TEST
-	  USARTx_Send((char *) "Panel con Programa de testeo en fabrica\r\n");
+	  Usart1Send((char *) "Panel con Programa de testeo en fabrica\r\n");
 #endif
 
 	  //--- EMPIEZO PROGRAMA DE PRUEBAS EN FABRICA ---//
@@ -454,15 +460,15 @@ int main(void)
 	  //si esta todo bien configurado prendo el led
 	  LED_ON;
 
-	  //USARTx_Send(s_bienvenida);
+	  //Usart1Send(s_bienvenida);
 	  //RxCode_Enable();
 
 	  //--- PRUEBA USART
 	  /*
-	  USARTx_Send((const char *) "Prueba RS232 STM32F030K6\r\n");
+	  Usart1Send((const char *) "Prueba RS232 STM32F030K6\r\n");
 	  while (1)
 	  {
-		  //USARTx_Send((const char *) "Funciona\r\n");
+		  //Usart1Send((const char *) "Funciona\r\n");
 		  //USARTx->TDR = 'M';
 		  //Wait_ms(1000);
 
@@ -471,7 +477,7 @@ int main(void)
 			  j = InterpretarMsg(pbuffrx);
 			  buffrx_ready = 0;
 			  if (j != ERROR)
-				  USARTx_Send((const char *) "OK\r\n");
+				  Usart1Send((const char *) "OK\r\n");
 		  }
 	  }
 	  */
@@ -591,7 +597,7 @@ int main(void)
 				  {
 					  if (position == 951)
 					  {
-						  USARTx_Send("Master Unlock\r\n");
+						  Usart1Send("Master Unlock\r\n");
 						  main_state = MAIN_TO_UNLOCK;
 					  }
 					  else
@@ -600,19 +606,19 @@ int main(void)
 						  {
 							  if (position == 416)
 							  {
-								  USARTx_Send("User default Unlock\r\n");
+								  Usart1Send("User default Unlock\r\n");
 								  main_state = MAIN_TO_UNLOCK;
 							  }
 						  }
 						  else if (position == (unsigned short) CheckIndexInMemory_SST(1000))
 						  {
-							  USARTx_Send("User Unlock\r\n");
+							  Usart1Send("User Unlock\r\n");
 							  main_state = MAIN_TO_UNLOCK;
 						  }
 					  }
 					  //position = (unsigned short) CheckIndexInMemory_SST(1000);
 					  //sprintf(str, "user code: %03d\r\n", position);
-					  //USARTx_Send(str);
+					  //Usart1Send(str);
 				  }
 
 				  switches = CheckRemoteKeypad(&switches_posi0, &switches_posi1, &switches_posi2, &position);
@@ -625,7 +631,7 @@ int main(void)
 				  {
 					  if (position == 951)
 					  {
-						  USARTx_Send("Master Remote Unlock\r\n");
+						  Usart1Send("Master Remote Unlock\r\n");
 						  main_state = MAIN_TO_UNLOCK;
 						  unlock_by_remote = 1;
 					  }
@@ -635,14 +641,14 @@ int main(void)
 						  {
 							  if (position == 416)
 							  {
-								  USARTx_Send("User default Remote Unlock\r\n");
+								  Usart1Send("User default Remote Unlock\r\n");
 								  main_state = MAIN_TO_UNLOCK;
 								  unlock_by_remote = 1;
 							  }
 						  }
 						  else if (position == (unsigned short) CheckIndexInMemory_SST(1000))
 						  {
-							  USARTx_Send("User Remote Unlock\r\n");
+							  Usart1Send("User Remote Unlock\r\n");
 							  main_state = MAIN_TO_UNLOCK;
 							  unlock_by_remote = 1;
 						  }
@@ -672,7 +678,7 @@ int main(void)
 					  if (position == 800)
 					  {
 						  main_state = MAIN_TO_CHANGE_USER_PASSWORD;
-						  USARTx_Send("Change User Password\r\n");
+						  Usart1Send("Change User Password\r\n");
 						  wait_for_code_timeout = param_struct.wait_for_code;
 					  }
 					  else
@@ -680,7 +686,7 @@ int main(void)
 						  main_state = MAIN_TO_SAVE_AT_LAST;
 						  wait_for_code_timeout = param_struct.wait_for_code;
 						  sprintf(str, "Guardar en: %03d\r\n", position);
-						  USARTx_Send(str);
+						  Usart1Send(str);
 					  }
 				  }
 
@@ -705,13 +711,13 @@ int main(void)
 					  main_state = MAIN_TO_SAVE_REMOTE_AT_LAST;
 					  wait_for_code_timeout = param_struct.wait_for_code;
 					  sprintf(str, "Keypad Remoto guardar en: %03d\r\n", position);
-					  USARTx_Send(str);
+					  Usart1Send(str);
 				  }
 
 #ifdef CON_BLOQUEO_DE_KEYPAD
 				  if (!timer_keypad_enabled)
 				  {
-					  USARTx_Send("Keypad Locked\r\n");
+					  Usart1Send("Keypad Locked\r\n");
 					  main_state = MAIN_MAIN;
 					  unlock_by_remote = 0;
 					  ShowNumbers(DISPLAY_NONE);
@@ -724,7 +730,7 @@ int main(void)
 				  if (switches == KNUMBER_FINISH)
 				  {
 					  WriteCodeToMemory_SST(1000, position);
-					  USARTx_Send("User Password changed\r\n");
+					  Usart1Send("User Password changed\r\n");
 					  BuzzerCommands(BUZZER_SHORT_CMD, 7);
 					  main_state = MAIN_TO_MAIN_WAIT_5SEGS;
 				  }
@@ -762,9 +768,9 @@ int main(void)
 					  {
 						  //el codigo no se habia utilizado
 						  if (Write_Code_To_Memory(position, code) != 0)
-							  USARTx_Send((char *) "Codigo Guardado OK\r\n");
+							  Usart1Send((char *) "Codigo Guardado OK\r\n");
 						  else
-							  USARTx_Send((char *) "Error al guardar\r\n");
+							  Usart1Send((char *) "Error al guardar\r\n");
 
 						  ConvertPositionToDisplay(position);
 						  BuzzerCommands(BUZZER_SHORT_CMD, 7);
@@ -773,7 +779,7 @@ int main(void)
 					  {
 						  //se habia utilizado en otra posicion
 						  sprintf(str, "Error codigo ya esta en: %03d\r\n", code_position);
-						  USARTx_Send(str);
+						  Usart1Send(str);
 
 						  ConvertPositionToDisplay(code_position);
 						  BuzzerCommands(BUZZER_HALF_CMD, 2);
@@ -799,7 +805,7 @@ int main(void)
 				  if ((switches == KNUMBER_FINISH) && (position == 999) && (mass_erase_position == 0))	//termino el numero y era 999
 				  {
 					  //se va a hacer un blanqueo completo
-					  USARTx_Send((char *) "\r\n- CUIDADO entrando en Blanqueo Completo -\r\n");
+					  Usart1Send((char *) "\r\n- CUIDADO entrando en Blanqueo Completo -\r\n");
 					  main_state = MAIN_TO_MASS_ERASE_AT_LAST;
 				  }
 
@@ -834,9 +840,9 @@ int main(void)
 					  {
 						  //el codigo no se habia utilizado
 						  if (Write_Code_To_Memory(position, code) != 0)
-								USARTx_Send((char *) "Codigo Guardado OK\r\n");
+								Usart1Send((char *) "Codigo Guardado OK\r\n");
 						  else
-								USARTx_Send((char *) "Error al guardar\r\n");
+								Usart1Send((char *) "Error al guardar\r\n");
 
 						  ConvertPositionToDisplay(position);
 						  BuzzerCommands(BUZZER_SHORT_CMD, 7);
@@ -846,7 +852,7 @@ int main(void)
 					  {
 						  //se habia utilizado en otra posicion
 						  sprintf(str, "Error codigo ya esta en: %03d\r\n", code_position);
-						  USARTx_Send(str);
+						  Usart1Send(str);
 
 						  ConvertPositionToDisplay(code_position);
 						  BuzzerCommands(BUZZER_HALF_CMD, 2);
@@ -862,7 +868,7 @@ int main(void)
 			  case MAIN_TO_DEL_CODE:
 				  if (Write_Code_To_Memory(position, 0xFFFFFFFF) != 0)
 				  {
-					  USARTx_Send((char *) "Codigo Borrado OK\r\n");
+					  Usart1Send((char *) "Codigo Borrado OK\r\n");
 					  VectorToDisplay(DISPLAY_ZERO);
 					  VectorToDisplay(DISPLAY_POINT);	//agrego punto
 					  VectorToDisplay(DISPLAY_NONE);
@@ -870,7 +876,7 @@ int main(void)
 				  }
 				  else
 				  {
-					  USARTx_Send((char *) "Error al borrar\r\n");
+					  Usart1Send((char *) "Error al borrar\r\n");
 					  ShowNumbers(DISPLAY_NONE);
 					  BuzzerCommands(BUZZER_HALF_CMD, 1);
 				  }
@@ -899,7 +905,7 @@ int main(void)
 						  {
 							  if (Write_Code_To_Memory(position, 0xFFFFFFFF) != 0)
 							  {
-								  USARTx_Send((char *) "Codigo Borrado OK\r\n");
+								  Usart1Send((char *) "Codigo Borrado OK\r\n");
 								  VectorToDisplay(DISPLAY_ZERO);
 								  VectorToDisplay(DISPLAY_POINT);	//agrego punto
 								  VectorToDisplay(DISPLAY_NONE);
@@ -908,7 +914,7 @@ int main(void)
 							  }
 							  else
 							  {
-								  USARTx_Send((char *) "Error al borrar\r\n");
+								  Usart1Send((char *) "Error al borrar\r\n");
 								  ShowNumbers(DISPLAY_NONE);
 								  SirenCommands(SIREN_HALF_CMD);
 								  BuzzerCommands(BUZZER_HALF_CMD, 1);
@@ -924,7 +930,7 @@ int main(void)
 			  case MAIN_TO_DEL_REMOTE_CODE:
 				  if (Write_Code_To_Memory(position, 0xFFFFFFFF) != 0)
 				  {
-					  USARTx_Send((char *) "Codigo Borrado OK\r\n");
+					  Usart1Send((char *) "Codigo Borrado OK\r\n");
 					  VectorToDisplay(DISPLAY_ZERO);
 					  VectorToDisplay(DISPLAY_POINT);	//agrego punto
 					  VectorToDisplay(DISPLAY_NONE);
@@ -933,7 +939,7 @@ int main(void)
 				  }
 				  else
 				  {
-					  USARTx_Send((char *) "Error al borrar\r\n");
+					  Usart1Send((char *) "Error al borrar\r\n");
 					  ShowNumbers(DISPLAY_NONE);
 					  SirenCommands(SIREN_HALF_CMD);
 					  BuzzerCommands(BUZZER_HALF_CMD, 1);
@@ -946,7 +952,7 @@ int main(void)
 				  //se va a borrar la memoria
 				  if (EraseAllMemory() != 0)
 				  {
-					  USARTx_Send((char *) "Memoria Completa Borrada OK\r\n");
+					  Usart1Send((char *) "Memoria Completa Borrada OK\r\n");
 					  VectorToDisplay(DISPLAY_ZERO);
 					  VectorToDisplay(DISPLAY_POINT);	//agrego punto
 					  VectorToDisplay(DISPLAY_NONE);
@@ -955,7 +961,7 @@ int main(void)
 				  }
 				  else
 				  {
-					  USARTx_Send((char *) "Error al borrar memoria\r\n");
+					  Usart1Send((char *) "Error al borrar memoria\r\n");
 					  ShowNumbers(DISPLAY_NONE);
 					  BuzzerCommands(BUZZER_HALF_CMD, 1);
 					  main_state = MAIN_TO_MAIN_CANCEL;
@@ -963,19 +969,19 @@ int main(void)
 				  break;
 
 			  case MAIN_TO_MAIN_CANCEL:
-				  USARTx_Send((char *) "Opereta cancelada\r\n");
+				  Usart1Send((char *) "Opereta cancelada\r\n");
 				  main_state = MAIN_INIT;
 				  interdigit_timeout = 300;	//espero que se limpien las teclas
 				  break;
 
 			  case MAIN_TO_MAIN_TIMEOUT:
-				  USARTx_Send((char *) "Timeout\r\n");
+				  Usart1Send((char *) "Timeout\r\n");
 				  main_state = MAIN_INIT;
 				  interdigit_timeout = 300;	//espero que se limpien las teclas
 				  break;
 
 			  case MAIN_TO_MONITORING:
-				  USARTx_Send((char *) "Goto 115200 confirmed\r\n");
+				  Usart1Send((char *) "Goto 115200 confirmed\r\n");
 				  main_state++;
 				  interdigit_timeout = 300;	//espero que se limpien los buffers
 				  break;
@@ -985,14 +991,14 @@ int main(void)
 				  {
 					  ShowNumbers(DISPLAY_REMOTE);
 					  USART1->CR1 &= ~USART_CR1_UE;
-					  USART1->BRR = BAUD_115200;
+					  USART1->BRR = USART_115200;
 					  USART1->CR1 |= USART_CR1_UE;
 					  main_state++;
 				  }
 				  break;
 
 			  case MAIN_TO_MONITORINGB:
-				  USARTx_Send((char *) "Monitoring confirmed\r\n");	//enviado a 115200
+				  Usart1Send((char *) "Monitoring confirmed\r\n");	//enviado a 115200
 				  main_state++;
 				  break;
 
@@ -1002,7 +1008,7 @@ int main(void)
 
 
 			  case MAIN_TO_MONITORING_LEAVE:
-				  USARTx_Send((char *) "Goto 9600 confirmed\r\n");
+				  Usart1Send((char *) "Goto 9600 confirmed\r\n");
 				  main_state++;
 				  interdigit_timeout = 300;	//espero que se limpien los buffers
 				  break;
@@ -1012,7 +1018,7 @@ int main(void)
 				  {
 					  ShowNumbers(DISPLAY_NONE);
 					  USART1->CR1 &= ~USART_CR1_UE;
-					  USART1->BRR = BAUD_9600;
+					  USART1->BRR = USART_9600;
 					  USART1->CR1 |= USART_CR1_UE;
 					  main_state = MAIN_TO_MAIN_OK;
 				  }
@@ -1082,7 +1088,7 @@ int main(void)
 				j = InterpretarMsg(pbuffrx);
 				buffrx_ready = 0;
 				if (j != ERROR)
-					USARTx_Send((const char *) "OK\r\n");
+					Usart1Send((const char *) "OK\r\n");
 			}
 
 			if (RxCode() == ENDED_OK)
@@ -1095,12 +1101,12 @@ int main(void)
 				if (dummy16 != 0xffff)
 				{
 					sprintf(str, "Code Finded in: %04d\r\n", dummy16);
-					USARTx_Send(str);
+					Usart1Send(str);
 				}
 				else
 				{
 					sprintf(str, "Code: %04X %04X not finded\r\n", code0, code1);
-					USARTx_Send(str);
+					Usart1Send(str);
 				}
 			}
 			*/
@@ -1108,9 +1114,9 @@ int main(void)
 			/*
 			Wait_ms(2000);
 			if (ReadMem())
-				USARTx_Send((const char *) "Mem OK\r\n");
+				Usart1Send((const char *) "Mem OK\r\n");
 			else
-				USARTx_Send((const char *) "Mem NOK!!\r\n");
+				Usart1Send((const char *) "Mem NOK!!\r\n");
 			*/
 
 			/*
@@ -1119,9 +1125,9 @@ int main(void)
 				dummy16 = Write_Code_To_Memory(512, 0x4D08064A);
 				j = 1;
 				if (dummy16 == 0)
-					USARTx_Send((const char *) "No grabo\r\n");
+					Usart1Send((const char *) "No grabo\r\n");
 				else
-					USARTx_Send((const char *) "Grabado OK\r\n");
+					Usart1Send((const char *) "Grabado OK\r\n");
 			}
 			while(1);
 			*/
@@ -1291,7 +1297,7 @@ unsigned char FuncAlarm (void)
 				button_timer = ACT_DESACT_IN_SECS;	//2 segundos OK y buena distancia 20-5-15
 
 
-				USARTx_Send(str);
+				Usart1Send(str);
 			}
 			break;
 
@@ -1343,7 +1349,7 @@ unsigned char FuncAlarm (void)
 			}
 			else
 			{
-				USARTx_Send((char*) "Timeout B1 ");
+				Usart1Send((char*) "Timeout B1 ");
 				alarm_state = ALARM_BUTTON1_FINISH;
 			}
 			break;
@@ -1364,7 +1370,7 @@ unsigned char FuncAlarm (void)
 
 		case ALARM_BUTTON1_FINISH:
 			sprintf(str, "Desactivo: %03d\r\n", last_one_or_three);
-			USARTx_Send(str);
+			Usart1Send(str);
 
 			SirenCommands(SIREN_STOP_CMD);
 			FPLUS_OFF;
@@ -1427,14 +1433,14 @@ unsigned char FuncAlarm (void)
 			if (button == 2)	//reviso solo boton 2
 			{
 				sprintf(str, "Desactivo: %03d\r\n", code_position);
-				USARTx_Send(str);
+				Usart1Send(str);
 				alarm_state = ALARM_BUTTON2_FINISH;
 			}
 
 			if (button == 1)		//reviso el boton
 			{
 				sprintf(str, "Activo: %03d B1\r\n", code_position);
-				USARTx_Send(str);
+				Usart1Send(str);
 
 				last_one_or_three = code_position;
 				repetition_counter = param_struct.b1r;
@@ -1446,7 +1452,7 @@ unsigned char FuncAlarm (void)
 			if (button == 3)		//reviso el boton
 			{
 				sprintf(str, "Activo: %03d B3\r\n", code_position);
-				USARTx_Send(str);
+				Usart1Send(str);
 
 				last_one_or_three = code_position;
 				repetition_counter = param_struct.b3r;
@@ -1459,7 +1465,7 @@ unsigned char FuncAlarm (void)
 			if (button == 1)		//reviso el boton
 			{
 				sprintf(str, "Activo: %03d B1\r\n", code_position);
-				USARTx_Send(str);
+				Usart1Send(str);
 
 				last_one_or_three = code_position;
 				repetition_counter = param_struct.b1r;
@@ -1471,7 +1477,7 @@ unsigned char FuncAlarm (void)
 			if (button == 3)		//reviso el boton
 			{
 				sprintf(str, "Activo: %03d B3\r\n", code_position);
-				USARTx_Send(str);
+				Usart1Send(str);
 
 				last_one_or_three = code_position;
 				repetition_counter = param_struct.b3r;
@@ -1483,7 +1489,7 @@ unsigned char FuncAlarm (void)
 			if (button == 4)	//reviso boton 4 para desactivar
 			{
 				sprintf(str, "Desactivo: %03d\r\n", code_position);
-				USARTx_Send(str);
+				Usart1Send(str);
 				alarm_state = ALARM_BUTTON2_FINISH;
 			}
 #endif
@@ -1491,7 +1497,7 @@ unsigned char FuncAlarm (void)
 			if (!button_timer)
 			{
 				//tengo timeout, apago reflectores
-				USARTx_Send((char*) "Timeout B2\r\n");
+				Usart1Send((char*) "Timeout B2\r\n");
 				alarm_state = ALARM_BUTTON2_FINISH;
 			}
 			break;
@@ -1541,14 +1547,14 @@ unsigned char FuncAlarm (void)
 			if (button == 3)	//reviso solo boton 3
 			{
 				sprintf(str, "Desactivo: %03d\r\n", code_position);
-				USARTx_Send(str);
+				Usart1Send(str);
 				alarm_state = ALARM_BUTTON3_FINISH;
 			}
 
 			if (button == 1)		//reviso el boton
 			{
 				sprintf(str, "Activo: %03d B1\r\n", code_position);
-				USARTx_Send(str);
+				Usart1Send(str);
 
 				last_one_or_three = code_position;
 				repetition_counter = param_struct.b1r;
@@ -1562,7 +1568,7 @@ unsigned char FuncAlarm (void)
 			if (button == 1)		//reviso el boton
 			{
 				sprintf(str, "Activo: %03d B1\r\n", code_position);
-				USARTx_Send(str);
+				Usart1Send(str);
 
 				last_one_or_three = code_position;
 				repetition_counter = param_struct.b1r;
@@ -1574,7 +1580,7 @@ unsigned char FuncAlarm (void)
 			if (button == 4)	//reviso solo boton 4
 			{
 				sprintf(str, "Desactivo: %03d\r\n", code_position);
-				USARTx_Send(str);
+				Usart1Send(str);
 				alarm_state = ALARM_BUTTON3_FINISH;
 			}
 #endif
@@ -1596,7 +1602,7 @@ unsigned char FuncAlarm (void)
 			}
 			else
 			{
-				USARTx_Send((char*) "Timeout B3 ");
+				Usart1Send((char*) "Timeout B3 ");
 				alarm_state = ALARM_BUTTON3_FINISH;
 			}
 			break;
@@ -1617,7 +1623,7 @@ unsigned char FuncAlarm (void)
 
 		case ALARM_BUTTON3_FINISH:
 			sprintf(str, "Desactivo: %03d\r\n", last_one_or_three);
-			USARTx_Send(str);
+			Usart1Send(str);
 
 			SirenCommands(SIREN_STOP_CMD);
 //			F12PLUS_OFF;
@@ -1666,14 +1672,14 @@ unsigned char FuncAlarm (void)
 			sirena_sonando = 0;
 			SirenCommands(SIREN_STOP_CMD);
 			sprintf(str, "Desactivo: %03d\r\n", code_position);
-			USARTx_Send(str);
+			Usart1Send(str);
 		}
 		else
 		{
 			sirena_sonando = 1;
 			SirenCommands(SIREN_MULTIPLE_UP_CMD);
 			sprintf(str, "Activo: %03d\r\n", code_position);
-			USARTx_Send(str);
+			Usart1Send(str);
 		}
 		main_state = MAIN_TO_MAIN_WAIT_5SEGS;
 
@@ -2510,7 +2516,7 @@ void UpdateAudio (void)
 
 			Power_Ampli_Ena ();
 			Ampli_to_Audio ();
-			USARTx_Send((char *) "-> To Audio\r\n");
+			Usart1Send((char *) "-> To Audio\r\n");
 			audio_state++;
 			break;
 
@@ -2560,7 +2566,7 @@ void UpdateAudio (void)
 			memset (numbers_speak, '\0', sizeof(numbers_speak));
 			Power_Ampli_Disa ();
 			Ampli_to_Sirena ();
-			USARTx_Send((char *) "-> To Sirena\r\n");
+			Usart1Send((char *) "-> To Sirena\r\n");
 			audio_state = AUDIO_INIT;
 			break;
 

@@ -8,7 +8,7 @@
 
 #include "comm.h"
 #include "hard.h"
-#include "stm32f0x_uart.h"
+#include "usart.h"
 #include "flash_program.h"
 
 #include <string.h>
@@ -105,10 +105,10 @@ unsigned char InterpretarMsg (unsigned char lstate, char * pStr)	//TODO copiar p
 
 		//pruebo con los T
 		//sprintf(str, "%d %d %d %d\r\n", b1t,b2t,b3t,b4t);
-		//USARTx_Send(str);
+		//Usart1Send(str);
 		//pruebo con los R
 		//sprintf(str, "%d %d %d %d\r\n", b1r,b2r,b3r,b4r);
-		//USARTx_Send(str);
+		//Usart1Send(str);
 		return MAIN_TO_SAVE_TIME;
 	}
 
@@ -154,7 +154,7 @@ unsigned char InterpretarMsg (unsigned char lstate, char * pStr)	//TODO copiar p
 	if (strncmp(pStr, s_grabar_term, sizeof(s_grabar_term) - 1) == 0)
 	{
 
-		USARTx_Send((char *) s_ok);
+		Usart1Send((char *) s_ok);
 		file_done = 1;
 		return lstate;
 		//return MAIN_TO_MONITORINGC;
@@ -174,7 +174,7 @@ unsigned char InterpretarMsg (unsigned char lstate, char * pStr)	//TODO copiar p
 				param_struct.b3t, param_struct.b3r,
 				param_struct.b4t, param_struct.b4r);
 #endif
-		USARTx_Send(str);
+		Usart1Send(str);
 	}
 
 	return lstate;
