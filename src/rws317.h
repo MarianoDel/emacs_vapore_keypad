@@ -1,6 +1,16 @@
-#ifndef RWS317_H
-#define RWS317_H
+//------------------------------------------------------
+// #### PROYECTO PANEL ALARMA VAPORE - Custom Board ####
+// ##
+// ## @Author: Med
+// ## @Editor: Emacs - ggtags
+// ## @TAGS:   Global
+// ##
+// #### RWS317.H #######################################
+//------------------------------------------------------
+#ifndef _RWS317_H_
+#define _RWS317_H_
 
+// Additional Includes for Configuration ------------------------------
 #include "stm32f0x_tim.h"
 #include "flash_program.h"
 
@@ -9,11 +19,22 @@
 // VER HARD.H LO QUE CORRESPONDE A HARDWARE
 // VER RWS317.H LO QUE TIENE QUE VER CON CODIGOS Y CONTROLES
 
-// #define PROGRAMA_NORMAL
+#define PROGRAMA_NORMAL
 // #define PROGRAMA_DE_BUCLE
-#define PROGRAMA_FACTORY_TEST
+// #define PROGRAMA_FACTORY_TEST
+
+//--- TEMAS DE LOS CODIGOS ---//
+//---- Chip Interno de los Controles
+//#define HT6P20B2
+//#define EV1527
+//#define PT2264
+//#define HT6P20B2_AND_PT2264
+#define EV1527_AND_PT2264
+
+#define B1_BY_B2		//botones cambiados B1 x B2
 
 
+// Exported Macros and Defines ----------------------------------------
 #ifdef PROGRAMA_NORMAL
 #define ACT_DESACT_IN_SECS	2
 #define ACT_DESACT_IN_MSECS	2000
@@ -26,16 +47,6 @@
 #define ACT_DESACT_IN_SECS	2
 #define ACT_DESACT_IN_MSECS	2000
 #endif
-
-//--- TEMAS DE LOS CODIGOS ---//
-//---- Chip Interno de los Controles
-//#define HT6P20B2
-//#define EV1527
-//#define PT2264
-//#define HT6P20B2_AND_PT2264
-#define EV1527_AND_PT2264
-
-#define B1_BY_B2		//botones cambiados B1 x B2
 
 #ifdef EV1527
 #define WITHOUT_ABSOLUTE_VALUE_CTROL_EV1527
@@ -243,21 +254,23 @@
 #define REM_B12		12
 
 
-//-------- Graper de funciones --------//
+//-------- Functions Wrapper --------//
 #ifdef CODES_IN_FLASH
-#define CheckCodeInMemory(X)		CheckCodeInMemory_FLASH((X))
-#define CheckBaseCodeInMemory(X)	CheckBaseCodeInMemory_FLASH((X))
-#define CheckIndexInMemory(X)		CheckIndexInMemory_FLASH((X))
-#define Write_Code_To_Memory(X,Y)	Write_Code_To_Memory_FLASH((X),(Y))
-#define EraseAllMemory()			EraseAllMemory_FLASH()
+#define CheckCodeInMemory(X)		FLASH_CheckCodeInMemory((X))
+#define CheckBaseCodeInMemory(X)	FLASH_CheckBaseCodeInMemory((X))
+#define CheckIndexInMemory(X)		FLASH_CheckIndexInMemory((X))
+#define Write_Code_To_Memory(X,Y)	FLASH_Write_Code_To_Memory((X),(Y))
+#define EraseAllMemory()		FLASH_EraseAllMemory()
+#define CheckButtonInCode(X)            FLASH_CheckButtonInCode((X))
 #endif
 
 #ifdef CODES_IN_SST
-#define CheckCodeInMemory(X)		CheckCodeInMemory_SST((X))
-#define CheckBaseCodeInMemory(X)	CheckBaseCodeInMemory_SST((X))
-#define CheckIndexInMemory(X)		CheckIndexInMemory_SST((X))
-#define Write_Code_To_Memory(X,Y)	WriteCodeToMemory_SST((X),(Y))
-#define EraseAllMemory()			EraseAllMemory_SST()
+#define CheckCodeInMemory(X)		SST_CheckCodeInMemory((X))
+#define CheckBaseCodeInMemory(X)	SST_CheckBaseCodeInMemory((X))
+#define CheckIndexInMemory(X)		SST_CheckIndexInMemory((X))
+#define Write_Code_To_Memory(X,Y)	SST_WriteCodeToMemory((X),(Y))
+#define EraseAllMemory()		SST_EraseAllMemory()
+#define CheckButtonInCode(X)            SST_CheckButtonInCode((X))
 #endif
 
 
@@ -275,4 +288,7 @@ unsigned char CheckButtonRemote (unsigned short,  unsigned short);
 
 
 
-#endif
+#endif    /* _RWS317_H_ */
+
+//--- end of file ---//
+

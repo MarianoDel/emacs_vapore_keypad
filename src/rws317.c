@@ -1,5 +1,14 @@
+//------------------------------------------------------
+// #### PROYECTO PANEL ALARMA VAPORE - Custom Board ####
+// ##
+// ## @Author: Med
+// ## @Editor: Emacs - ggtags
+// ## @TAGS:   Global
+// ##
+// #### RWS317.C #######################################
+//------------------------------------------------------
 
-
+/* Includes ------------------------------------------------------------------*/
 #include "rws317.h"
 #include "hard.h"
 #include "flash_program.h"
@@ -12,14 +21,14 @@
 //desde que saque main.h
 
 
-//-------------------------- EXTERNAL VARIABLES ------------------------
+/* Externals variables ---------------------------------------------------------*/
 extern volatile unsigned short code0;
 extern volatile unsigned short code1;
 extern volatile unsigned char errorcode;
 extern volatile unsigned char pilot_code;
 extern unsigned int * pmem;
 
-//-------------------------- GLOBAL VARIABLES --------------------------
+/* Global variables ------------------------------------------------------------*/
 volatile unsigned char ctrol_new = 0;
 volatile unsigned char bitcount = 0;
 volatile unsigned char bitstate = 0;
@@ -31,28 +40,24 @@ volatile unsigned char on_receipt = 0;
 unsigned char code_state = 0;
 
 
-
-
-
-
-//--------------------------- FUNCTIONS --------------------------------
+/* Module Functions ------------------------------------------------------------*/
 //0 si hay algun error de 1 a 4 los botones
 unsigned char CheckForButtons(unsigned short * p_posi, unsigned int * p_code)
 {
-	unsigned char resp = 0;
+    unsigned char resp = 0;
 
-	if (RxCode() == ENDED_OK)
-	{
-		*p_code = code0;
-		*p_code <<= 16;
-		*p_code |= code1;
+    if (RxCode() == ENDED_OK)
+    {
+        *p_code = code0;
+        *p_code <<= 16;
+        *p_code |= code1;
 
-		*p_posi = CheckBaseCodeInMemory(*p_code);
+        *p_posi = CheckBaseCodeInMemory(*p_code);
 
-		if ((*p_posi >= 0) && (*p_posi <= 1023))	//el codigo existe en memoria
-			resp = CheckButtonInCode(*p_code);		//reviso el boton
-	}
-	return resp;
+        if ((*p_posi >= 0) && (*p_posi <= 1023))	//el codigo existe en memoria
+            resp = CheckButtonInCode(*p_code);		//reviso el boton
+    }
+    return resp;
 }
 
 
@@ -1000,3 +1005,5 @@ void Timer_Interrupt_Handler (unsigned short tpm1)
 #endif
 
 }
+
+//--- end of file ---//

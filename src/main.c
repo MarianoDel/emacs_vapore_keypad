@@ -326,7 +326,7 @@ int main(void)
 				  break;
 
 			  case TEST_CHECK_MEMORY_WRITE:
-				  if (WriteCodeToMemory_SST(100, 0x5555) == PASSED)
+				  if (SST_WriteCodeToMemory(100, 0x5555) == PASSED)
 				  {
 					  TimingDelay = 900;
 					  main_state++;
@@ -341,7 +341,7 @@ int main(void)
 			  case TEST_CHECK_MEMORY_READ:
 				  if (!TimingDelay)			//grabo memoria
 				  {
-					  if (CheckIndexInMemory_SST(100) == 0x5555)
+					  if (SST_CheckIndexInMemory(100) == 0x5555)
 					  {
 						  ShowNumbers(0);
 						  TimingDelay = 900;
@@ -602,7 +602,7 @@ int main(void)
 					  }
 					  else
 					  {
-						  if ((unsigned short) CheckIndexInMemory_SST(1000) == 0xFFFF)
+						  if ((unsigned short) SST_CheckIndexInMemory(1000) == 0xFFFF)
 						  {
 							  if (position == 416)
 							  {
@@ -610,13 +610,13 @@ int main(void)
 								  main_state = MAIN_TO_UNLOCK;
 							  }
 						  }
-						  else if (position == (unsigned short) CheckIndexInMemory_SST(1000))
+						  else if (position == (unsigned short) SST_CheckIndexInMemory(1000))
 						  {
 							  Usart1Send("User Unlock\r\n");
 							  main_state = MAIN_TO_UNLOCK;
 						  }
 					  }
-					  //position = (unsigned short) CheckIndexInMemory_SST(1000);
+					  //position = (unsigned short) SST_CheckIndexInMemory(1000);
 					  //sprintf(str, "user code: %03d\r\n", position);
 					  //Usart1Send(str);
 				  }
@@ -637,7 +637,7 @@ int main(void)
 					  }
 					  else
 					  {
-						  if ((unsigned short) CheckIndexInMemory_SST(1000) == 0xFFFF)
+						  if ((unsigned short) SST_CheckIndexInMemory(1000) == 0xFFFF)
 						  {
 							  if (position == 416)
 							  {
@@ -646,7 +646,7 @@ int main(void)
 								  unlock_by_remote = 1;
 							  }
 						  }
-						  else if (position == (unsigned short) CheckIndexInMemory_SST(1000))
+						  else if (position == (unsigned short) SST_CheckIndexInMemory(1000))
 						  {
 							  Usart1Send("User Remote Unlock\r\n");
 							  main_state = MAIN_TO_UNLOCK;
@@ -729,7 +729,7 @@ int main(void)
 				  switches = CheckKeypad(&switches_posi0, &switches_posi1, &switches_posi2, &position);
 				  if (switches == KNUMBER_FINISH)
 				  {
-					  WriteCodeToMemory_SST(1000, position);
+					  SST_WriteCodeToMemory(1000, position);
 					  Usart1Send("User Password changed\r\n");
 					  BuzzerCommands(BUZZER_SHORT_CMD, 7);
 					  main_state = MAIN_TO_MAIN_WAIT_5SEGS;
@@ -1040,13 +1040,13 @@ int main(void)
 
 			  case MAIN_MEMORY_DUMP:
 					//cargo 256 numeros al vector de 1024 posiciones
-				  MemoryDump (OFFSET_CODES_256);
+				  SST_MemoryDump (OFFSET_CODES_256);
 				  main_state = MAIN_INIT;
 				  break;
 
 			  case MAIN_MEMORY_DUMP2:
 					//cargo 256 numeros al vector de 1024 posiciones
-				  MemoryDump (OFFSET_CODES_512);
+				  SST_MemoryDump (OFFSET_CODES_512);
 				  main_state = MAIN_INIT;
 				  break;
 
@@ -1255,7 +1255,7 @@ unsigned char FuncAlarm (void)
 				sprintf(str, (char *) "Activo: %03d ", code_position);
 				//el codigo existe en memoria
 				//reviso el boton
-				button = CheckButtonInCode(code);
+				button = SST_CheckButtonInCode(code);
 				if (button == 1)
 				{
 					last_one_or_three = code_position;

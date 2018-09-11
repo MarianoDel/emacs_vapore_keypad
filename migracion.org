@@ -69,6 +69,12 @@
     CLOSED: [2018-09-11 Tue 10:30]
     - uso micro-booster como base, copio directamente los archivos
 
+*** Migro Modulo sst25codes
+    - Ahora todas las funciones empiezan con SST_
+
+*** Migro RWS317
+    - faltan cosas, habria que quitar los codigos de la memoria flash
+
 ** TODO Agregar Welcome code la version del HARD
 
 * Opcion 1

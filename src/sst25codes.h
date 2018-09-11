@@ -1,14 +1,31 @@
-/*
- * sst25codes.h
- *
- *  Created on: 03/05/2015
- *      Author: Mariano
- */
+//------------------------------------------------------
+// #### PROYECTO PANEL ALARMA VAPORE - Custom Board ####
+// ##
+// ## @Author: Med
+// ## @Editor: Emacs - ggtags
+// ## @TAGS:   Global
+// ##
+// #### SST25CODES.H ###################################
+//------------------------------------------------------
+#ifndef _SST25CODES_H_
+#define _SST25CODES_H_
 
-#ifndef SST25CODES_H_
-#define SST25CODES_H_
-
+// Additional Includes for Configuration ------------------------------
 #include "rws317.h"
+
+
+// Exported Macros and Defines ----------------------------------------
+#define SST_CheckCodeInMemory(X)	SST_CheckBaseMask((X), 0xFFFFFFFF)
+
+#ifdef EV1527_BASE_CODE
+#define SST_CheckBaseCodeInMemory(X)	SST_CheckBaseMask((X), EV1527_CODE_MASK)
+#define SST_CheckButtonInCode(X)	SST_CheckButton((X), EV1527_BUTTON_MASK)
+#endif
+
+#ifdef HT6P20B2_BASE_CODE
+#define SST_CheckBaseCodeInMemory(X)	SST_CheckBaseMask((X), HT6P20B2_CODE_MASK)
+#define SST_CheckButtonInCode(X)	SST_CheckButton((X), HT6P20B2_BUTTON_MASK)
+#endif
 
 #define OFFSET_CODES_256	0x2000
 #define OFFSET_CODES_512	0x3000
@@ -20,23 +37,16 @@
 #define CODES_POSI_768		768
 #define CODES_POSI_1024		1024
 
-//unsigned short CheckCodeInMemory_SST (unsigned int);
-//unsigned short CheckBaseCodeInMemory_SST (unsigned int);
-unsigned char EraseAllMemory_SST(void);
-unsigned int CheckIndexInMemory_SST (unsigned short);
-unsigned short CheckBaseMask_SST (unsigned int, unsigned int);
-unsigned char WriteCodeToMemory_SST(unsigned short, unsigned int);
-void MemoryDump (unsigned int);
-unsigned char CheckButtonInCode_SST (unsigned int, unsigned int);
+// Exported Module Functions ------------------------------------------
+unsigned char SST_EraseAllMemory (void);
+unsigned int SST_CheckIndexInMemory (unsigned short);
+unsigned short SST_CheckBaseMask (unsigned int, unsigned int);
+unsigned char SST_WriteCodeToMemory (unsigned short, unsigned int);
+void SST_MemoryDump (unsigned int);
+unsigned char SST_CheckButton (unsigned int, unsigned int);
 
-#define CheckCodeInMemory_SST(X)	CheckBaseMask_SST((X), 0xFFFFFFFF)
-#ifdef EV1527_BASE_CODE
-#define CheckBaseCodeInMemory_SST(X)	CheckBaseMask_SST((X), EV1527_CODE_MASK)
-#define CheckButtonInCode(X)	CheckButtonInCode_SST((X), EV1527_BUTTON_MASK)
-#endif
-#ifdef HT6P20B2_BASE_CODE
-#define CheckBaseCodeInMemory_SST(X)	CheckBaseMask_SST((X), HT6P20B2_CODE_MASK)
-#define CheckButtonInCode(X)	CheckButtonInCode_SST((X), HT6P20B2_BUTTON_MASK)
-#endif
 
-#endif /* SST25CODES_H_ */
+#endif /* _SST25CODES_H_ */
+
+//--- end of file ---//
+
