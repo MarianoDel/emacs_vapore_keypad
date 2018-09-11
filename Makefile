@@ -122,7 +122,7 @@ SRC += $(STMSPSRCDDIR)/stm32f0xx_tim.c
 ## fin nuevos modulos revisar
 
 ## anteriores del Makefile_bkp
-SRC += ./src/stm32f0xx_it.c
+SRC += ./src/it.c
 SRC += ./src/stm32f0x_gpio.c
 SRC += ./src/stm32f0x_tim.c
 SRC += ./src/spi.c

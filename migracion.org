@@ -63,7 +63,11 @@
     CLOSED: [2018-09-11 Tue 10:20]
     - uso emacs_micro_booster como base
     - tiene un error en el clk de USART1??? AHBENR y debe ser APB2ENR!!!! REVISAR MICRO-BOOSTER
+    - micro booster esta ok, se me paso el error
 
+*** DONE empiezo a migrar it
+    CLOSED: [2018-09-11 Tue 10:30]
+    - uso micro-booster como base, copio directamente los archivos
 
 ** TODO Agregar Welcome code la version del HARD
 

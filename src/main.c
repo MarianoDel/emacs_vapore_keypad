@@ -32,7 +32,7 @@
 // #include "stm32f0x_uart.h"
 #include <stdio.h>
 #include <string.h>
-#include "stm32f0xx_it.h"
+#include "it.h"
 
 // #include "stm32f0xx_spi.h"
 // #include "stm32f0xx_rcc.h"
