@@ -92,8 +92,10 @@
     - ahora esta todo compila ok sin la libST
 
 *** Faltan arreglar un par de archivos mas
-    - modulo comm
-    - modulo flash_program
+**** modulo comm
+     - me faltaria relacionarlo con el puerto serie con algun update desde main.c
+
+**** modulo flash_program
 
 ** TODO Agregar Welcome code la version del HARD
 
