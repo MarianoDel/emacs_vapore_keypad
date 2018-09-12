@@ -1,19 +1,66 @@
-/*
- * hard.h
- *
- *  Created on: 28/11/2013
- *      Author: Mariano
- */
-
-#ifndef HARD_H_
-#define HARD_H_
+//---------------------------------------------
+// ##
+// ## @Author: Med
+// ## @Editor: Emacs - ggtags
+// ## @TAGS:   Global
+// ## @CPU:    STM32F103
+// ##
+// #### HARD.H ################################
+//---------------------------------------------
+#ifndef _HARD_H_
+#define _HARD_H_
 
 
 //------ FUNCIONAMIENTO GENERAL DEL EQUIPO ------//
+//----------- Defines For Configuration -------------
 // VER HARD.H LO QUE CORRESPONDE A HARDWARE
 // VER RWS317.H LO QUE TIENE QUE VER CON CODIGOS Y CONTROLES
 #define CON_BLOQUEO_DE_KEYPAD
 #define CON_MODIFICACION_DIODO_BATERIA
+
+// #define PROGRAMA_NORMAL
+// #define PROGRAMA_DE_BUCLE
+#define PROGRAMA_FACTORY_TEST
+
+//----------- Hardware Board Version -------------
+#define VER_1_3
+
+//---- Configuration for Hardware Versions -------
+#ifdef VER_1_3
+#define HARDWARE_VERSION_1_3
+#define SOFTWARE_VERSION_2_0
+#endif
+
+
+//---- Features Configuration ----------------
+
+//------ Configuration for Firmware-Channels -----
+
+//--- Hardware Welcome Code ------------------//
+#ifdef HARDWARE_VERSION_1_3
+#define HARD "Hardware V: 1.3\n"
+#endif
+
+//--- Software Welcome Code ------------------//
+#ifdef SOFTWARE_VERSION_2_0
+#define SOFT "Software V: 2.0\n"
+#endif
+
+//--- Type of Program Announcement ----------------
+#ifdef PROGRAMA_NORMAL
+#define KIND_OF_PROGRAM "Panel Normal\r\n"
+#endif
+#ifdef PROGRAMA_DE_BUCLE
+#define KIND_OF_PROGRAM "Panel con Programa para Bucle\r\n"
+#endif
+#ifdef PROGRAMA_FACTORY_TEST
+#define KIND_OF_PROGRAM "Panel con Programa de testeo en fabrica\r\n"
+#endif
+#ifdef TEST_FIXED_VOUT
+#define KIND_OF_PROGRAM "Programa Vout fijo\n"
+#endif
+//---- End of Program Configuration ----------
+
 
 #define SPI_MASTER
 //para GPIO 1 solo bit uso Port bit set/reset register (GPIOx_BSRR) (x=A..G)
@@ -81,7 +128,7 @@
 
 
 #define CH_IN_TEMP ADC_Channel_0
-#define LAST_NUMBER		5
+#define LAST_NUMBER		6
 #define LAST_NUMBER_SPEAK		5
 
 //--- TIMEOUTS DEL PROGRAMA ----//
@@ -329,4 +376,7 @@ enum end_states
 	END_TIMEOUT
 };
 
-#endif /* HARD_H_ */
+#endif /* _HARD_H_ */
+
+//--- end of file ---//
+

@@ -29,8 +29,10 @@
 
 #define DISPLAY_SQR_UP		DISPLAY_REMOTE
 #define DISPLAY_SQR_DOWN		15
+#define DISPLAY_H        16
+#define DISPLAY_S        17
 
-#define SIZEOF_VDISPLAY    DISPLAY_SQR_DOWN + 1
+#define SIZEOF_VDISPLAY    DISPLAY_S + 1
 
 //estados de la SM del DISPLAY
 typedef enum {

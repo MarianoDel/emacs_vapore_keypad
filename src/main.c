@@ -256,48 +256,72 @@ int main(void)
     /* SPI configuration ------------------------------------------------------*/
     SPI_Config();		//activo sin interrupcion
 
-    /* USART configuration ------------------------------------------------------*/
+    /* USART configuration -----------------------------------------------------*/
     Usart1Config();    //activo con int priority 5
 
-    //Usart1Send((char *) (const char *) "Prueba RS232 STM32F030K6\r\n");
+    /* Welcome Code ------------------------------------------------------------*/    
+    //---- Defines from hard.h -----//
     Usart1Send((char *) " - Kirno Technology - STM32F030K6\r\n");
     Wait_ms(100);
     Usart1Send((char *) "Sistema de Alarma ALERTA VECINAL\r\n");
     Wait_ms(100);
-#ifdef PROGRAMA_NORMAL
-    Usart1Send((char *) "Panel Normal\r\n");
+    
+#ifdef HARD
+    Usart1Send((char *) HARD);
+    Wait_ms(100);
+#else
+#error	"No Hardware defined in hard.h file"
 #endif
 
-#ifdef PROGRAMA_DE_BUCLE
-    Usart1Send((char *) "Panel con Programa para Bucle\r\n");
+#ifdef SOFT
+    Usart1Send((char *) SOFT);
+    Wait_ms(100);
+#else
+#error	"No Soft Version defined in hard.h file"
 #endif
 
-#ifdef PROGRAMA_FACTORY_TEST
-    Usart1Send((char *) "Panel con Programa de testeo en fabrica\r\n");
+#ifdef KIND_OF_PROGRAM
+    Usart1Send((char *) KIND_OF_PROGRAM);
+    Wait_ms(100);
+#else
+#error	"No Kind of Program selected in hard.h file"
 #endif
+
+    //-- HARDWARE pero para Display --
+#ifdef VER_1_3
+    VectorToDisplayStr("h1.3");
+    while (!DisplayIsFree())
+        UpdateDisplaySM();
+
+    VectorToDisplayStr("s2.0");
+    while (!DisplayIsFree())
+        UpdateDisplaySM();    
+#endif
+    /* End of Welcome Code ------------------------------------------------------*/    
+    
 
     //--- EMPIEZO PROGRAMA DE PRUEBAS EN FABRICA ---//
 #ifdef PROGRAMA_FACTORY_TEST
     UpdateDisplayResetSM();
-    dummy16 = 0;
-    while (1)
-    {
-        if (!timer_standby)
-        {
-            timer_standby = 5000;
-            BuzzerCommands(BUZZER_SHORT_CMD, 1);
-            if (dummy16 < 1000)
-            {
-                ConvertPositionToDisplay(dummy16);
-                dummy16++;
-            }
-            else
-                dummy16 = 0;
-        }
+    // dummy16 = 0;
+    // while (1)
+    // {
+    //     if (!timer_standby)
+    //     {
+    //         timer_standby = 5000;
+    //         BuzzerCommands(BUZZER_SHORT_CMD, 1);
+    //         if (dummy16 < 1000)
+    //         {
+    //             ConvertPositionToDisplay(dummy16);
+    //             dummy16++;
+    //         }
+    //         else
+    //             dummy16 = 0;
+    //     }
 
-        UpdateBuzzer();
-        UpdateDisplaySM();
-    }
+    //     UpdateBuzzer();
+    //     UpdateDisplaySM();
+    // }
 
     main_state = TEST_INIT;
 
@@ -351,7 +375,8 @@ int main(void)
         case TEST_CHECK_KEYPAD:
             if (!TimingDelay)
             {
-                switches = ReadSwitches();
+                // switches = ReadSwitches();
+                switches = UpdateSwitches();
 
                 if (switches == NO_KEY)
                 {
@@ -405,6 +430,9 @@ int main(void)
     UpdateDisplayResetSM();
     //apago el display
     ShowNumbers(DISPLAY_NONE);
+
+
+    
     BuzzerCommands(BUZZER_LONG_CMD, 2);
 
     p_numbers_speak = numbers_speak;	//seteo puntero

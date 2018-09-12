@@ -12,15 +12,13 @@
 
 // Additional Includes for Configuration ------------------------------
 #include "flash_program.h"    //info in sst or info in flash
+#include "hard.h"             //info del tipo de programa
 
 
 //------ FUNCIONAMIENTO GENERAL DEL EQUIPO ------//
 // VER HARD.H LO QUE CORRESPONDE A HARDWARE
 // VER RWS317.H LO QUE TIENE QUE VER CON CODIGOS Y CONTROLES
 
-#define PROGRAMA_NORMAL
-// #define PROGRAMA_DE_BUCLE
-// #define PROGRAMA_FACTORY_TEST
 
 //--- TEMAS DE LOS CODIGOS ---//
 //---- Chip Interno de los Controles

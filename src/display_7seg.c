@@ -53,7 +53,8 @@ void ShowNumbersAgain (void)
 //bits   7 6 5 4 3 2 1 0
 //negados
 const unsigned char v_display_numbers [] = { 0xC0, 0xF9, 0xA4, 0xB0, 0x99, 0x92, 0x82, 0xF8,
-                                             0x80, 0x98, 0x7F, 0xBF, 0x9C, 0x06, 0xB0, 0xA3 };
+                                             0x80, 0x98, 0x7F, 0xBF, 0x9C, 0x06, 0xB0, 0xA3,
+                                             0x8B, 0x92 };
 
 //beware read the switches disables de displayed number
 //system calls ShowNumbersAgain to solve this
@@ -187,6 +188,10 @@ void UpdateDisplaySM (void)
     case DISPLAY_SM_SENDING:
         if (*p_vector_numbers == '.')
             ShowNumbers(DISPLAY_POINT);
+        else if (*p_vector_numbers == 'h')
+            ShowNumbers(DISPLAY_H);
+        else if (*p_vector_numbers == 's')
+            ShowNumbers(DISPLAY_S);
         else
             ShowNumbers(*p_vector_numbers - '0');
         
