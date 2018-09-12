@@ -15,6 +15,7 @@
 #include "spi.h"
 
 #include <string.h>
+#include <stdio.h>
 
 
 /* Externals variables ---------------------------------------------------------*/
@@ -58,11 +59,9 @@ const unsigned char v_display_numbers [] = { 0xC0, 0xF9, 0xA4, 0xB0, 0x99, 0x92,
 //system calls ShowNumbersAgain to solve this
 void ShowNumbers (unsigned char number)	//from 0 to 9 are numbers; 10 to 15 are other symbols
 {
+    display_last_digit = number;
     if ((number != DISPLAY_NONE) && (number < SIZEOF_VDISPLAY))
-    {
-        display_last_digit = number;
         number = v_display_numbers[number];
-    }
     else
         number = 0xFF;
 
@@ -228,27 +227,8 @@ void UpdateDisplaySM (void)
 }
 
 //carga los numeros a mostrar en secuencia en un vector
-//del 1 al 9; 10 es cero; 11 es punto; 0, 12, 13, 14, 15 apagar
-// void VectorToDisplay (unsigned char new_number)
-// {
-//     unsigned char i;
-//     //me fijo si hay espacio
-//     if (p_vector_numbers < &display_vector_numbers [LAST_NUMBER])
-//     {
-//         //busco la primer posicion vacia y pongo el nuevo numero
-//         for (i = 0; i < LAST_NUMBER; i++)
-//         {
-//             if (display_vector_numbers[i] == 0)
-//             {
-//                 display_vector_numbers[i] = new_number;
-//                 i = LAST_NUMBER;
-//             }
-//         }
-//     }
-// }
-
-//carga los numeros a mostrar en secuencia en un vector
-//del 1 al 9; 10 es cero; 11 es punto; 0, 12, 13, 14, 15 apagar
+//acepta numeros en formato char y el punto
+//en general 3 digitos hasta LAST_NUMBER
 void VectorToDisplayStr (char * s_number)
 {
     unsigned char len;
@@ -262,6 +242,17 @@ void VectorToDisplayStr (char * s_number)
     }
 }
 
+void ConvertPositionToDisplay (unsigned short pos)
+{
+    char buff [6] = { '\0' };
+    
+    if (pos > 999)
+        return;
+
+    sprintf(buff, "%03d.", pos);
+    VectorToDisplayStr(buff);
+    
+}
 
 
 //--- end of file ---//

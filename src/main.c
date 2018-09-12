@@ -28,6 +28,7 @@
 #include <string.h>
 #include "it.h"
 #include "display_7seg.h"
+#include "keypad.h"
 
 
 
@@ -42,8 +43,11 @@ volatile unsigned short timer_keypad_enabled = 0;
 volatile unsigned short wait_ms_var = 0;
 
 // ------- Externals para el Display -------
-volatile unsigned short display_timeout;
+volatile unsigned short display_timeout = 0;
 
+// ------- Externals para el keypad -------
+volatile unsigned char keypad_timeout = 0;
+volatile unsigned short keypad_interdigit_timeout = 0;
 
 // ------- Externals del Puerto serie  -------
 volatile unsigned char tx1buff[SIZEOF_DATA];
@@ -95,7 +99,7 @@ static __IO uint32_t TimingDelay;
 
 unsigned short counter = TIM3_ARR;
 
-unsigned char last_internals = 0;
+
 unsigned char buzzer_state = 0;
 unsigned char buzz_multiple = 0;
 unsigned char siren_state = 0;
@@ -104,7 +108,7 @@ unsigned char siren_steps = 0;
 
 
 volatile unsigned char binary_full = 0;
-volatile unsigned char switches_internals_timeout = 0;
+
 volatile unsigned short wait_for_code_timeout;
 volatile unsigned short interdigit_timeout;
 volatile unsigned short buzzer_timeout;
@@ -115,7 +119,6 @@ volatile unsigned char button_timer;
 volatile unsigned short button_timer_internal;
 
 //--- Respecto del KeyPad
-unsigned char keypad_state = 0;
 unsigned char remote_keypad_state = 0;
 unsigned char unlock_by_remote = 0;
 
@@ -157,12 +160,9 @@ unsigned char FuncAlarm (void);
 //unsigned char FuncProgCod (unsigned char);
 
 
-
 // ------- de los switches ---
-unsigned char ReadSwitches (void);
-unsigned char ReadSwitches_Internals (void);
-unsigned char CheckKeypad (unsigned char *, unsigned char *, unsigned char *, unsigned short *);
 unsigned char CheckRemoteKeypad (unsigned char *, unsigned char *, unsigned char *, unsigned short *);
+
 
 // ------- del buzzer --------
 void BuzzerCommands(unsigned char, unsigned char);
@@ -277,7 +277,7 @@ int main(void)
 #endif
 
     //--- EMPIEZO PROGRAMA DE PRUEBAS EN FABRICA ---//
-
+#ifdef PROGRAMA_FACTORY_TEST
     UpdateDisplayResetSM();
     dummy16 = 0;
     while (1)
@@ -299,7 +299,6 @@ int main(void)
         UpdateDisplaySM();
     }
 
-#ifdef PROGRAMA_FACTORY_TEST
     main_state = TEST_INIT;
 
     while (1)
@@ -404,6 +403,8 @@ int main(void)
     //--- INICIO PROGRAMA DE PRODUCCION ---//
     //reset a la SM del display
     UpdateDisplayResetSM();
+    //apago el display
+    ShowNumbers(DISPLAY_NONE);
     BuzzerCommands(BUZZER_LONG_CMD, 2);
 
     p_numbers_speak = numbers_speak;	//seteo puntero
@@ -615,6 +616,7 @@ int main(void)
                 //Usart1Send(str);
             }
 
+            //ahora reviso si hay algun control enviando y si es el remote_keypad o un control de alarma
             switches = CheckRemoteKeypad(&switches_posi0, &switches_posi1, &switches_posi2, &position);
             if (switches == RK_MUST_BE_CONTROL)
             {
@@ -695,6 +697,7 @@ int main(void)
             }
 
 
+            //ahora reviso si hay algun control enviando y si es el remote_keypad o un control de alarma
             switches = CheckRemoteKeypad(&switches_posi0, &switches_posi1, &switches_posi2, &position);
             if (switches == RK_MUST_BE_CONTROL)
             {
@@ -1688,338 +1691,7 @@ unsigned char FuncAlarm (void)
 }
 
 
-/*
-void SendSegment (unsigned char segment)
-{
-	unsigned char j;
 
-	OE_OFF;
-    while (SPI_GetTransmissionFIFOStatus(SPIx) != SPI_TransmissionFIFOStatus_Empty);
-    if (segment & 0x80)
-    	SPI_SendData8(SPIx, 0x01);
-    else
-    	SPI_SendData8(SPIx, 0x00);
-
-    while (SPI_GetTransmissionFIFOStatus(SPIx) != SPI_TransmissionFIFOStatus_Empty);
-    segment <<= 1;
-    SPI_SendData8(SPIx, segment);
-    for (j = 0; j < 150; j++)
-    {
-    	asm("nop");
-    }
-	OE_ON;
-}
-*/
-
-
-unsigned char ReadSwitches (void)
-{
-	//funciona tipo Zero Order Hold con tiempo de muestreo SWITCHES_INTERNALS_TIMEOUT
-	//revisa los switches cada 50ms, le da tiempo al display para mostrar los numeros
-	if (!switches_internals_timeout)
-	{
-		last_internals = ReadSwitches_Internals ();
-		ShowNumbersAgain();
-		switches_internals_timeout = SWITCHES_INTERNALS_TIMEOUT;
-	}
-	return last_internals;
-}
-
-#define SPIx                             SPI1
-unsigned char ReadSwitches_Internals (void)
-{
-	unsigned short sw = 0;
-	unsigned char sw0 = 0;
-	unsigned char sw1 = 0;
-
-	//bajo la velocidad del SPI
-	SPIx->CR1 &= ~SPI_CR1_SPE;		//deshabilito periferico
-	//clk / 256;
-	SPIx->CR1 &= 0xFFC7;
-	SPIx->CR1 |= SPI_CR1_BR_0 | SPI_CR1_BR_1 | SPI_CR1_BR_2;
-
-	SPIx->CR1 |= SPI_CR1_SPE;		//habilito periferico
-
-	OE_OFF;
-	PS_ON;
-
-    sw0 = Receive_SPI_Single();
-    sw1 = Receive_SPI_Single();
-
-	PS_OFF;
-	OE_ON;
-
-	sw = sw1;
-	sw <<= 8;
-	sw |= sw0;
-
-	switch (sw)
-	{
-		case 0xBFBE:
-			sw = 1;
-			break;
-
-		case 0xBFBD:
-			sw = 2;
-			break;
-
-		case 0xBFBB:
-			sw = 3;
-			break;
-
-		case 0xBFB7:
-			sw = 4;
-			break;
-
-		case 0xBFAF:
-			sw = 5;
-			break;
-
-		case 0xBF9F:
-			sw = 6;
-			break;
-
-		case 0xBEBF:
-			sw = 7;
-			break;
-
-		case 0xBDBF:
-			sw = 8;
-			break;
-
-		case 0xBBBF:
-			sw = 9;
-			break;
-
-		case 0xB7BF:
-			sw = 10;
-			break;
-
-		case 0xAFBF:
-			sw = 11;
-			break;
-
-		case 0x9FBF:
-			sw = 12;
-			break;
-
-		default:
-			sw = 0;
-			break;
-	}
-
-	//subo la velocidad del SPI
-	SPIx->CR1 &= ~SPI_CR1_SPE;		//deshabilito periferico
-	//clk / 8;
-	SPIx->CR1 &= 0xFFC7;
-	SPIx->CR1 |= SPI_CR1_BR_1;
-
-	SPIx->CR1 |= SPI_CR1_SPE;		//habilito periferico
-
-	return (unsigned char) sw;
-}
-
-unsigned char CheckKeypad (unsigned char * sp0, unsigned char * sp1, unsigned char * sp2, unsigned short * posi)
-{
-	unsigned char switches = 0;
-
-	switches = ReadSwitches();
-
-	switch (keypad_state)
-	{
-		case KNONE:
-
-			if ((switches != NO_KEY) && (switches != STAR_KEY) && (switches != POUND_KEY))
-			{
-				//se presiono un numero voy a modo grabar codigo
-				//reviso si fue 0
-				if (switches == ZERO_KEY)
-				{
-					*sp0 = 0;
-					ShowNumbers(10);
-				}
-				else
-				{
-					*sp0 = switches;
-					ShowNumbers(switches);
-				}
-				BuzzerCommands(BUZZER_SHORT_CMD, 1);
-				*sp1 = 0;
-				*sp2 = 0;
-				interdigit_timeout = param_struct.interdigit;
-				keypad_state = KRECEIVING_A;
-			}
-
-			if (switches == STAR_KEY)
-			{
-				//se cancelo la operacion
-				ShowNumbers(DISPLAY_NONE);
-				BuzzerCommands(BUZZER_HALF_CMD, 1);
-				keypad_state = KCANCEL;
-			}
-			break;
-
-		case KRECEIVING_A:
-			//para validar switch anterior necesito que lo liberen
-			if (switches == 0)
-			{
-				ShowNumbers(DISPLAY_NONE);
-				keypad_state = KRECEIVING_B;
-				interdigit_timeout = param_struct.interdigit;
-			}
-
-			if (!interdigit_timeout)
-				keypad_state = KTIMEOUT;
-
-			break;
-
-		case KRECEIVING_B:			//segundo digito o confirmacion del primero
-			if (switches == STAR_KEY)
-			{
-				//se cancelo la operacion
-				ShowNumbers(DISPLAY_NONE);
-				BuzzerCommands(BUZZER_HALF_CMD, 1);
-				keypad_state = KCANCEL;
-			}
-
-			if (((switches > NO_KEY) && (switches < 10)) || (switches == ZERO_KEY))	//es un numero 1 a 9 o 0
-			{
-				if (switches == ZERO_KEY)
-				{
-					*sp1 = 0;
-					ShowNumbers(10);
-				}
-				else
-				{
-					*sp1 = switches;
-					ShowNumbers(switches);
-				}
-				BuzzerCommands(BUZZER_SHORT_CMD, 1);
-				keypad_state = KRECEIVING_C;
-				interdigit_timeout = param_struct.interdigit;
-			}
-
-			//si esta apurado un solo numero
-			if (switches == POUND_KEY)
-			{
-				ShowNumbers(DISPLAY_LINE);
-				BuzzerCommands(BUZZER_SHORT_CMD, 2);
-				*sp2 = *sp0;
-				*sp0 = 0;
-				*posi = *sp2;
-
-				keypad_state = KNUMBER_FINISH;
-			}
-
-			if (!interdigit_timeout)
-				  keypad_state = KTIMEOUT;
-
-			break;
-
-		case KRECEIVING_C:
-			  //para validar switch anterior necesito que lo liberen
-			  if (switches == 0)
-			  {
-				  ShowNumbers(DISPLAY_NONE);
-				  keypad_state = KRECEIVING_D;
-				  interdigit_timeout = param_struct.interdigit;
-			  }
-
-			  if (!interdigit_timeout)
-				  keypad_state = KTIMEOUT;
-
-			break;
-
-		case KRECEIVING_D:				//tercer digito o confirmacion del segundo
-			  if (switches == STAR_KEY)
-			  {
-				  //se cancelo la operacion
-				  ShowNumbers(DISPLAY_NONE);
-				  BuzzerCommands(BUZZER_HALF_CMD, 1);
-				  keypad_state = KCANCEL;
-			  }
-
-			  if (((switches > NO_KEY) && (switches < 10)) || (switches == ZERO_KEY))	//es un numero 1 a 9 o 0
-			  {
-				  if (switches == ZERO_KEY)
-				  {
-					  *sp2 = 0;
-					  ShowNumbers(10);
-				  }
-				  else
-				  {
-					  *sp2 = switches;
-					  ShowNumbers(switches);
-				  }
-
-				  BuzzerCommands(BUZZER_SHORT_CMD, 1);
-				  keypad_state = KRECEIVING_E;
-				  interdigit_timeout = param_struct.interdigit;
-			  }
-
-			  //si esta apurado dos numeros
-			  if (switches == POUND_KEY)
-			  {
-				  ShowNumbers(DISPLAY_LINE);
-				  BuzzerCommands(BUZZER_SHORT_CMD, 2);
-				  *sp2 = *sp0;
-				  *posi = *sp2 * 10 + *sp1;
-
-				  keypad_state = KNUMBER_FINISH;
-			  }
-
-			  if (!interdigit_timeout)
-				  keypad_state = KTIMEOUT;
-
-			break;
-
-		case KRECEIVING_E:
-			  //para validar switch anterior necesito que lo liberen
-			  if (switches == 0)
-			  {
-				  ShowNumbers(DISPLAY_NONE);
-				  keypad_state = KRECEIVING_F;
-				  interdigit_timeout = param_struct.interdigit;
-
-			  }
-
-			  if (!interdigit_timeout)
-				  keypad_state = KTIMEOUT;
-
-			break;
-
-		case KRECEIVING_F:
-			if (switches == STAR_KEY)
-			{
-				//se cancelo la operacion
-				ShowNumbers(DISPLAY_NONE);
-				BuzzerCommands(BUZZER_HALF_CMD, 1);
-				keypad_state = KCANCEL;
-			}
-
-			if (switches == POUND_KEY)	//es la confirmacion
-			{
-				ShowNumbers(DISPLAY_LINE);
-				BuzzerCommands(BUZZER_SHORT_CMD, 2);
-				*posi = *sp0 * 100 + *sp1 * 10 + *sp2;
-
-				keypad_state = KNUMBER_FINISH;
-			}
-
-			if (!interdigit_timeout)
-				keypad_state = KTIMEOUT;
-			break;
-
-		case KNUMBER_FINISH:
-		case KCANCEL:
-		case KTIMEOUT:
-		default:
-			keypad_state = KNONE;
-			break;
-	}
-
-	return keypad_state;
-}
 
 unsigned char CheckRemoteKeypad (unsigned char * sp0, unsigned char * sp1, unsigned char * sp2, unsigned short * posi)
 {
@@ -2793,96 +2465,63 @@ void UpdateBuzzer (void)
 	}
 }
 
-void ConvertPositionToDisplay (unsigned short pos)
-{
-    char buff [6] = { '\0' };
-    
-    if (pos > 999)
-        return;
-
-    sprintf(buff, "%03d.", pos);
-    VectorToDisplayStr(buff);
-    
-	// unsigned char p0, p1, p2;
-
-	// p0 = pos / 100;
-
-	// if (p0 == 0)
-	// 	VectorToDisplay(10);
-	// else
-	// 	VectorToDisplay(p0);
-
-	// p1 = (pos - p0 * 100) / 10;
-
-	// if (p1 == 0)
-	// 	VectorToDisplay(10);
-	// else
-	// 	VectorToDisplay(p1);
-
-	// p2 = pos - p0 * 100 - p1 * 10;
-
-	// if (p2 == 0)
-	// 	VectorToDisplay(10);
-	// else
-	// 	VectorToDisplay(p2);
-
-	// VectorToDisplay(11);	//agrego punto
-	// VectorToDisplay(0);
-
-}
 
 //One_ms Interrupt
 void TimingDelay_Decrement(void)
 {
-	if (TimingDelay != 0x00)
-		TimingDelay--;
+    if (TimingDelay != 0x00)
+        TimingDelay--;
 
-	if (wait_ms_var)
-		wait_ms_var--;
+    if (wait_ms_var)
+        wait_ms_var--;
 
-        if (timer_standby)
-		timer_standby--;
+    if (timer_standby)
+        timer_standby--;
 
-	if (pilot_code)
-		pilot_code--;
+    if (pilot_code)
+        pilot_code--;
 
-	//estos dos que siguen podrían ser el mismo
-	if (interdigit_timeout)
-		interdigit_timeout--;
+    //estos dos que siguen podrían ser el mismo
+    if (interdigit_timeout)
+        interdigit_timeout--;
 
-	if (wait_for_code_timeout)
-		wait_for_code_timeout--;
+    if (wait_for_code_timeout)
+        wait_for_code_timeout--;
 
-	if (switches_internals_timeout)
-		switches_internals_timeout--;
+    //los del keypad
+    if (keypad_timeout)
+        keypad_timeout--;
 
-	if (buzzer_timeout)
-		buzzer_timeout--;
+    if (keypad_interdigit_timeout)
+        keypad_interdigit_timeout--;
+    
+    if (buzzer_timeout)
+        buzzer_timeout--;
 
-	if (display_timeout)
-		display_timeout--;
+    if (display_timeout)
+        display_timeout--;
 
-	if (siren_timeout)
-		siren_timeout--;
+    if (siren_timeout)
+        siren_timeout--;
 
-	if (timer_keypad_enabled)
-		timer_keypad_enabled--;
+    if (timer_keypad_enabled)
+        timer_keypad_enabled--;
 
 #ifdef CON_MODIFICACION_DIODO_BATERIA
-	if (timer_battery)
-		timer_battery--;
+    if (timer_battery)
+        timer_battery--;
 #endif
-	//cuenta 1 segundo
-	if (button_timer_internal)
-		button_timer_internal--;
-	else
-	{
-		if (button_timer)
-		{
-			button_timer--;
-			button_timer_internal = 1000;
-		}
-	}
+    //cuenta 1 segundo
+    if (button_timer_internal)
+        button_timer_internal--;
+    else
+    {
+        if (button_timer)
+        {
+            button_timer--;
+            button_timer_internal = 1000;
+        }
+    }
 }
 
 //--- end of file ---//

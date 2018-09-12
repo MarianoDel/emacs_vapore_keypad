@@ -85,7 +85,6 @@
 #define LAST_NUMBER_SPEAK		5
 
 //--- TIMEOUTS DEL PROGRAMA ----//
-#define SWITCHES_INTERNALS_TIMEOUT 50
 #define TIM_BIP_SHORT		50
 #define TIM_BIP_SHORT_WAIT		100
 #define TIM_BIP_HALF		200
@@ -96,11 +95,6 @@
 
 //--- FIN TIMEOUTS          ----//
 
-#define NO_KEY 0
-#define NINE_KEY 9
-#define STAR_KEY 10
-#define ZERO_KEY 11
-#define POUND_KEY 12
 
 //ESTADOS DEL PROGRAMA PRINCIPAL PARA TESTEO
 enum TestStateEnum
@@ -195,18 +189,6 @@ enum TestStateEnum
 #define MAIN_MEMORY_DUMP		200
 #define MAIN_MEMORY_DUMP2		201
 
-//ESTADOS DEL KEYPAD
-#define KNONE				0
-#define KRECEIVING_A		1
-#define KRECEIVING_B		2
-#define KRECEIVING_C		3
-#define KRECEIVING_D		4
-#define KRECEIVING_E		5
-#define KRECEIVING_F		6
-
-#define KNUMBER_FINISH		8
-#define KCANCEL				9
-#define KTIMEOUT			10
 
 //ESTADOS DEL KEYPAD REMOTO
 #define RK_NONE						0

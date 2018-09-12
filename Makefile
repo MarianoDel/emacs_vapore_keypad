@@ -119,6 +119,7 @@ SRC += ./src/rws317.c
 SRC += ./src/flash_program.c
 SRC += ./src/sst25codes.c
 SRC += ./src/display_7seg.c
+SRC += ./src/keypad.c
 
 
 
