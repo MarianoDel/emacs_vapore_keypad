@@ -30,7 +30,9 @@
 #include "display_7seg.h"
 #include "keypad.h"
 
-
+#ifdef PROGRAMA_DE_GESTION
+#include "gestion.h"
+#endif
 
 
 
@@ -53,12 +55,9 @@ volatile unsigned short keypad_interdigit_timeout = 0;
 volatile unsigned char tx1buff[SIZEOF_DATA];
 volatile unsigned char rx1buff[SIZEOF_DATA];
 volatile unsigned char usart1_have_data = 0;
-
-
+volatile unsigned char binary_full = 0;
 mem_bkp_typedef memory_backup;
 filesystem_typedef files;
-
-
 unsigned char next_pckt = 0;
 unsigned char file_done = 0;
 
@@ -107,7 +106,7 @@ unsigned short freq_us = 0;
 unsigned char siren_steps = 0;
 
 
-volatile unsigned char binary_full = 0;
+
 
 volatile unsigned short wait_for_code_timeout;
 volatile unsigned short interdigit_timeout;
@@ -146,11 +145,6 @@ unsigned short bat_counter = 0;
 unsigned char slow_toggle = 0;
 #endif
 
-const char s_1024 [] = {"1024 bytes\r\n"};
-const char s_ok [] = {"OK\r\n"};
-
-//const char s_bienvenida [] = {"Prueba RS232 STM32F030K6\r\n"};
-//SPI_InitTypeDef  SPI_InitStructure;
 
 /* Module Functions -----------------------------------------------------------*/
 void Delay(__IO uint32_t nTime);
@@ -198,7 +192,7 @@ int main(void)
     unsigned char switches, switches_posi0, switches_posi1, switches_posi2;
     //unsigned char switches_last;
     unsigned char result;
-    //unsigned int file_size = 0;
+
     //unsigned short * p_mem_dump;
     //unsigned char button_remote = 0;
     unsigned char digit_remote = 0;
@@ -299,7 +293,16 @@ int main(void)
 #endif
     /* End of Welcome Code ------------------------------------------------------*/    
     
+    //--- EMPIEZO PROGRAMA DE GESTION y GRABAR MEMORIA SST ---//
+#ifdef PROGRAMA_DE_GESTION
+    while (1)
+    {
+        FuncGestion();        
+    }
+#endif
+    //--- FIN PROGRAMA DE GESTION y GRABAR MEMORIA SST ---//    
 
+    
     //--- EMPIEZO PROGRAMA DE PRUEBAS EN FABRICA ---//
 #ifdef PROGRAMA_FACTORY_TEST
     UpdateDisplayResetSM();
@@ -483,113 +486,6 @@ int main(void)
 
     //si esta todo bien configurado prendo el led
     LED_ON;
-
-    //Usart1Send(s_bienvenida);
-    //RxCode_Enable();
-
-    //--- PRUEBA USART
-    /*
-      Usart1Send((const char *) "Prueba RS232 STM32F030K6\r\n");
-      while (1)
-      {
-      //Usart1Send((const char *) "Funciona\r\n");
-      //USARTx->TDR = 'M';
-      //Wait_ms(1000);
-
-      if (buffrx_ready)
-      {
-      j = InterpretarMsg(pbuffrx);
-      buffrx_ready = 0;
-      if (j != ERROR)
-      Usart1Send((const char *) "OK\r\n");
-      }
-      }
-    */
-    //--- FIN PRUEBA USART
-
-
-
-    /*
-      while(1)
-      {
-      PS_ON;
-      Wait_ms(1);
-      PS_OFF;
-      Wait_ms(1);
-      }
-    */
-
-    //--- PRUEBA DE SEGMENTOS
-    /*
-      while (1)
-      {
-      segment = 1;
-      i = 0;
-      do
-      {
-      seg_neg =  ~segment;
-      SendSegment(seg_neg);
-      segment <<= 1;
-      i++;
-      Wait_ms(1000);
-      }
-      while (i < 8);
-
-      Wait_ms(5000);
-      }
-    */
-    //--- FIN PRUEBA DE SEGMENTOS
-
-    //--- PRUEBA DE NUMEROS DEL 0 AL 9
-    /*
-      while (1)
-      {
-      if (LED)
-      LED_OFF;
-      else
-      LED_ON;
-
-      for (i = 0; i < 11; i++)
-      {
-      ShowNumbers(i);
-      Wait_ms(1000);
-
-      }
-      Wait_ms(5000);
-      }
-    */
-    //--- FIN PRUEBA DE NUMEROS DEL 0 AL 9
-
-    //--- PRUEBA DE NUMEROS DEL 0 AL 9 + TACT SWITCHES
-    /*
-      while (1)
-      {
-      switches = ReadSwitches();
-
-      if (switches != NO_KEY)
-      {
-      LED_ON;
-      ShowNumbers(switches);
-      }
-      else
-      {
-      //ShowNumbers(DISPLAY_NONE);
-      LED_OFF;
-      }
-      }
-    */
-    //--- FIN PRUEBA DE NUMEROS DEL 0 AL 9 + TACT SWITCHES
-
-    //--- PRUEBA DE CODIGOS
-    /*
-      SirenCommands(SIREN_MULTIPLE_UP_CMD);
-      while (1)
-      {
-      RxCode();
-      UpdateSiren();
-      }
-    */
-    //--- FIN PRUEBA DE CODIGOS
 
     while (1)
     {
@@ -909,49 +805,6 @@ int main(void)
             }
 
             main_state = MAIN_TO_MAIN_OK;
-
-            /*
-              if (prog_remote)
-              {
-              if (RxCode() == ENDED_OK)
-              {
-              //en code0 y code1 tengo lo recibido
-              button_remote = CheckButtonRemote(code0, code1);
-
-              //se cancelo la operacion
-              if (button_remote == REM_B10)
-              {
-              ShowNumbers(DISPLAY_NONE);
-              SirenCommands(SIREN_HALF_CMD);
-              BuzzerCommands(BUZZER_HALF_CMD, 1);
-              main_state = MAIN_TO_MAIN_CANCEL;
-              }
-
-              //es la confirmacion
-              if (button_remote == REM_B12)
-              {
-              if (Write_Code_To_Memory(position, 0xFFFFFFFF) != 0)
-              {
-              Usart1Send((char *) "Codigo Borrado OK\r\n");
-              VectorToDisplay(DISPLAY_ZERO);
-              VectorToDisplay(DISPLAY_POINT);	//agrego punto
-              VectorToDisplay(DISPLAY_NONE);
-              SirenCommands(SIREN_CONFIRM_OK_CMD);
-              BuzzerCommands(BUZZER_SHORT_CMD, 7);
-              }
-              else
-              {
-              Usart1Send((char *) "Error al borrar\r\n");
-              ShowNumbers(DISPLAY_NONE);
-              SirenCommands(SIREN_HALF_CMD);
-              BuzzerCommands(BUZZER_HALF_CMD, 1);
-              }
-              main_state = MAIN_TO_MAIN_OK;
-              }
-              }
-
-              }
-            */
             break;
 
         case MAIN_TO_DEL_REMOTE_CODE:
@@ -1009,49 +862,49 @@ int main(void)
             interdigit_timeout = 300;	//espero que se limpien las teclas
             break;
 
-        case MAIN_TO_MONITORING:
-            Usart1Send((char *) "Goto 115200 confirmed\r\n");
-            main_state++;
-            interdigit_timeout = 300;	//espero que se limpien los buffers
-            break;
+        // case MAIN_TO_MONITORING:
+        //     Usart1Send((char *) "Goto 115200 confirmed\r\n");
+        //     main_state++;
+        //     interdigit_timeout = 300;	//espero que se limpien los buffers
+        //     break;
 
-        case MAIN_TO_MONITORINGA:
-            if (!interdigit_timeout)
-            {
-                ShowNumbers(DISPLAY_REMOTE);
-                USART1->CR1 &= ~USART_CR1_UE;
-                USART1->BRR = USART_115200;
-                USART1->CR1 |= USART_CR1_UE;
-                main_state++;
-            }
-            break;
+        // case MAIN_TO_MONITORINGA:
+        //     if (!interdigit_timeout)
+        //     {
+        //         ShowNumbers(DISPLAY_REMOTE);
+        //         USART1->CR1 &= ~USART_CR1_UE;
+        //         USART1->BRR = USART_115200;
+        //         USART1->CR1 |= USART_CR1_UE;
+        //         main_state++;
+        //     }
+        //     break;
 
-        case MAIN_TO_MONITORINGB:
-            Usart1Send((char *) "Monitoring confirmed\r\n");	//enviado a 115200
-            main_state++;
-            break;
+        // case MAIN_TO_MONITORINGB:
+        //     Usart1Send((char *) "Monitoring confirmed\r\n");	//enviado a 115200
+        //     main_state++;
+        //     break;
 
-        case MAIN_TO_MONITORINGC:
+        // case MAIN_TO_MONITORINGC:
 
-            break;
+        //     break;
 
 
-        case MAIN_TO_MONITORING_LEAVE:
-            Usart1Send((char *) "Goto 9600 confirmed\r\n");
-            main_state++;
-            interdigit_timeout = 300;	//espero que se limpien los buffers
-            break;
+        // case MAIN_TO_MONITORING_LEAVE:
+        //     Usart1Send((char *) "Goto 9600 confirmed\r\n");
+        //     main_state++;
+        //     interdigit_timeout = 300;	//espero que se limpien los buffers
+        //     break;
 
-        case MAIN_TO_MONITORINGE:
-            if (!interdigit_timeout)
-            {
-                ShowNumbers(DISPLAY_NONE);
-                USART1->CR1 &= ~USART_CR1_UE;
-                USART1->BRR = USART_9600;
-                USART1->CR1 |= USART_CR1_UE;
-                main_state = MAIN_TO_MAIN_OK;
-            }
-            break;
+        // case MAIN_TO_MONITORINGE:
+        //     if (!interdigit_timeout)
+        //     {
+        //         ShowNumbers(DISPLAY_NONE);
+        //         USART1->CR1 &= ~USART_CR1_UE;
+        //         USART1->BRR = USART_9600;
+        //         USART1->CR1 |= USART_CR1_UE;
+        //         main_state = MAIN_TO_MAIN_OK;
+        //     }
+        //     break;
 
         case MAIN_TO_MAIN_WAIT_5SEGS:
             interdigit_timeout = ACT_DESACT_IN_MSECS;	//espero 5 segundos luego del codigo grabado OK
@@ -1067,99 +920,24 @@ int main(void)
             main_state = MAIN_INIT;
             break;
 
-        case MAIN_MEMORY_DUMP:
-            //cargo 256 numeros al vector de 1024 posiciones
-            SST_MemoryDump (OFFSET_CODES_256);
-            main_state = MAIN_INIT;
-            break;
+        // case MAIN_MEMORY_DUMP:
+        //     //cargo 256 numeros al vector de 1024 posiciones
+        //     SST_MemoryDump (OFFSET_CODES_256);
+        //     main_state = MAIN_INIT;
+        //     break;
 
-        case MAIN_MEMORY_DUMP2:
-            //cargo 256 numeros al vector de 1024 posiciones
-            SST_MemoryDump (OFFSET_CODES_512);
-            main_state = MAIN_INIT;
-            break;
+        // case MAIN_MEMORY_DUMP2:
+        //     //cargo 256 numeros al vector de 1024 posiciones
+        //     SST_MemoryDump (OFFSET_CODES_512);
+        //     main_state = MAIN_INIT;
+        //     break;
 
         default:
             main_state = MAIN_INIT;
             break;
 
         }
-        /*
-          if (LED)
-          {
-          LED_OFF;
-          FPLUS_OFF;
-          F12PLUS_OFF;
-          F5PLUS_OFF;
-          //BUZZER_OFF;
-          //WP_ON;
-          //CE_ON;
-          Power_Ampli_Ena();
-          }
-          else
-          {
-          LED_ON;
-          FPLUS_ON;
-          F12PLUS_ON;
-          F5PLUS_ON;
-          //BUZZER_ON;
-          //WP_OFF;
-          //CE_OFF;
-          Power_Ampli_Disa();
-          }
-        */
-        /*
-          i = (unsigned char) ReadSwitches();
-          ShowNumbers(i);
-          //Wait_ms(50);
-          if (buffrx_ready)
-          {
-          j = InterpretarMsg(pbuffrx);
-          buffrx_ready = 0;
-          if (j != ERROR)
-          Usart1Send((const char *) "OK\r\n");
-          }
 
-          if (RxCode() == ENDED_OK)
-          {
-          code = code0;
-          code <<= 16;
-          code |= code1;
-
-          dummy16 = CheckCodeInMemory (code);
-          if (dummy16 != 0xffff)
-          {
-          sprintf(str, "Code Finded in: %04d\r\n", dummy16);
-          Usart1Send(str);
-          }
-          else
-          {
-          sprintf(str, "Code: %04X %04X not finded\r\n", code0, code1);
-          Usart1Send(str);
-          }
-          }
-        */
-
-        /*
-          Wait_ms(2000);
-          if (ReadMem())
-          Usart1Send((const char *) "Mem OK\r\n");
-          else
-          Usart1Send((const char *) "Mem NOK!!\r\n");
-        */
-
-        /*
-          if (j == 0)
-          {
-          dummy16 = Write_Code_To_Memory(512, 0x4D08064A);
-          j = 1;
-          if (dummy16 == 0)
-          Usart1Send((const char *) "No grabo\r\n");
-          else
-          Usart1Send((const char *) "Grabado OK\r\n");
-          }
-          while(1);
-        */
         UpdateBuzzer();
         UpdateDisplaySM();
         UpdateSiren();

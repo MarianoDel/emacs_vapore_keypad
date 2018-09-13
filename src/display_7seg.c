@@ -54,7 +54,7 @@ void ShowNumbersAgain (void)
 //negados
 const unsigned char v_display_numbers [] = { 0xC0, 0xF9, 0xA4, 0xB0, 0x99, 0x92, 0x82, 0xF8,
                                              0x80, 0x98, 0x7F, 0xBF, 0x9C, 0x06, 0xB0, 0xA3,
-                                             0x8B, 0x92 };
+                                             0x8B, 0x92, 0x8C };
 
 //beware read the switches disables de displayed number
 //system calls ShowNumbersAgain to solve this

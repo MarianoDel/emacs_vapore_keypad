@@ -44,6 +44,10 @@
 #define ACT_DESACT_IN_SECS	2
 #define ACT_DESACT_IN_MSECS	2000
 #endif
+#ifdef PROGRAMA_DE_GESTION	//evita problemas de compilacion en el main
+#define ACT_DESACT_IN_SECS	2
+#define ACT_DESACT_IN_MSECS	2000
+#endif
 
 #ifdef EV1527
 #define WITHOUT_ABSOLUTE_VALUE_CTROL_EV1527

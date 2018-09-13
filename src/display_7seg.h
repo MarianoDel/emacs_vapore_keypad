@@ -31,8 +31,11 @@
 #define DISPLAY_SQR_DOWN		15
 #define DISPLAY_H        16
 #define DISPLAY_S        17
+#define DISPLAY_PROG     18
 
-#define SIZEOF_VDISPLAY    DISPLAY_S + 1
+#define SIZEOF_VDISPLAY    DISPLAY_PROG + 1
+//cargar nuevos simbolos en ShowNumbers
+//y en UpdateDisplaySM si se necesita enviarlos vectorizados
 
 //estados de la SM del DISPLAY
 typedef enum {

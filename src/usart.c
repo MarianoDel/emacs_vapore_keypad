@@ -19,6 +19,8 @@
 /* Externals ------------------------------------------------------------------*/
 extern mem_bkp_typedef memory_backup;
 extern volatile unsigned char binary_full;
+// extern volatile unsigned short binary_bytes;
+
 
 extern volatile unsigned char usart1_have_data;
 extern volatile unsigned char tx1buff[];
@@ -49,6 +51,7 @@ unsigned char UpdateUart(unsigned char last_state)
 		last_state = InterpretarMsg (last_state, (char *) rx1buff);
 		// memset((char *) rx1buff, '\0', sizeof(rx1buff));
 		memset((char *) rx1buff, '\0', SIZEOF_DATA);
+                prx1 = rx1buff;
 	}
 	return last_state;
         
@@ -109,7 +112,11 @@ void USART1_IRQHandler(void)
         {
             if (prx1 < &rx1buff[SIZEOF_DATA])
             {
-                if ((dummy == '\n') || (dummy == '\r') || (dummy == 26))		//26 es CTRL-Z
+                //al /r no le doy bola
+                if (dummy == '\r')
+                {
+                }
+                else if ((dummy == '\n') || (dummy == 26))		//26 es CTRL-Z
                 {
                     *prx1 = '\0';
                     usart1_have_data = 1;
@@ -120,6 +127,8 @@ void USART1_IRQHandler(void)
                     prx1++;
                 }
             }
+            else
+                prx1 = rx1buff;    //soluciona problema bloqueo con garbage
         }
     }
         
@@ -172,6 +181,10 @@ void Usart1SendSingle(unsigned char tosend)
     Usart1SendUnsigned(&tosend, 1);
 }
 
-
+void UsartRxBinary (void)
+{
+    binary_bytes = 0;
+    binary_full = 0;
+}
 //--- end of file ---//
 

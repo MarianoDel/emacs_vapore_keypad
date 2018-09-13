@@ -20,7 +20,8 @@
 
 // #define PROGRAMA_NORMAL
 // #define PROGRAMA_DE_BUCLE
-#define PROGRAMA_FACTORY_TEST
+// #define PROGRAMA_FACTORY_TEST
+#define PROGRAMA_DE_GESTION
 
 //----------- Hardware Board Version -------------
 #define VER_1_3
@@ -56,8 +57,8 @@
 #ifdef PROGRAMA_FACTORY_TEST
 #define KIND_OF_PROGRAM "Panel con Programa de testeo en fabrica\r\n"
 #endif
-#ifdef TEST_FIXED_VOUT
-#define KIND_OF_PROGRAM "Programa Vout fijo\n"
+#ifdef PROGRAMA_DE_GESTION
+#define KIND_OF_PROGRAM "Programa de Gestion para Grabar SST\r\n"
 #endif
 //---- End of Program Configuration ----------
 
@@ -168,73 +169,17 @@ enum TestStateEnum
 #define MAIN_TO_SAVE_REMOTE_AT_LAST		13
 #define MAIN_TO_CHANGE_USER_PASSWORD	14
 
-#define MAIN_TO_MAIN_CANCEL			20
+#define MAIN_TO_MAIN_CANCEL		20
 #define MAIN_TO_MAIN_OK			21
-#define MAIN_TO_MAIN_TIMEOUT			22
+#define MAIN_TO_MAIN_TIMEOUT		22
+#define MAIN_TO_MAIN_WAIT_5SEGS         23
+#define MAIN_TO_MAIN_WAIT_5SEGSA        24
+#define MAIN_TO_MASS_ERASE_AT_LAST	25
 
-#define MAIN_TO_MASS_ERASE0		30
-#define MAIN_TO_MASS_ERASE1		31
-#define MAIN_TO_MASS_ERASE_AT_LAST		32
+// #define MAIN_TO_MASS_ERASE0		30
+// #define MAIN_TO_MASS_ERASE1		31
 
-#define MAIN_TO_MONITORING		40
-#define MAIN_TO_MONITORINGA		41
-#define MAIN_TO_MONITORINGB		42
-#define MAIN_TO_MONITORINGC		43
-#define MAIN_TO_MONITORING_LEAVE		44
-#define MAIN_TO_MONITORINGE				45
 
-#define MAIN_TO_SAVE_TIME		50
-
-#define MAIN_TO_MAIN_WAIT_5SEGS		60
-#define MAIN_TO_MAIN_WAIT_5SEGSA	61
-
-//#define MAIN_TO_READ_SST		70
-//#define MAIN_TO_READ_SSTA		71
-//#define MAIN_TO_READ_SSTB		72
-
-#define MAIN_TO_WRITE_SST0		80
-#define MAIN_TO_WRITE_SST0_A	81
-#define MAIN_TO_WRITE_SST0_B	82
-#define MAIN_TO_WRITE_SST0_C	83
-
-#define MAIN_TO_WRITE_SST1		90
-#define MAIN_TO_WRITE_SST1_A	91
-#define MAIN_TO_WRITE_SST1_B	92
-
-#define MAIN_TO_WRITE_SST2		100
-#define MAIN_TO_WRITE_SST2_A	101
-#define MAIN_TO_WRITE_SST2_B	102
-
-#define MAIN_TO_WRITE_SST3		110
-#define MAIN_TO_WRITE_SST3_A	111
-#define MAIN_TO_WRITE_SST3_B	112
-
-#define MAIN_TO_WRITE_SST4		120
-#define MAIN_TO_WRITE_SST4_A	121
-#define MAIN_TO_WRITE_SST4_B	122
-
-#define MAIN_TO_WRITE_SST5		130
-#define MAIN_TO_WRITE_SST5_A	131
-#define MAIN_TO_WRITE_SST5_B	132
-
-#define MAIN_TO_WRITE_SST6		140
-#define MAIN_TO_WRITE_SST6_A	141
-#define MAIN_TO_WRITE_SST6_B	142
-
-#define MAIN_TO_WRITE_SST7		150
-#define MAIN_TO_WRITE_SST7_A	151
-#define MAIN_TO_WRITE_SST7_B	152
-
-#define MAIN_TO_WRITE_SST8		160
-#define MAIN_TO_WRITE_SST8_A	161
-#define MAIN_TO_WRITE_SST8_B	162
-
-#define MAIN_TO_WRITE_SST9		170
-#define MAIN_TO_WRITE_SST9_A	171
-#define MAIN_TO_WRITE_SST9_B	172
-
-#define MAIN_MEMORY_DUMP		200
-#define MAIN_MEMORY_DUMP2		201
 
 
 //ESTADOS DEL KEYPAD REMOTO

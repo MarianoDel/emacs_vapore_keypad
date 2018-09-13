@@ -79,6 +79,7 @@ void USART1_IRQHandler(void);
 void Usart1SendUnsigned(unsigned char *, unsigned char);
 void Usart1Send (char *);
 void Usart1Config (void);
+void UsartRxBinary (void);
 
 #endif /* _USART_H_ */
 
