@@ -255,6 +255,9 @@ int main(void)
 
     /* Welcome Code ------------------------------------------------------------*/    
     //---- Defines from hard.h -----//
+#ifdef PROGRAMA_DE_GESTION
+    Usart1ChangeBaud(USART_115200);
+#endif
     Usart1Send((char *) " - Kirno Technology - STM32F030K6\r\n");
     Wait_ms(100);
     Usart1Send((char *) "Sistema de Alarma ALERTA VECINAL\r\n");
@@ -282,6 +285,7 @@ int main(void)
 #endif
 
     //-- HARDWARE pero para Display --
+#ifdef WITH_WELCOME_CODE_ON_DISPLAY
 #ifdef VER_1_3
     VectorToDisplayStr("h1.3");
     while (!DisplayIsFree())
@@ -290,6 +294,7 @@ int main(void)
     VectorToDisplayStr("s2.0");
     while (!DisplayIsFree())
         UpdateDisplaySM();    
+#endif
 #endif
     /* End of Welcome Code ------------------------------------------------------*/    
     

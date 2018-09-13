@@ -46,10 +46,6 @@ const char s_ok_finish_conf [] = {"FINISH CONF\r\n"};
 /* Module Functions ------------------------------------------------------------*/
 void FuncGestion (void)
 {
-    USART1->CR1 &= ~USART_CR1_UE;
-    USART1->BRR = USART_115200;
-    USART1->CR1 |= USART_CR1_UE;
-
     Usart1Send((char *) "STM32F030K6 Programa de Gestion de Memoria\r\n");
 
     //cargo los valores de memoria

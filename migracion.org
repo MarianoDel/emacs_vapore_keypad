@@ -25,7 +25,8 @@
    CLOSED: [2018-09-09 Sun 16:30]
    - pasar a emacs...
 
-** TODO Quitar Lib STM32
+** DONE Quitar Lib STM32
+   CLOSED: [2018-09-13 Thu 08:53]
    - hacer upgrade y quitar clone_vapore
 *** Pruebo objetos de LIBST desde el makefile
     - no utiliza funciones del adc
@@ -33,10 +34,12 @@
     - de misc utiliza NVIC
     - de rcc utiliza RCC_APB2Perph y RCC_AHBPerip
 
-** TODO Armar nuevos modelos de archivos en modulos
+** DONE Armar nuevos modelos de archivos en modulos
+   CLOSED: [2018-09-13 Thu 08:53]
    - .h .c con nuevo modelo
 
-** TODO Achicar todo lo posible el program luego de quitar LibST
+** DONE Achicar todo lo posible el program luego de quitar LibST
+   CLOSED: [2018-09-13 Thu 08:53]
    - switches de segmentos pueden transformarse a vectores con un wrapper de error del caso no disponible
    - con alguna macro para revisar el tamanio del vector
    - revisar con nm donde vale la pena recortar codigo para anar bytes
@@ -98,7 +101,13 @@
 **** DONE modulo flash_program
      CLOSED: [2018-09-11 Tue 15:06]
 
-** TODO Agregar Welcome code la version del HARD
+** DONE Agregar Welcome code la version del HARD
+   CLOSED: [2018-09-13 Thu 08:53]
+
+** DONE Puse los programas adicionales de Gestion y Factory Test dentro del proyecto
+   CLOSED: [2018-09-13 Thu 08:55]
+*** Gestion tenia un problema con el '\r' en la serie
+    - lo solucione no dandole bola a ese caracter
 
 * Opcion 1
 ** Agrandar el tiempo de espera de control a 1 minuto
@@ -108,4 +117,5 @@
 ** TODO Armar programa que deje grabar controles con incremento automatico
 
 * Opcion 3
-** TODO Ver de meter el programa de grabacion de audios y conf en el mismo principal
+** DONE Ver de meter el programa de grabacion de audios y conf en el mismo principal
+   CLOSED: [2018-09-13 Thu 08:55]

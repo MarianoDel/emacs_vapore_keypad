@@ -17,6 +17,7 @@
 // VER RWS317.H LO QUE TIENE QUE VER CON CODIGOS Y CONTROLES
 #define CON_BLOQUEO_DE_KEYPAD
 #define CON_MODIFICACION_DIODO_BATERIA
+// #define WITH_WELCOME_CODE_ON_DISPLAY
 
 // #define PROGRAMA_NORMAL
 // #define PROGRAMA_DE_BUCLE
@@ -39,12 +40,12 @@
 
 //--- Hardware Welcome Code ------------------//
 #ifdef HARDWARE_VERSION_1_3
-#define HARD "Hardware V: 1.3\n"
+#define HARD "Hardware V: 1.3\r\n"
 #endif
 
 //--- Software Welcome Code ------------------//
 #ifdef SOFTWARE_VERSION_2_0
-#define SOFT "Software V: 2.0\n"
+#define SOFT "Software V: 2.0\r\n"
 #endif
 
 //--- Type of Program Announcement ----------------

@@ -186,5 +186,12 @@ void UsartRxBinary (void)
     binary_bytes = 0;
     binary_full = 0;
 }
+
+void Usart1ChangeBaud (unsigned short new_baud)
+{
+    USART1->CR1 &= ~USART_CR1_UE;
+    USART1->BRR = new_baud;
+    USART1->CR1 |= USART_CR1_UE;
+}
 //--- end of file ---//
 

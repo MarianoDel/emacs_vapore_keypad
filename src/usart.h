@@ -80,6 +80,7 @@ void Usart1SendUnsigned(unsigned char *, unsigned char);
 void Usart1Send (char *);
 void Usart1Config (void);
 void UsartRxBinary (void);
+void Usart1ChangeBaud (unsigned short);
 
 #endif /* _USART_H_ */
 
