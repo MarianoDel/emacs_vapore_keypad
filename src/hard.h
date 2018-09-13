@@ -19,10 +19,10 @@
 #define CON_MODIFICACION_DIODO_BATERIA
 // #define WITH_WELCOME_CODE_ON_DISPLAY
 
-// #define PROGRAMA_NORMAL
+#define PROGRAMA_NORMAL
 // #define PROGRAMA_DE_BUCLE
 // #define PROGRAMA_FACTORY_TEST
-#define PROGRAMA_DE_GESTION
+// #define PROGRAMA_DE_GESTION
 
 //----------- Hardware Board Version -------------
 #define VER_1_3

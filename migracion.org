@@ -115,7 +115,20 @@
      
 * Opcion 2
 ** TODO Armar programa que deje grabar controles con incremento automatico
+** Algo parecido a la secuencia de blanqueo
 
 * Opcion 3
 ** DONE Ver de meter el programa de grabacion de audios y conf en el mismo principal
    CLOSED: [2018-09-13 Thu 08:55]
+
+* Funciones Normales del Panel
+** Blanqueo
+   - desbloquear teclado
+   - 000#
+   - 999#
+
+** Borrar Control
+   - desbloquear teclado
+   - XXX#    //numero a borrar
+   - 0#
+
