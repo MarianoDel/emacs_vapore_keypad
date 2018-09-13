@@ -94,12 +94,8 @@ unsigned char CheckKeypad (unsigned char * sp0, unsigned char * sp1, unsigned ch
         }
 
         if (switches == STAR_KEY)
-        {
-            //se cancelo la operacion
-            ShowNumbers(DISPLAY_NONE);
-            BuzzerCommands(BUZZER_HALF_CMD, 1);
-            keypad_state = KCANCEL;
-        }
+            keypad_state = KCANCELLING;
+        
         break;
 
     case KRECEIVING_A:
@@ -118,12 +114,7 @@ unsigned char CheckKeypad (unsigned char * sp0, unsigned char * sp1, unsigned ch
 
     case KRECEIVING_B:			//segundo digito o confirmacion del primero
         if (switches == STAR_KEY)
-        {
-            //se cancelo la operacion
-            ShowNumbers(DISPLAY_NONE);
-            BuzzerCommands(BUZZER_HALF_CMD, 1);
-            keypad_state = KCANCEL;
-        }
+            keypad_state = KCANCELLING;            
 
         if (((switches > NO_KEY) && (switches < 10)) || (switches == ZERO_KEY))	//es un numero 1 a 9 o 0
         {
@@ -145,7 +136,6 @@ unsigned char CheckKeypad (unsigned char * sp0, unsigned char * sp1, unsigned ch
         //si esta apurado un solo numero
         if (switches == POUND_KEY)
         {
-            ShowNumbers(DISPLAY_LINE);
             BuzzerCommands(BUZZER_SHORT_CMD, 2);
             *sp2 = *sp0;
             *sp0 = 0;
@@ -161,7 +151,7 @@ unsigned char CheckKeypad (unsigned char * sp0, unsigned char * sp1, unsigned ch
 
     case KRECEIVING_C:
         //para validar switch anterior necesito que lo liberen
-        if (switches == 0)
+        if (switches == NO_KEY)
         {
             ShowNumbers(DISPLAY_NONE);
             keypad_state = KRECEIVING_D;
@@ -175,12 +165,7 @@ unsigned char CheckKeypad (unsigned char * sp0, unsigned char * sp1, unsigned ch
 
     case KRECEIVING_D:				//tercer digito o confirmacion del segundo
         if (switches == STAR_KEY)
-        {
-            //se cancelo la operacion
-            ShowNumbers(DISPLAY_NONE);
-            BuzzerCommands(BUZZER_HALF_CMD, 1);
-            keypad_state = KCANCEL;
-        }
+            keypad_state = KCANCELLING;
 
         if (((switches > NO_KEY) && (switches < 10)) || (switches == ZERO_KEY))	//es un numero 1 a 9 o 0
         {
@@ -203,7 +188,6 @@ unsigned char CheckKeypad (unsigned char * sp0, unsigned char * sp1, unsigned ch
         //si esta apurado dos numeros
         if (switches == POUND_KEY)
         {
-            ShowNumbers(DISPLAY_LINE);
             BuzzerCommands(BUZZER_SHORT_CMD, 2);
             *sp2 = *sp0;
             *posi = *sp2 * 10 + *sp1;
@@ -218,7 +202,7 @@ unsigned char CheckKeypad (unsigned char * sp0, unsigned char * sp1, unsigned ch
 
     case KRECEIVING_E:
         //para validar switch anterior necesito que lo liberen
-        if (switches == 0)
+        if (switches == NO_KEY)
         {
             ShowNumbers(DISPLAY_NONE);
             keypad_state = KRECEIVING_F;
@@ -233,16 +217,10 @@ unsigned char CheckKeypad (unsigned char * sp0, unsigned char * sp1, unsigned ch
 
     case KRECEIVING_F:
         if (switches == STAR_KEY)
-        {
-            //se cancelo la operacion
-            ShowNumbers(DISPLAY_NONE);
-            BuzzerCommands(BUZZER_HALF_CMD, 1);
-            keypad_state = KCANCEL;
-        }
+            keypad_state = KCANCELLING;
 
         if (switches == POUND_KEY)	//es la confirmacion
         {
-            ShowNumbers(DISPLAY_LINE);
             BuzzerCommands(BUZZER_SHORT_CMD, 2);
             *posi = *sp0 * 100 + *sp1 * 10 + *sp2;
 
@@ -253,6 +231,14 @@ unsigned char CheckKeypad (unsigned char * sp0, unsigned char * sp1, unsigned ch
             keypad_state = KTIMEOUT;
         break;
 
+    case KCANCELLING:
+            //se cancelo la operacion
+            ShowNumbers(DISPLAY_NONE);
+            BuzzerCommands(BUZZER_HALF_CMD, 1);
+            keypad_state = KCANCEL;
+            
+        break;
+        
     case KNUMBER_FINISH:
     case KCANCEL:
     case KTIMEOUT:

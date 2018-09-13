@@ -187,6 +187,7 @@ int main(void)
     char str [40];
 
     unsigned short position, mass_erase_position;
+    unsigned char seq_number = 0;
     unsigned short code_position;
     unsigned int code;
     unsigned char switches, switches_posi0, switches_posi1, switches_posi2;
@@ -597,18 +598,22 @@ int main(void)
             break;
 
         case MAIN_UNLOCK:
+            //este es la caso principal de selcciones desde aca segun lo elegido
+            //voy pasando a otros casos
 
             switches = CheckKeypad(&switches_posi0, &switches_posi1, &switches_posi2, &position);
             if (switches == KNUMBER_FINISH)
             {
                 if (position == 800)
                 {
+                    ShowNumbers(DISPLAY_PROG);
                     main_state = MAIN_TO_CHANGE_USER_PASSWORD;
                     Usart1Send("Change User Password\r\n");
                     wait_for_code_timeout = param_struct.wait_for_code;
                 }
                 else
                 {
+                    ShowNumbers(DISPLAY_LINE);
                     main_state = MAIN_TO_SAVE_AT_LAST;
                     wait_for_code_timeout = param_struct.wait_for_code;
                     sprintf(str, "Guardar en: %03d\r\n", position);
@@ -714,7 +719,7 @@ int main(void)
                 main_state = MAIN_TO_MAIN_WAIT_5SEGS;
             }
 
-            //Como tengo que conocer los tres juntos
+            //Backup de la posicion del control que me trajo hasta aca
             mass_erase_position = position;
             switches = CheckKeypad(&switches_posi0, &switches_posi1, &switches_posi2, &position);
             if (switches == KCANCEL)
@@ -722,18 +727,31 @@ int main(void)
                 main_state = MAIN_TO_MAIN_CANCEL;
             }
 
-            if ((switches == KNUMBER_FINISH) && (position == 0))	//termino el numero y era 0
+            //se eligio borrar una posicion de control
+            //xxx# y 0#
+            if ((switches == KNUMBER_FINISH) && (position == 0))
             {
-                //se va a borrar la posicion con teclado local
                 position = mass_erase_position;	//update de posicion del control
                 main_state = MAIN_TO_DEL_CODE;
             }
 
-            if ((switches == KNUMBER_FINISH) && (position == 999) && (mass_erase_position == 0))	//termino el numero y era 999
+            //se eligio borrar todos los codigos de memoria (BLANQUEO COMPLETO)
+            //000# y luego 999#
+            if ((switches == KNUMBER_FINISH) && (position == 999) && (mass_erase_position == 0))
             {
-                //se va a hacer un blanqueo completo
                 Usart1Send((char *) "\r\n- CUIDADO entrando en Blanqueo Completo -\r\n");
                 main_state = MAIN_TO_MASS_ERASE_AT_LAST;
+            }
+
+            //se eligio entrar en grabado de controles con secuencia
+            //dos veces el mismo codigo de grabado
+            if ((switches == KNUMBER_FINISH) && (position == mass_erase_position))
+            {
+                sprintf(str, "Grabar en secuencia desde: %d\r\n", position);
+                Usart1Send(str);
+                ShowNumbers(DISPLAY_S);
+                seq_number = 0;                
+                main_state = MAIN_TO_SAVE_IN_SEQUENCE;                
             }
 
             if (!wait_for_code_timeout)
@@ -855,6 +873,59 @@ int main(void)
             }
             break;
 
+        case MAIN_TO_SAVE_IN_SEQUENCE:
+            //me quedo esperando un código de control valido para guardarlo en posi
+            switches = CheckRemoteKeypad(&switches_posi0, &switches_posi1, &switches_posi2, &position);
+            if (switches == RK_MUST_BE_CONTROL)
+            {
+                code = code0;
+                code <<= 16;
+                code |= code1;
+                code_position = CheckCodeInMemory(code);
+                if (code_position == 0xFFFF)
+                {
+                    //el codigo no se habia utilizado
+                    if (Write_Code_To_Memory(position, code) != 0)
+                    {
+                        sprintf(str, "Codigo Guardado OK en: %d\r\n", (position + seq_number));
+                        Usart1Send(str);
+                        ConvertPositionToDisplay((position + seq_number));
+                        BuzzerCommands(BUZZER_SHORT_CMD, 7);
+                        seq_number++;
+                    }
+                    else
+                    {
+                        Usart1Send((char *) "Error al guardar, problemas de memoria??\r\n");
+                        //salgo por error
+                        VectorToDisplayStr("e");
+                        main_state = MAIN_TO_MAIN_WAIT_5SEGS;                        
+                    }
+                }
+                else
+                {
+                    //se habia utilizado en otra posicion
+                    sprintf(str, "Error codigo ya esta en: %03d\r\n", code_position);
+                    Usart1Send(str);
+                    ConvertPositionToDisplay(code_position);
+                    BuzzerCommands(BUZZER_HALF_CMD, 2);
+                    //salgo por error
+                    main_state = MAIN_TO_MAIN_WAIT_5SEGS;                    
+                }
+            }
+
+            switches = CheckKeypad(&switches_posi0, &switches_posi1, &switches_posi2, &position);
+            if (switches == KCANCEL)
+            {
+                Usart1Send((char *) "Termino de grabar en secuencia\r\n");
+                main_state = MAIN_TO_MAIN_CANCEL;
+            }
+
+            //si no estoy en enviado la secuencia de numeros pongo la S
+            if (DisplayIsFree())
+                ShowNumbers(DISPLAY_S);
+            
+            break;
+            
         case MAIN_TO_MAIN_CANCEL:
             Usart1Send((char *) "Opereta cancelada\r\n");
             main_state = MAIN_INIT;

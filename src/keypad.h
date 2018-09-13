@@ -36,6 +36,7 @@
 #define KNUMBER_FINISH		8
 #define KCANCEL				9
 #define KTIMEOUT			10
+#define KCANCELLING        11
 
 // //estados de la SM del DISPLAY
 // typedef enum {

@@ -132,3 +132,7 @@
    - XXX#    //numero a borrar
    - 0#
 
+** Grabado en secuencia
+   - desbloquear teclado
+   - XXX#    //numero a grabar
+   - XXX#    //habilita grabado en secuencia

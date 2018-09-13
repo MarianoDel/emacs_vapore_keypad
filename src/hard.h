@@ -176,6 +176,7 @@ enum TestStateEnum
 #define MAIN_TO_MAIN_WAIT_5SEGS         23
 #define MAIN_TO_MAIN_WAIT_5SEGSA        24
 #define MAIN_TO_MASS_ERASE_AT_LAST	25
+#define MAIN_TO_SAVE_IN_SEQUENCE	26
 
 // #define MAIN_TO_MASS_ERASE0		30
 // #define MAIN_TO_MASS_ERASE1		31
