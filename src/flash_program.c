@@ -212,7 +212,8 @@ void LoadConfiguration (void)
 	param_struct.interdigit = 3000;
         //modificacion 09-09-18 doy mas tiempo para recibir un codigo en programacion
 	// param_struct.wait_for_code = 10000;
-	param_struct.wait_for_code = 60000;        
+	param_struct.wait_for_code = 60000;
+	// param_struct.wait_for_code = 55000;    //doy 55s para que tenga algo de espacio el unlock de 60s
 
 }
 #endif

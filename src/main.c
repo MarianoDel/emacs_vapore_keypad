@@ -197,6 +197,7 @@ int main(void)
     //unsigned short * p_mem_dump;
     //unsigned char button_remote = 0;
     unsigned char digit_remote = 0;
+    unsigned char keypad_locked = 1;
 
     //!< At this stage the microcontroller clock setting is already configured,
     //   this is done through SystemInit() function which is called from startup
@@ -439,8 +440,6 @@ int main(void)
     UpdateDisplayResetSM();
     //apago el display
     ShowNumbers(DISPLAY_NONE);
-
-
     
     BuzzerCommands(BUZZER_LONG_CMD, 2);
 
@@ -507,21 +506,23 @@ int main(void)
 
 #ifdef CON_BLOQUEO_DE_KEYPAD
             if (!interdigit_timeout)
-                main_state = MAIN_MAIN;
+            {
+                if (keypad_locked)
+                    main_state = MAIN_MAIN;
+                else    //cambio 21-09-18 a unica forma de hacer un lock es estar 60s sin tocar nada
+                    main_state = MAIN_TO_UNLOCK;
+            }
 #else
             main_state = MAIN_UNLOCK;
 #endif
             break;
 
         case MAIN_MAIN:
-            //si termine alguna operacion y estaba con unlock
-            if (timer_keypad_enabled)
-                main_state = MAIN_TO_UNLOCK;
-
             if (CheckKeypad(&switches_posi0, &switches_posi1, &switches_posi2, &position) == KNUMBER_FINISH)
             {
                 if (position == 951)
                 {
+                    keypad_locked = 0;
                     Usart1Send("Master Unlock\r\n");
                     main_state = MAIN_TO_UNLOCK;
                 }
@@ -531,12 +532,14 @@ int main(void)
                     {
                         if (position == 416)
                         {
+                            keypad_locked = 0;                            
                             Usart1Send("User default Unlock\r\n");
                             main_state = MAIN_TO_UNLOCK;
                         }
                     }
                     else if (position == (unsigned short) SST_CheckIndexInMemory(1000))
                     {
+                        keypad_locked = 0;
                         Usart1Send("User Unlock\r\n");
                         main_state = MAIN_TO_UNLOCK;
                     }
@@ -560,6 +563,7 @@ int main(void)
                     Usart1Send("Master Remote Unlock\r\n");
                     main_state = MAIN_TO_UNLOCK;
                     unlock_by_remote = 1;
+                    keypad_locked = 0;
                 }
                 else
                 {
@@ -570,6 +574,7 @@ int main(void)
                             Usart1Send("User default Remote Unlock\r\n");
                             main_state = MAIN_TO_UNLOCK;
                             unlock_by_remote = 1;
+                            keypad_locked = 0;
                         }
                     }
                     else if (position == (unsigned short) SST_CheckIndexInMemory(1000))
@@ -577,6 +582,7 @@ int main(void)
                         Usart1Send("User Remote Unlock\r\n");
                         main_state = MAIN_TO_UNLOCK;
                         unlock_by_remote = 1;
+                        keypad_locked = 0;
                     }
                 }
             }
@@ -649,6 +655,7 @@ int main(void)
 #ifdef CON_BLOQUEO_DE_KEYPAD
             if (!timer_keypad_enabled)
             {
+                keypad_locked = 1;
                 Usart1Send("Keypad Locked\r\n");
                 main_state = MAIN_MAIN;
                 unlock_by_remote = 0;
@@ -814,9 +821,6 @@ int main(void)
             if (Write_Code_To_Memory(position, 0xFFFFFFFF) != 0)
             {
                 Usart1Send((char *) "Codigo Borrado OK\r\n");
-                // VectorToDisplay(DISPLAY_ZERO);
-                // VectorToDisplay(DISPLAY_POINT);	//agrego punto
-                // VectorToDisplay(DISPLAY_NONE);
                 VectorToDisplayStr("0.");
                 BuzzerCommands(BUZZER_SHORT_CMD, 7);
             }
@@ -834,9 +838,6 @@ int main(void)
             if (Write_Code_To_Memory(position, 0xFFFFFFFF) != 0)
             {
                 Usart1Send((char *) "Codigo Borrado OK\r\n");
-                // VectorToDisplay(DISPLAY_ZERO);
-                // VectorToDisplay(DISPLAY_POINT);	//agrego punto
-                // VectorToDisplay(DISPLAY_NONE);
                 VectorToDisplayStr("0.");
                 SirenCommands(SIREN_CONFIRM_OK_CMD);
                 BuzzerCommands(BUZZER_SHORT_CMD, 7);
@@ -857,9 +858,6 @@ int main(void)
             if (EraseAllMemory() != 0)
             {
                 Usart1Send((char *) "Memoria Completa Borrada OK\r\n");
-                // VectorToDisplay(DISPLAY_ZERO);
-                // VectorToDisplay(DISPLAY_POINT);	//agrego punto
-                // VectorToDisplay(DISPLAY_NONE);
                 VectorToDisplayStr("0.");
                 BuzzerCommands(BUZZER_SHORT_CMD, 7);
                 main_state = MAIN_TO_MAIN_WAIT_5SEGS;
@@ -885,13 +883,14 @@ int main(void)
                 if (code_position == 0xFFFF)
                 {
                     //el codigo no se habia utilizado
-                    if (Write_Code_To_Memory(position, code) != 0)
+                    if (Write_Code_To_Memory((position + seq_number), code) != 0)
                     {
                         sprintf(str, "Codigo Guardado OK en: %d\r\n", (position + seq_number));
                         Usart1Send(str);
                         ConvertPositionToDisplay((position + seq_number));
                         BuzzerCommands(BUZZER_SHORT_CMD, 7);
                         seq_number++;
+                        main_state = MAIN_TO_SAVE_IN_SEQUENCE_WAITING;
                     }
                     else
                     {
@@ -925,6 +924,12 @@ int main(void)
                 ShowNumbers(DISPLAY_S);
             
             break;
+
+        case MAIN_TO_SAVE_IN_SEQUENCE_WAITING:
+            if (DisplayIsFree())
+                main_state = MAIN_TO_SAVE_IN_SEQUENCE;
+            
+            break;
             
         case MAIN_TO_MAIN_CANCEL:
             Usart1Send((char *) "Opereta cancelada\r\n");
@@ -937,50 +942,6 @@ int main(void)
             main_state = MAIN_INIT;
             interdigit_timeout = 300;	//espero que se limpien las teclas
             break;
-
-        // case MAIN_TO_MONITORING:
-        //     Usart1Send((char *) "Goto 115200 confirmed\r\n");
-        //     main_state++;
-        //     interdigit_timeout = 300;	//espero que se limpien los buffers
-        //     break;
-
-        // case MAIN_TO_MONITORINGA:
-        //     if (!interdigit_timeout)
-        //     {
-        //         ShowNumbers(DISPLAY_REMOTE);
-        //         USART1->CR1 &= ~USART_CR1_UE;
-        //         USART1->BRR = USART_115200;
-        //         USART1->CR1 |= USART_CR1_UE;
-        //         main_state++;
-        //     }
-        //     break;
-
-        // case MAIN_TO_MONITORINGB:
-        //     Usart1Send((char *) "Monitoring confirmed\r\n");	//enviado a 115200
-        //     main_state++;
-        //     break;
-
-        // case MAIN_TO_MONITORINGC:
-
-        //     break;
-
-
-        // case MAIN_TO_MONITORING_LEAVE:
-        //     Usart1Send((char *) "Goto 9600 confirmed\r\n");
-        //     main_state++;
-        //     interdigit_timeout = 300;	//espero que se limpien los buffers
-        //     break;
-
-        // case MAIN_TO_MONITORINGE:
-        //     if (!interdigit_timeout)
-        //     {
-        //         ShowNumbers(DISPLAY_NONE);
-        //         USART1->CR1 &= ~USART_CR1_UE;
-        //         USART1->BRR = USART_9600;
-        //         USART1->CR1 |= USART_CR1_UE;
-        //         main_state = MAIN_TO_MAIN_OK;
-        //     }
-        //     break;
 
         case MAIN_TO_MAIN_WAIT_5SEGS:
             interdigit_timeout = ACT_DESACT_IN_MSECS;	//espero 5 segundos luego del codigo grabado OK
