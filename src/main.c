@@ -198,6 +198,7 @@ int main(void)
     //unsigned char button_remote = 0;
     unsigned char digit_remote = 0;
     unsigned char keypad_locked = 1;
+    unsigned char remote_is_working = 0;
 
     //!< At this stage the microcontroller clock setting is already configured,
     //   this is done through SystemInit() function which is called from startup
@@ -646,10 +647,11 @@ int main(void)
             }
             else if (switches == RK_NUMBER_FINISH)
             {
-                main_state = MAIN_TO_SAVE_REMOTE_AT_LAST;
+                remote_is_working = 1;
                 wait_for_code_timeout = param_struct.wait_for_code;
                 sprintf(str, "Keypad Remoto guardar en: %03d\r\n", position);
                 Usart1Send(str);
+                main_state = MAIN_TO_SAVE_AT_LAST;                
             }
 
 #ifdef CON_BLOQUEO_DE_KEYPAD
@@ -659,6 +661,7 @@ int main(void)
                 Usart1Send("Keypad Locked\r\n");
                 main_state = MAIN_MAIN;
                 unlock_by_remote = 0;
+                remote_is_working = 0;
                 ShowNumbers(DISPLAY_NONE);
             }
 #endif
@@ -696,109 +699,57 @@ int main(void)
         case MAIN_TO_SAVE_AT_LAST:
 
             //me quedo esperando un código de control valido para guardarlo en posi
+            mass_erase_position = position;
             switches = CheckRemoteKeypad(&switches_posi0, &switches_posi1, &switches_posi2, &position);
-            if (switches == RK_MUST_BE_CONTROL)
-            {
-                code = code0;
-                code <<= 16;
-                code |= code1;
-                code_position = CheckCodeInMemory(code);
-                if (code_position == 0xFFFF)
-                {
-                    //el codigo no se habia utilizado
-                    if (Write_Code_To_Memory(position, code) != 0)
-                        Usart1Send((char *) "Codigo Guardado OK\r\n");
-                    else
-                        Usart1Send((char *) "Error al guardar\r\n");
 
-                    ConvertPositionToDisplay(position);
-                    BuzzerCommands(BUZZER_SHORT_CMD, 7);
-                }
-                else
+            //reviso primero todas las posibilidades del teclado remoto
+            if (remote_is_working)
+            {
+                if (switches == RK_CANCEL)
+                    main_state = MAIN_TO_MAIN_CANCEL;
+
+                //se eligio borrar una posicion de control desde el teclado remoto
+                //xxx# y 0#
+                else if ((switches == RK_NUMBER_FINISH) && (position == 0))	//termino el numero y era 0
                 {
-                    //se habia utilizado en otra posicion
-                    sprintf(str, "Error codigo ya esta en: %03d\r\n", code_position);
+                    //se va a borrar la posicion con teclado remoto
+                    position = mass_erase_position;	//update de posicion del control
+                    main_state = MAIN_TO_DEL_CODE;
+                }
+
+                //se eligio entrar en grabado de controles con secuencia desde el teclado remoto
+                //dos veces el mismo codigo de grabado
+                else if ((switches == RK_NUMBER_FINISH) && (position == mass_erase_position))
+                {
+                    sprintf(str, "Grabar en secuencia remota desde: %d\r\n", position);
                     Usart1Send(str);
-
-                    ConvertPositionToDisplay(code_position);
-                    BuzzerCommands(BUZZER_HALF_CMD, 2);
-                }
-                main_state = MAIN_TO_MAIN_WAIT_5SEGS;
-            }
-
-            //Backup de la posicion del control que me trajo hasta aca
-            mass_erase_position = position;
-            switches = CheckKeypad(&switches_posi0, &switches_posi1, &switches_posi2, &position);
-            if (switches == KCANCEL)
-            {
-                main_state = MAIN_TO_MAIN_CANCEL;
-            }
-
-            //se eligio borrar una posicion de control
-            //xxx# y 0#
-            if ((switches == KNUMBER_FINISH) && (position == 0))
-            {
-                position = mass_erase_position;	//update de posicion del control
-                main_state = MAIN_TO_DEL_CODE;
-            }
-
-            //se eligio borrar todos los codigos de memoria (BLANQUEO COMPLETO)
-            //000# y luego 999#
-            if ((switches == KNUMBER_FINISH) && (position == 999) && (mass_erase_position == 0))
-            {
-                Usart1Send((char *) "\r\n- CUIDADO entrando en Blanqueo Completo -\r\n");
-                main_state = MAIN_TO_MASS_ERASE_AT_LAST;
-            }
-
-            //se eligio entrar en grabado de controles con secuencia
-            //dos veces el mismo codigo de grabado
-            if ((switches == KNUMBER_FINISH) && (position == mass_erase_position))
-            {
-                sprintf(str, "Grabar en secuencia desde: %d\r\n", position);
-                Usart1Send(str);
-                ShowNumbers(DISPLAY_S);
-                seq_number = 0;                
-                main_state = MAIN_TO_SAVE_IN_SEQUENCE;                
-            }
-
-            if (!wait_for_code_timeout)
-                main_state = MAIN_TO_MAIN_TIMEOUT;
-
-            break;
-
-        case MAIN_TO_SAVE_REMOTE_AT_LAST:
-
-            mass_erase_position = position;
-            switches = CheckRemoteKeypad(&switches_posi0, &switches_posi1, &switches_posi2, &position);
-            if (switches == RK_CANCEL)
-            {
-                main_state = MAIN_TO_MAIN_CANCEL;
-            }
-
-            if ((switches == RK_NUMBER_FINISH) && (position == 0))	//termino el numero y era 0
-            {
-                //se va a borrar la posicion con teclado remoto
-                position = mass_erase_position;	//update de posicion del control
-                main_state = MAIN_TO_DEL_REMOTE_CODE;
-            }
-
-            if (switches == RK_MUST_BE_CONTROL)
-            {
-                code = code0;
-                code <<= 16;
-                code |= code1;
-                code_position = CheckCodeInMemory(code);
-                if (code_position == 0xFFFF)
-                {
-                    //el codigo no se habia utilizado
-                    if (Write_Code_To_Memory(position, code) != 0)
-                        Usart1Send((char *) "Codigo Guardado OK\r\n");
-                    else
-                        Usart1Send((char *) "Error al guardar\r\n");
-
-                    ConvertPositionToDisplay(position);
-                    BuzzerCommands(BUZZER_SHORT_CMD, 7);
+                    ShowNumbers(DISPLAY_S);
                     SirenCommands(SIREN_CONFIRM_OK_CMD);
+                    seq_number = 0;                
+                    main_state = MAIN_TO_SAVE_IN_SEQUENCE;                
+                }
+            }
+
+            //ahora podria ser un control
+            if (switches == RK_MUST_BE_CONTROL)
+            {
+                code = code0;
+                code <<= 16;
+                code |= code1;
+                code_position = CheckCodeInMemory(code);
+                if (code_position == 0xFFFF)
+                {
+                    //el codigo no se habia utilizado
+                    if (Write_Code_To_Memory(position, code) != 0)
+                        Usart1Send((char *) "Codigo Guardado OK\r\n");
+                    else
+                        Usart1Send((char *) "Error al guardar\r\n");
+
+                    ConvertPositionToDisplay(position);
+                    BuzzerCommands(BUZZER_SHORT_CMD, 7);
+                    if (remote_is_working)
+                        SirenCommands(SIREN_CONFIRM_OK_CMD);                    
+
                 }
                 else
                 {
@@ -808,10 +759,49 @@ int main(void)
 
                     ConvertPositionToDisplay(code_position);
                     BuzzerCommands(BUZZER_HALF_CMD, 2);
-                    SirenCommands(SIREN_HALF_CMD);
+                    if (remote_is_working)
+                        SirenCommands(SIREN_HALF_CMD);
+                    
                 }
                 main_state = MAIN_TO_MAIN_WAIT_5SEGS;
             }
+
+            if (!remote_is_working)
+            {
+                //Backup de la posicion del control que me trajo hasta aca
+                mass_erase_position = position;
+                switches = CheckKeypad(&switches_posi0, &switches_posi1, &switches_posi2, &position);
+                if (switches == KCANCEL)
+                    main_state = MAIN_TO_MAIN_CANCEL;
+
+                //se eligio borrar una posicion de control
+                //xxx# y 0#
+                if ((switches == KNUMBER_FINISH) && (position == 0))
+                {
+                    position = mass_erase_position;	//update de posicion del control
+                    main_state = MAIN_TO_DEL_CODE;
+                }
+
+                //se eligio borrar todos los codigos de memoria (BLANQUEO COMPLETO)
+                //000# y luego 999#
+                if ((switches == KNUMBER_FINISH) && (position == 999) && (mass_erase_position == 0))
+                {
+                    Usart1Send((char *) "\r\n- CUIDADO entrando en Blanqueo Completo -\r\n");
+                    main_state = MAIN_TO_MASS_ERASE_AT_LAST;
+                }
+
+                //se eligio entrar en grabado de controles con secuencia
+                //dos veces el mismo codigo de grabado
+                if ((switches == KNUMBER_FINISH) && (position == mass_erase_position))
+                {
+                    sprintf(str, "Grabar en secuencia desde: %d\r\n", position);
+                    Usart1Send(str);
+                    ShowNumbers(DISPLAY_S);
+                    seq_number = 0;                
+                    main_state = MAIN_TO_SAVE_IN_SEQUENCE;                
+                }
+            }
+
             if (!wait_for_code_timeout)
                 main_state = MAIN_TO_MAIN_TIMEOUT;
 
@@ -823,31 +813,16 @@ int main(void)
                 Usart1Send((char *) "Codigo Borrado OK\r\n");
                 VectorToDisplayStr("0.");
                 BuzzerCommands(BUZZER_SHORT_CMD, 7);
+                if (remote_is_working)
+                    SirenCommands(SIREN_CONFIRM_OK_CMD);                    
             }
             else
             {
                 Usart1Send((char *) "Error al borrar\r\n");
                 ShowNumbers(DISPLAY_NONE);
                 BuzzerCommands(BUZZER_HALF_CMD, 1);
-            }
-
-            main_state = MAIN_TO_MAIN_OK;
-            break;
-
-        case MAIN_TO_DEL_REMOTE_CODE:
-            if (Write_Code_To_Memory(position, 0xFFFFFFFF) != 0)
-            {
-                Usart1Send((char *) "Codigo Borrado OK\r\n");
-                VectorToDisplayStr("0.");
-                SirenCommands(SIREN_CONFIRM_OK_CMD);
-                BuzzerCommands(BUZZER_SHORT_CMD, 7);
-            }
-            else
-            {
-                Usart1Send((char *) "Error al borrar\r\n");
-                ShowNumbers(DISPLAY_NONE);
-                SirenCommands(SIREN_HALF_CMD);
-                BuzzerCommands(BUZZER_HALF_CMD, 1);
+                if (remote_is_working)
+                    SirenCommands(SIREN_HALF_CMD);                    
             }
 
             main_state = MAIN_TO_MAIN_OK;
@@ -888,9 +863,12 @@ int main(void)
                         sprintf(str, "Codigo Guardado OK en: %d\r\n", (position + seq_number));
                         Usart1Send(str);
                         ConvertPositionToDisplay((position + seq_number));
-                        BuzzerCommands(BUZZER_SHORT_CMD, 7);
+                        BuzzerCommands(BUZZER_SHORT_CMD, 7);                        
                         seq_number++;
                         main_state = MAIN_TO_SAVE_IN_SEQUENCE_WAITING;
+                        if (remote_is_working)
+                            SirenCommands(SIREN_CONFIRM_OK_CMD);                    
+                        
                     }
                     else
                     {
@@ -908,15 +886,27 @@ int main(void)
                     ConvertPositionToDisplay(code_position);
                     BuzzerCommands(BUZZER_HALF_CMD, 2);
                     //salgo por error
-                    main_state = MAIN_TO_MAIN_WAIT_5SEGS;                    
+                    main_state = MAIN_TO_MAIN_WAIT_5SEGS;
+                    if (remote_is_working)
+                        SirenCommands(SIREN_HALF_CMD);
+                    
                 }
             }
 
-            switches = CheckKeypad(&switches_posi0, &switches_posi1, &switches_posi2, &position);
-            if (switches == KCANCEL)
+            if (!remote_is_working)
             {
-                Usart1Send((char *) "Termino de grabar en secuencia\r\n");
-                main_state = MAIN_TO_MAIN_CANCEL;
+                switches = CheckKeypad(&switches_posi0, &switches_posi1, &switches_posi2, &position);
+                if (switches == KCANCEL)
+                {
+                    Usart1Send((char *) "Termino de grabar en secuencia\r\n");
+                    main_state = MAIN_TO_MAIN_CANCEL;
+                }
+            }
+            else if (switches == RK_CANCEL)
+            {
+                SirenCommands(SIREN_CONFIRM_OK_CMD);
+                Usart1Send((char *) "Termino de grabar remotos en secuencia\r\n");
+                main_state = MAIN_TO_MAIN_CANCEL;                
             }
 
             //si no estoy en enviado la secuencia de numeros pongo la S
@@ -924,7 +914,7 @@ int main(void)
                 ShowNumbers(DISPLAY_S);
             
             break;
-
+            
         case MAIN_TO_SAVE_IN_SEQUENCE_WAITING:
             if (DisplayIsFree())
                 main_state = MAIN_TO_SAVE_IN_SEQUENCE;
@@ -935,17 +925,20 @@ int main(void)
             Usart1Send((char *) "Opereta cancelada\r\n");
             main_state = MAIN_INIT;
             interdigit_timeout = 300;	//espero que se limpien las teclas
+            remote_is_working = 0;
             break;
 
         case MAIN_TO_MAIN_TIMEOUT:
             Usart1Send((char *) "Timeout\r\n");
             main_state = MAIN_INIT;
             interdigit_timeout = 300;	//espero que se limpien las teclas
+            remote_is_working = 0;            
             break;
 
         case MAIN_TO_MAIN_WAIT_5SEGS:
             interdigit_timeout = ACT_DESACT_IN_MSECS;	//espero 5 segundos luego del codigo grabado OK
             main_state = MAIN_TO_MAIN_WAIT_5SEGSA;
+            remote_is_working = 0;            
             break;
 
         case MAIN_TO_MAIN_WAIT_5SEGSA:
@@ -954,6 +947,7 @@ int main(void)
             break;
 
         case MAIN_TO_MAIN_OK:
+            remote_is_working = 0;
             main_state = MAIN_INIT;
             break;
 
@@ -1538,241 +1532,241 @@ unsigned char FuncAlarm (void)
 
 unsigned char CheckRemoteKeypad (unsigned char * sp0, unsigned char * sp1, unsigned char * sp2, unsigned short * posi)
 {
-	unsigned char button_remote = 0;
+    unsigned char button_remote = 0;
 
-	switch (remote_keypad_state)
-	{
-		case RK_NONE:
-			//me quedo esperando un código de control
-			if (RxCode() == ENDED_OK)
-			{
-				//reviso aca si es de remote keypad o control
-				//si es control contesto MUST_BE_CONTROL
+    switch (remote_keypad_state)
+    {
+    case RK_NONE:
+        //me quedo esperando un código de control
+        if (RxCode() == ENDED_OK)
+        {
+            //reviso aca si es de remote keypad o control
+            //si es control contesto MUST_BE_CONTROL
 
-				//en code0 y code1 tengo lo recibido
-				button_remote = CheckButtonRemote(code0, code1);
+            //en code0 y code1 tengo lo recibido
+            button_remote = CheckButtonRemote(code0, code1);
 
-				if (button_remote != REM_NO)
-				{
-					//se cancelo la operacion
-					if (button_remote == REM_B10)
-					{
-						ShowNumbers(DISPLAY_NONE);
-						if (unlock_by_remote)
-							SirenCommands(SIREN_HALF_CMD);
-						BuzzerCommands(BUZZER_HALF_CMD, 1);
-						remote_keypad_state = RK_CANCEL;
-					}
-					else if (((button_remote > REM_NO) && (button_remote < REM_B10)) || (button_remote == REM_B11))	//es un numero 1 a 9 o 0
-					{
-						//se presiono un numero - reviso si fue 0
-						if (button_remote == REM_B11)
-						{
-							ShowNumbers(10);
-							*sp0 = 0;
-						}
-						else
-						{
-							ShowNumbers(button_remote);
-							*sp0 = button_remote;
-						}
-						if (unlock_by_remote)
-							SirenCommands(SIREN_SHORT_CMD);
-						BuzzerCommands(BUZZER_SHORT_CMD, 1);
+            if (button_remote != REM_NO)
+            {
+                //se cancelo la operacion
+                if (button_remote == REM_B10)
+                {
+                    ShowNumbers(DISPLAY_NONE);
+                    if (unlock_by_remote)
+                        SirenCommands(SIREN_HALF_CMD);
+                    BuzzerCommands(BUZZER_HALF_CMD, 1);
+                    remote_keypad_state = RK_CANCEL;
+                }
+                else if (((button_remote > REM_NO) && (button_remote < REM_B10)) || (button_remote == REM_B11))	//es un numero 1 a 9 o 0
+                {
+                    //se presiono un numero - reviso si fue 0
+                    if (button_remote == REM_B11)
+                    {
+                        ShowNumbers(DISPLAY_ZERO);
+                        *sp0 = 0;
+                    }
+                    else
+                    {
+                        ShowNumbers(button_remote);
+                        *sp0 = button_remote;
+                    }
+                    if (unlock_by_remote)
+                        SirenCommands(SIREN_SHORT_CMD);
+                    BuzzerCommands(BUZZER_SHORT_CMD, 1);
 
-						*sp1 = 0;
-						*sp2 = 0;
-						remote_keypad_state = RK_RECEIVING_A;
-						interdigit_timeout = 1000;
-					}
-				}
-				else
-					remote_keypad_state = RK_MUST_BE_CONTROL;
-			}
-			break;
+                    *sp1 = 0;
+                    *sp2 = 0;
+                    remote_keypad_state = RK_RECEIVING_A;
+                    interdigit_timeout = 1000;
+                }
+            }
+            else
+                remote_keypad_state = RK_MUST_BE_CONTROL;
+        }
+        break;
 
-		case RK_RECEIVING_A:
-			if (!interdigit_timeout)
-			{
-				remote_keypad_state = RK_RECEIVING_B;
-				interdigit_timeout = param_struct.interdigit;
-			}
-			break;
+    case RK_RECEIVING_A:
+        if (!interdigit_timeout)
+        {
+            remote_keypad_state = RK_RECEIVING_B;
+            interdigit_timeout = param_struct.interdigit;
+        }
+        break;
 
-		case RK_RECEIVING_B:			//segundo digito o confirmacion del primero
-			if (RxCode() == ENDED_OK)
-			{
-				//en code0 y code1 tengo lo recibido
-				button_remote = CheckButtonRemote(code0, code1);
+    case RK_RECEIVING_B:			//segundo digito o confirmacion del primero
+        if (RxCode() == ENDED_OK)
+        {
+            //en code0 y code1 tengo lo recibido
+            button_remote = CheckButtonRemote(code0, code1);
 
-				//se cancelo la operacion
-				if (button_remote == REM_B10)
-				{
-					ShowNumbers(DISPLAY_NONE);
-					if (unlock_by_remote)
-						SirenCommands(SIREN_HALF_CMD);
-					BuzzerCommands(BUZZER_HALF_CMD, 1);
-					remote_keypad_state = RK_CANCEL;
-				}
+            //se cancelo la operacion
+            if (button_remote == REM_B10)
+            {
+                ShowNumbers(DISPLAY_NONE);
+                if (unlock_by_remote)
+                    SirenCommands(SIREN_HALF_CMD);
+                BuzzerCommands(BUZZER_HALF_CMD, 1);
+                remote_keypad_state = RK_CANCEL;
+            }
 
-				//si esta apurado un solo numero
-				if (button_remote == REM_B12)
-				{
-					ShowNumbers(DISPLAY_LINE);
-					if (unlock_by_remote)
-						SirenCommands(SIREN_SHORT_CMD);
-					BuzzerCommands(BUZZER_SHORT_CMD, 2);
-					*sp2 = *sp0;
-					*sp1 = 0;
-					*sp0 = 0;
+            //si esta apurado un solo numero
+            if (button_remote == REM_B12)
+            {
+                ShowNumbers(DISPLAY_LINE);
+                if (unlock_by_remote)
+                    SirenCommands(SIREN_SHORT_CMD);
+                BuzzerCommands(BUZZER_SHORT_CMD, 2);
+                *sp2 = *sp0;
+                *sp1 = 0;
+                *sp0 = 0;
 
-					*posi = *sp2;
-					remote_keypad_state = RK_NUMBER_FINISH;
-				}
-				//es un numero 1 a 9 o 0
-				if (((button_remote > REM_NO) && (button_remote < REM_B10)) || (button_remote == REM_B11))
-				{
-					if (button_remote == REM_B11)
-					{
-						*sp1 = 0;
-						ShowNumbers(10);
-					}
-					else
-					{
-						*sp1 = button_remote;
-						ShowNumbers(button_remote);
-					}
+                *posi = *sp2;
+                remote_keypad_state = RK_NUMBER_FINISH;
+            }
+            //es un numero 1 a 9 o 0
+            if (((button_remote > REM_NO) && (button_remote < REM_B10)) || (button_remote == REM_B11))
+            {
+                if (button_remote == REM_B11)
+                {
+                    *sp1 = 0;
+                    ShowNumbers(DISPLAY_ZERO);
+                }
+                else
+                {
+                    *sp1 = button_remote;
+                    ShowNumbers(button_remote);
+                }
 
-					if (unlock_by_remote)
-						SirenCommands(SIREN_SHORT_CMD);
-					BuzzerCommands(BUZZER_SHORT_CMD, 1);
-					*sp2 = 0;
-					remote_keypad_state = RK_RECEIVING_C;
-					interdigit_timeout = 1000;
-				}
-			}
+                if (unlock_by_remote)
+                    SirenCommands(SIREN_SHORT_CMD);
+                BuzzerCommands(BUZZER_SHORT_CMD, 1);
+                *sp2 = 0;
+                remote_keypad_state = RK_RECEIVING_C;
+                interdigit_timeout = 1000;
+            }
+        }
 
-			if (!interdigit_timeout)
-			{
-				remote_keypad_state = RK_TIMEOUT;
-			}
+        if (!interdigit_timeout)
+        {
+            remote_keypad_state = RK_TIMEOUT;
+        }
 
-			break;
+        break;
 
-		case RK_RECEIVING_C:
-			if (!interdigit_timeout)
-			{
-				remote_keypad_state = RK_RECEIVING_D;
-				interdigit_timeout = param_struct.interdigit;
-			}
-			break;
+    case RK_RECEIVING_C:
+        if (!interdigit_timeout)
+        {
+            remote_keypad_state = RK_RECEIVING_D;
+            interdigit_timeout = param_struct.interdigit;
+        }
+        break;
 
-		case RK_RECEIVING_D:				//tercer digito o confirmacion del segundo
-			if (RxCode() == ENDED_OK)
-			{
-				//en code0 y code1 tengo lo recibido
-				button_remote = CheckButtonRemote(code0, code1);
+    case RK_RECEIVING_D:				//tercer digito o confirmacion del segundo
+        if (RxCode() == ENDED_OK)
+        {
+            //en code0 y code1 tengo lo recibido
+            button_remote = CheckButtonRemote(code0, code1);
 
-				//se cancelo la operacion
-				if (button_remote == REM_B10)
-				{
-					ShowNumbers(DISPLAY_NONE);
-					if (unlock_by_remote)
-						SirenCommands(SIREN_HALF_CMD);
-					BuzzerCommands(BUZZER_HALF_CMD, 1);
-					remote_keypad_state = RK_CANCEL;
-				}
+            //se cancelo la operacion
+            if (button_remote == REM_B10)
+            {
+                ShowNumbers(DISPLAY_NONE);
+                if (unlock_by_remote)
+                    SirenCommands(SIREN_HALF_CMD);
+                BuzzerCommands(BUZZER_HALF_CMD, 1);
+                remote_keypad_state = RK_CANCEL;
+            }
 
-				//si esta apurado dos numeros
-				if (button_remote == REM_B12)
-				{
-					ShowNumbers(DISPLAY_LINE);
-					if (unlock_by_remote)
-						SirenCommands(SIREN_SHORT_CMD);
-					BuzzerCommands(BUZZER_SHORT_CMD, 2);
-					*sp2 = *sp0;
-					*sp0 = 0;
+            //si esta apurado dos numeros
+            if (button_remote == REM_B12)
+            {
+                ShowNumbers(DISPLAY_LINE);
+                if (unlock_by_remote)
+                    SirenCommands(SIREN_SHORT_CMD);
+                BuzzerCommands(BUZZER_SHORT_CMD, 2);
+                *sp2 = *sp0;
+                *sp0 = 0;
 
-					*posi = *sp2 * 10 + *sp1;
-					remote_keypad_state = RK_NUMBER_FINISH;
-				}
+                *posi = *sp2 * 10 + *sp1;
+                remote_keypad_state = RK_NUMBER_FINISH;
+            }
 
-				if (((button_remote > REM_NO) && (button_remote < REM_B10)) || (button_remote == REM_B11))	//es un numero 1 a 9 o 0
-				{
-					if (button_remote == ZERO_KEY)
-					{
-						*sp2 = 0;
-						ShowNumbers(10);
-					}
-					else
-					{
-						*sp2 = button_remote;
-						ShowNumbers(button_remote);
-					}
-					if (unlock_by_remote)
-						SirenCommands(SIREN_SHORT_CMD);
-					BuzzerCommands(BUZZER_SHORT_CMD, 1);
-					remote_keypad_state = RK_RECEIVING_E;
-					interdigit_timeout = 1000;
-				}
-			}
+            if (((button_remote > REM_NO) && (button_remote < REM_B10)) || (button_remote == REM_B11))	//es un numero 1 a 9 o 0
+            {
+                if (button_remote == ZERO_KEY)
+                {
+                    *sp2 = 0;
+                    ShowNumbers(DISPLAY_ZERO);
+                }
+                else
+                {
+                    *sp2 = button_remote;
+                    ShowNumbers(button_remote);
+                }
+                if (unlock_by_remote)
+                    SirenCommands(SIREN_SHORT_CMD);
+                BuzzerCommands(BUZZER_SHORT_CMD, 1);
+                remote_keypad_state = RK_RECEIVING_E;
+                interdigit_timeout = 1000;
+            }
+        }
 
-			if (!interdigit_timeout)
-			{
-				remote_keypad_state = RK_TIMEOUT;
-			}
-			break;
+        if (!interdigit_timeout)
+        {
+            remote_keypad_state = RK_TIMEOUT;
+        }
+        break;
 
-		case RK_RECEIVING_E:
-			if (!interdigit_timeout)
-			{
-				remote_keypad_state = RK_RECEIVING_F;
-				interdigit_timeout = param_struct.interdigit;
-			}
-			break;
+    case RK_RECEIVING_E:
+        if (!interdigit_timeout)
+        {
+            remote_keypad_state = RK_RECEIVING_F;
+            interdigit_timeout = param_struct.interdigit;
+        }
+        break;
 
-		case RK_RECEIVING_F:
-			if (RxCode() == ENDED_OK)
-			{
-				//en code0 y code1 tengo lo recibido
-				button_remote = CheckButtonRemote(code0, code1);
+    case RK_RECEIVING_F:
+        if (RxCode() == ENDED_OK)
+        {
+            //en code0 y code1 tengo lo recibido
+            button_remote = CheckButtonRemote(code0, code1);
 
-				//se cancelo la operacion
-				if (button_remote == REM_B10)
-				{
-					ShowNumbers(DISPLAY_NONE);
-					if (unlock_by_remote)
-						SirenCommands(SIREN_HALF_CMD);
-					BuzzerCommands(BUZZER_HALF_CMD, 1);
-					remote_keypad_state = RK_CANCEL;
-				}
+            //se cancelo la operacion
+            if (button_remote == REM_B10)
+            {
+                ShowNumbers(DISPLAY_NONE);
+                if (unlock_by_remote)
+                    SirenCommands(SIREN_HALF_CMD);
+                BuzzerCommands(BUZZER_HALF_CMD, 1);
+                remote_keypad_state = RK_CANCEL;
+            }
 
-				//es la confirmacion
-				if (button_remote == REM_B12)
-				{
-					ShowNumbers(DISPLAY_LINE);
-					if (unlock_by_remote)
-						SirenCommands(SIREN_SHORT_CMD);
-					BuzzerCommands(BUZZER_SHORT_CMD, 2);
-					*posi = *sp0 * 100 + *sp1 * 10 + *sp2;
-					remote_keypad_state = RK_NUMBER_FINISH;
-				}
-			}
+            //es la confirmacion
+            if (button_remote == REM_B12)
+            {
+                ShowNumbers(DISPLAY_LINE);
+                if (unlock_by_remote)
+                    SirenCommands(SIREN_SHORT_CMD);
+                BuzzerCommands(BUZZER_SHORT_CMD, 2);
+                *posi = *sp0 * 100 + *sp1 * 10 + *sp2;
+                remote_keypad_state = RK_NUMBER_FINISH;
+            }
+        }
 
-			if (!interdigit_timeout)
-			{
-				remote_keypad_state = RK_TIMEOUT;
-			}
-			break;
+        if (!interdigit_timeout)
+        {
+            remote_keypad_state = RK_TIMEOUT;
+        }
+        break;
 
-		case RK_MUST_BE_CONTROL:
-		case RK_CANCEL:
-		case RK_TIMEOUT:
-		default:
-			remote_keypad_state = RK_NONE;
-			break;
-	}
-	return remote_keypad_state;
+    case RK_MUST_BE_CONTROL:
+    case RK_CANCEL:
+    case RK_TIMEOUT:
+    default:
+        remote_keypad_state = RK_NONE;
+        break;
+    }
+    return remote_keypad_state;
 }
 
 
