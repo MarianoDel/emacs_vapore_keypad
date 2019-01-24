@@ -17,7 +17,11 @@
 * Cambios al Programa - Pedidos Vapore
 ** DONE Funcionamiento F12PLUS
    CLOSED: [2019-01-24 Thu 10:45]
-   - Al activar con boton 1 espere 10 segundos en off y luego se active durante 5 segundos
+   - F12PLUS siempre en ON
+   - Al activar con boton 1 espere 10 segundos en on y luego se active durante 5 segundos (pasa off)
+
+   - para funcionar con comunicadores Techno 123 3G baackup celular
+   - y NT-LINK-3G-DSC comunicador keybus gprs sms 3g
 
 
 * Migrar Programa Vapore eclipse -> emacs

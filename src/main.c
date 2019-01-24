@@ -214,7 +214,12 @@ int main(void)
     PS_OFF;
     OE_OFF;
     FPLUS_OFF;
+#ifdef USE_F12_PLUS_DIRECT
     F12PLUS_OFF;
+#endif
+#ifdef USE_F12_PLUS_NEGATE
+    F12PLUS_ON;
+#endif    
     F5PLUS_OFF;
     BUZZER_OFF;
     LED_OFF;
@@ -1152,7 +1157,6 @@ unsigned char FuncAlarm (void)
         FPLUS_ON;
         F5PLUS_ON;
         //modificacion 24-01-2019 F12PLUS espera 10 segundos y se activa 5 segundos
-        // F12PLUS_ON;
         f12_plus_state = F12_PLUS_WAITING;
         f12_plus_timer = 10000;
 
@@ -1188,14 +1192,24 @@ unsigned char FuncAlarm (void)
         {
             if (f12_plus_state == F12_PLUS_WAITING)
             {
+#ifdef USE_F12_PLUS_DIRECT
                 F12PLUS_ON;
+#endif
+#ifdef USE_F12_PLUS_NEGATE
+                F12PLUS_OFF;
+#endif
                 f12_plus_timer = 5000;
                 f12_plus_state = F12_PLUS_ACTIVE;
             }
 
             if (f12_plus_state == F12_PLUS_ACTIVE)
             {
+#ifdef USE_F12_PLUS_DIRECT
                 F12PLUS_OFF;
+#endif
+#ifdef USE_F12_PLUS_NEGATE
+                F12PLUS_ON;
+#endif
                 f12_plus_state = F12_PLUS_DONE;
             }
         }
@@ -1238,14 +1252,24 @@ unsigned char FuncAlarm (void)
         {
             if (f12_plus_state == F12_PLUS_WAITING)
             {
+#ifdef USE_F12_PLUS_DIRECT
                 F12PLUS_ON;
+#endif
+#ifdef USE_F12_PLUS_NEGATE
+                F12PLUS_OFF;
+#endif
                 f12_plus_timer = 5000;
                 f12_plus_state = F12_PLUS_ACTIVE;
             }
 
             if (f12_plus_state == F12_PLUS_ACTIVE)
             {
+#ifdef USE_F12_PLUS_DIRECT
                 F12PLUS_OFF;
+#endif
+#ifdef USE_F12_PLUS_NEGATE
+                F12PLUS_ON;
+#endif                
                 f12_plus_state = F12_PLUS_DONE;
             }
         }
