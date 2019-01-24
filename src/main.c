@@ -114,7 +114,8 @@ volatile unsigned short buzzer_timeout;
 
 volatile unsigned short siren_timeout;
 
-volatile unsigned char button_timer;
+volatile unsigned short f12_plus_timer;
+volatile unsigned char button_timer_secs;
 volatile unsigned short button_timer_internal;
 
 //--- Respecto del KeyPad
@@ -1068,463 +1069,507 @@ int main(void)
 }
 //--- End of Main ---//
 
+typedef enum {
+    F12_PLUS_WAITING = 0,
+    F12_PLUS_ACTIVE,
+    F12_PLUS_DONE
+
+} f12_plus_state_t;
+f12_plus_state_t f12_plus_state;
+
 //funcion de alarmas, revisa codigo en memoria y actua en consecuencia
 unsigned char FuncAlarm (void)
 {
-	unsigned char button;
-	unsigned int code;
-	unsigned short code_position;
+    unsigned char button;
+    unsigned int code;
+    unsigned short code_position;
 
-	char str[50];
+    char str[50];
 
-	switch (alarm_state)
-	{
-		case ALARM_START:
-			alarm_state = ALARM_NO_CODE;
-			code = code0;
-			code <<= 16;
-			code |= code1;
+    switch (alarm_state)
+    {
+    case ALARM_START:
+        alarm_state = ALARM_NO_CODE;
+        code = code0;
+        code <<= 16;
+        code |= code1;
 
-			//code_position = CheckCodeInMemory(code);
-			code_position = CheckBaseCodeInMemory(code);
+        //code_position = CheckCodeInMemory(code);
+        code_position = CheckBaseCodeInMemory(code);
 
-			if ((code_position >= 0) && (code_position <= 1023))
-			{
-				sprintf(str, (char *) "Activo: %03d ", code_position);
-				//el codigo existe en memoria
-				//reviso el boton
-				button = SST_CheckButtonInCode(code);
-				if (button == 1)
-				{
-					last_one_or_three = code_position;
-					alarm_state = ALARM_BUTTON1;
-					strcat(str, (char *) "B1\r\n");
-					repetition_counter = param_struct.b1r;
-				}
-				else if (button == 2)
-				{
-					//original boton 2
-					last_two = code_position;
-					alarm_state = ALARM_BUTTON2;
-					strcat(str, (char *) "B2\r\n");
-					//para pruebas boton 2 -> 3
-					//last_one_or_three = code_position;
-					//repetition_counter = b3r;
-					//alarm_state = ALARM_BUTTON3;
-					//strcat(str, (char *) "B3\r\n");
-					//para pruebas boton 2 -> 4
-					//alarm_state = ALARM_BUTTON4;
-					//strcat(str, (char *) "B4\r\n");
-					//repetition_counter = b4r;
-				}
-				else if (button == 3)
-				{
-					last_one_or_three = code_position;
-					alarm_state = ALARM_BUTTON3;
-					strcat(str, (char *) "B3\r\n");
-					repetition_counter = param_struct.b3r;
-				}
-				else if (button == 4)
-				{
-					alarm_state = ALARM_BUTTON4;
-					strcat(str, (char *) "B4\r\n");
-					repetition_counter = param_struct.b4r;
-				}
+        if ((code_position >= 0) && (code_position <= 1023))
+        {
+            sprintf(str, (char *) "Activo: %03d ", code_position);
+            //el codigo existe en memoria
+            //reviso el boton
+            button = SST_CheckButtonInCode(code);
+            if (button == 1)
+            {
+                last_one_or_three = code_position;
+                alarm_state = ALARM_BUTTON1;
+                strcat(str, (char *) "B1\r\n");
+                repetition_counter = param_struct.b1r;
+            }
+            else if (button == 2)
+            {
+                //original boton 2
+                last_two = code_position;
+                alarm_state = ALARM_BUTTON2;
+                strcat(str, (char *) "B2\r\n");
+                //para pruebas boton 2 -> 3
+                //last_one_or_three = code_position;
+                //repetition_counter = b3r;
+                //alarm_state = ALARM_BUTTON3;
+                //strcat(str, (char *) "B3\r\n");
+                //para pruebas boton 2 -> 4
+                //alarm_state = ALARM_BUTTON4;
+                //strcat(str, (char *) "B4\r\n");
+                //repetition_counter = b4r;
+            }
+            else if (button == 3)
+            {
+                last_one_or_three = code_position;
+                alarm_state = ALARM_BUTTON3;
+                strcat(str, (char *) "B3\r\n");
+                repetition_counter = param_struct.b3r;
+            }
+            else if (button == 4)
+            {
+                alarm_state = ALARM_BUTTON4;
+                strcat(str, (char *) "B4\r\n");
+                repetition_counter = param_struct.b4r;
+            }
 
-				//button_timer = 5;	//5 segundos suena seguro EVITA PROBLEMAS EN LA VUELTA
-				button_timer = ACT_DESACT_IN_SECS;	//2 segundos OK y buena distancia 20-5-15
+            //button_timer_secs = 5;	//5 segundos suena seguro EVITA PROBLEMAS EN LA VUELTA
+            button_timer_secs = ACT_DESACT_IN_SECS;	//2 segundos OK y buena distancia 20-5-15
 
 
-				Usart1Send(str);
-			}
-			break;
+            Usart1Send(str);
+        }
+        break;
 
-		case ALARM_BUTTON1:
-			FPLUS_ON;
-			F5PLUS_ON;
-			F12PLUS_ON;
-			SirenCommands(SIREN_MULTIPLE_UP_CMD);
-			alarm_state++;
-			break;
+    case ALARM_BUTTON1:
+        FPLUS_ON;
+        F5PLUS_ON;
+        //modificacion 24-01-2019 F12PLUS espera 10 segundos y se activa 5 segundos
+        // F12PLUS_ON;
+        f12_plus_state = F12_PLUS_WAITING;
+        f12_plus_timer = 10000;
 
-		case ALARM_BUTTON1_A:
-			if (!button_timer)
-			{
-				button_timer = param_struct.b1t;
-				alarm_state++;
-			}
-			break;
+        SirenCommands(SIREN_MULTIPLE_UP_CMD);
+        alarm_state++;
+        break;
 
-		case ALARM_BUTTON1_B:
-			//me quedo esperando que apaguen o timer
+    case ALARM_BUTTON1_A:
+        if (!button_timer_secs)
+        {
+            button_timer_secs = param_struct.b1t;
+            alarm_state++;
+        }
+        break;
+
+    case ALARM_BUTTON1_B:
+        //me quedo esperando que apaguen o timer
 #ifdef PROGRAMA_NORMAL
-			if (CheckForButtons(&code_position, &code) == 1)	//reviso solo boton 1
-			{
-				alarm_state = ALARM_BUTTON1_FINISH;
-			}
+        if (CheckForButtons(&code_position, &code) == 1)	//reviso solo boton 1
+        {
+            alarm_state = ALARM_BUTTON1_FINISH;
+        }
 #endif
 
 #ifdef PROGRAMA_DE_BUCLE
-			if (CheckForButtons(&code_position, &code) == 4)	//desactivo solo con 4
-			{
-				alarm_state = ALARM_BUTTON1_FINISH;
-			}
+        if (CheckForButtons(&code_position, &code) == 4)	//desactivo solo con 4
+        {
+            alarm_state = ALARM_BUTTON1_FINISH;
+        }
 #endif
 
-			if (!button_timer)
-			{
-				//tengo timeout, avanzo al audio
-				alarm_state++;
-			}
-			break;
+        if (!f12_plus_timer)
+        {
+            if (f12_plus_state == F12_PLUS_WAITING)
+            {
+                F12PLUS_ON;
+                f12_plus_timer = 5000;
+                f12_plus_state = F12_PLUS_ACTIVE;
+            }
 
-		case ALARM_BUTTON1_C:
-			//paso el audio y descuento un ciclo
-			if (repetition_counter > 1)
-			{
-				alarm_state++;
-				repetition_counter--;
-			}
-			else
-			{
-				Usart1Send((char*) "Timeout B1 ");
-				alarm_state = ALARM_BUTTON1_FINISH;
-			}
-			break;
+            if (f12_plus_state == F12_PLUS_ACTIVE)
+            {
+                F12PLUS_OFF;
+                f12_plus_state = F12_PLUS_DONE;
+            }
+        }
+        
+        if (!button_timer_secs)
+        {
+            //tengo timeout, avanzo al audio
+            alarm_state++;
+        }
+        break;
 
-		case ALARM_BUTTON1_D:
-			SirenCommands(SIREN_STOP_CMD);
-			PositionToSpeak(last_one_or_three);
-			alarm_state++;
-			break;
+    case ALARM_BUTTON1_C:
+        //paso el audio y descuento un ciclo
+        if (repetition_counter > 1)
+        {
+            alarm_state++;
+            repetition_counter--;
+        }
+        else
+        {
+            Usart1Send((char*) "Timeout B1 ");
+            alarm_state = ALARM_BUTTON1_FINISH;
+        }
+        break;
 
-		case ALARM_BUTTON1_E:
-			if (audio_state == AUDIO_INIT)
-			{
-				//termino de enviar audio
-				alarm_state = ALARM_BUTTON1;
-			}
-			break;
+    case ALARM_BUTTON1_D:
+        SirenCommands(SIREN_STOP_CMD);
+        PositionToSpeak(last_one_or_three);
+        alarm_state++;
+        break;
 
-		case ALARM_BUTTON1_FINISH:
-			sprintf(str, "Desactivo: %03d\r\n", last_one_or_three);
-			Usart1Send(str);
+    case ALARM_BUTTON1_E:
+        if (audio_state == AUDIO_INIT)
+        {
+            //termino de enviar audio
+            alarm_state = ALARM_BUTTON1;
+        }
 
-			SirenCommands(SIREN_STOP_CMD);
-			FPLUS_OFF;
-			F5PLUS_OFF;
-			F12PLUS_OFF;
+        if (!f12_plus_timer)
+        {
+            if (f12_plus_state == F12_PLUS_WAITING)
+            {
+                F12PLUS_ON;
+                f12_plus_timer = 5000;
+                f12_plus_state = F12_PLUS_ACTIVE;
+            }
 
-			PositionToSpeak(last_one_or_three);
-			alarm_state++;
-			break;
+            if (f12_plus_state == F12_PLUS_ACTIVE)
+            {
+                F12PLUS_OFF;
+                f12_plus_state = F12_PLUS_DONE;
+            }
+        }
+        break;
 
-		case ALARM_BUTTON1_FINISH_B:
-			if (audio_state == AUDIO_INIT)
-			{
-				//termino de enviar audio
-				return END_OK;
-			}
-			break;
+    case ALARM_BUTTON1_FINISH:
+        sprintf(str, "Desactivo: %03d\r\n", last_one_or_three);
+        Usart1Send(str);
 
-		case ALARM_BUTTON2:		//solo enciendo reflectores
-			FPLUS_ON;
+        SirenCommands(SIREN_STOP_CMD);
+        FPLUS_OFF;
+        F5PLUS_OFF;
+        F12PLUS_OFF;
 
-			alarm_state++;
+        PositionToSpeak(last_one_or_three);
+        alarm_state++;
+        break;
+
+    case ALARM_BUTTON1_FINISH_B:
+        if (audio_state == AUDIO_INIT)
+        {
+            //termino de enviar audio
+            return END_OK;
+        }
+        break;
+
+    case ALARM_BUTTON2:		//solo enciendo reflectores
+        FPLUS_ON;
+
+        alarm_state++;
 #ifdef HT6P20B2_FOURTH_BUTTON
-			button_timer = 4;	//4 segundos overdrive
+        button_timer_secs = 4;	//4 segundos overdrive
 #endif
-			break;
+        break;
 
-		case ALARM_BUTTON2_A:		//espero los primeros 2 segundos
+    case ALARM_BUTTON2_A:		//espero los primeros 2 segundos
 #ifdef HT6P20B2_FOURTH_BUTTON
-			if (!button_timer)
-			{
-				button_timer = 2;
-				alarm_state++;
-			}
+        if (!button_timer_secs)
+        {
+            button_timer_secs = 2;
+            alarm_state++;
+        }
 #else
-			alarm_state++;
+        alarm_state++;
 #endif
-			break;
+        break;
 
-		case ALARM_BUTTON2_B:
+    case ALARM_BUTTON2_B:
 #ifdef HT6P20B2_FOURTH_BUTTON
-			if (CheckForButtons(&code_position, &code) == 2)	//reviso solo boton 2 para simular el 4
-			{
-				if (code_position == last_two)
-					alarm_state = ALARM_BUTTON2_D;
-			}
+        if (CheckForButtons(&code_position, &code) == 2)	//reviso solo boton 2 para simular el 4
+        {
+            if (code_position == last_two)
+                alarm_state = ALARM_BUTTON2_D;
+        }
 #endif
-			if (!button_timer)
-			{
-				button_timer = param_struct.b2t;
-				alarm_state++;
-			}
-			break;
+        if (!button_timer_secs)
+        {
+            button_timer_secs = param_struct.b2t;
+            alarm_state++;
+        }
+        break;
 
-		case ALARM_BUTTON2_C:
-			//me quedo esperando que apaguen o timer
+    case ALARM_BUTTON2_C:
+        //me quedo esperando que apaguen o timer
 
-			button = CheckForButtons(&code_position, &code);
+        button = CheckForButtons(&code_position, &code);
 #ifdef PROGRAMA_NORMAL
-			if (button == 2)	//reviso solo boton 2
-			{
-				sprintf(str, "Desactivo: %03d\r\n", code_position);
-				Usart1Send(str);
-				alarm_state = ALARM_BUTTON2_FINISH;
-			}
+        if (button == 2)	//reviso solo boton 2
+        {
+            sprintf(str, "Desactivo: %03d\r\n", code_position);
+            Usart1Send(str);
+            alarm_state = ALARM_BUTTON2_FINISH;
+        }
 
-			if (button == 1)		//reviso el boton
-			{
-				sprintf(str, "Activo: %03d B1\r\n", code_position);
-				Usart1Send(str);
+        if (button == 1)		//reviso el boton
+        {
+            sprintf(str, "Activo: %03d B1\r\n", code_position);
+            Usart1Send(str);
 
-				last_one_or_three = code_position;
-				repetition_counter = param_struct.b1r;
-				button_timer = ACT_DESACT_IN_SECS;
+            last_one_or_three = code_position;
+            repetition_counter = param_struct.b1r;
+            button_timer_secs = ACT_DESACT_IN_SECS;
 
-				alarm_state = ALARM_BUTTON1;
-			}
+            alarm_state = ALARM_BUTTON1;
+        }
 
-			if (button == 3)		//reviso el boton
-			{
-				sprintf(str, "Activo: %03d B3\r\n", code_position);
-				Usart1Send(str);
+        if (button == 3)		//reviso el boton
+        {
+            sprintf(str, "Activo: %03d B3\r\n", code_position);
+            Usart1Send(str);
 
-				last_one_or_three = code_position;
-				repetition_counter = param_struct.b3r;
-				button_timer = ACT_DESACT_IN_SECS;
+            last_one_or_three = code_position;
+            repetition_counter = param_struct.b3r;
+            button_timer_secs = ACT_DESACT_IN_SECS;
 
-				alarm_state = ALARM_BUTTON3;
-			}
+            alarm_state = ALARM_BUTTON3;
+        }
 #endif
 #ifdef PROGRAMA_DE_BUCLE
-			if (button == 1)		//reviso el boton
-			{
-				sprintf(str, "Activo: %03d B1\r\n", code_position);
-				Usart1Send(str);
+        if (button == 1)		//reviso el boton
+        {
+            sprintf(str, "Activo: %03d B1\r\n", code_position);
+            Usart1Send(str);
 
-				last_one_or_three = code_position;
-				repetition_counter = param_struct.b1r;
-				button_timer = ACT_DESACT_IN_SECS;
+            last_one_or_three = code_position;
+            repetition_counter = param_struct.b1r;
+            button_timer_secs = ACT_DESACT_IN_SECS;
 
-				alarm_state = ALARM_BUTTON1;
-			}
+            alarm_state = ALARM_BUTTON1;
+        }
 
-			if (button == 3)		//reviso el boton
-			{
-				sprintf(str, "Activo: %03d B3\r\n", code_position);
-				Usart1Send(str);
+        if (button == 3)		//reviso el boton
+        {
+            sprintf(str, "Activo: %03d B3\r\n", code_position);
+            Usart1Send(str);
 
-				last_one_or_three = code_position;
-				repetition_counter = param_struct.b3r;
-				button_timer = ACT_DESACT_IN_SECS;
+            last_one_or_three = code_position;
+            repetition_counter = param_struct.b3r;
+            button_timer_secs = ACT_DESACT_IN_SECS;
 
-				alarm_state = ALARM_BUTTON3;
-			}
+            alarm_state = ALARM_BUTTON3;
+        }
 
-			if (button == 4)	//reviso boton 4 para desactivar
-			{
-				sprintf(str, "Desactivo: %03d\r\n", code_position);
-				Usart1Send(str);
-				alarm_state = ALARM_BUTTON2_FINISH;
-			}
+        if (button == 4)	//reviso boton 4 para desactivar
+        {
+            sprintf(str, "Desactivo: %03d\r\n", code_position);
+            Usart1Send(str);
+            alarm_state = ALARM_BUTTON2_FINISH;
+        }
 #endif
 
-			if (!button_timer)
-			{
-				//tengo timeout, apago reflectores
-				Usart1Send((char*) "Timeout B2\r\n");
-				alarm_state = ALARM_BUTTON2_FINISH;
-			}
-			break;
+        if (!button_timer_secs)
+        {
+            //tengo timeout, apago reflectores
+            Usart1Send((char*) "Timeout B2\r\n");
+            alarm_state = ALARM_BUTTON2_FINISH;
+        }
+        break;
 
-		case ALARM_BUTTON2_D:
-			SirenCommands(SIREN_STOP_CMD);
-			PositionToSpeak(last_one_or_three);
-			alarm_state++;
-			break;
+    case ALARM_BUTTON2_D:
+        SirenCommands(SIREN_STOP_CMD);
+        PositionToSpeak(last_one_or_three);
+        alarm_state++;
+        break;
 
-		case ALARM_BUTTON2_E:
-			if (audio_state == AUDIO_INIT)
-			{
-				//termino de enviar audio
-				alarm_state++;
-			}
-			break;
+    case ALARM_BUTTON2_E:
+        if (audio_state == AUDIO_INIT)
+        {
+            //termino de enviar audio
+            alarm_state++;
+        }
+        break;
 
-		case ALARM_BUTTON2_FINISH:
-			FPLUS_OFF;
-			return END_OK;
-			break;
+    case ALARM_BUTTON2_FINISH:
+        FPLUS_OFF;
+        return END_OK;
+        break;
 
-		case ALARM_BUTTON3:
-			FPLUS_ON;
+    case ALARM_BUTTON3:
+        FPLUS_ON;
 //			F5PLUS_ON;
 //			F12PLUS_ON;
-			//SirenCommands(SIREN_SINGLE_CMD);
-			SirenCommands(SIREN_SINGLE_CHOPP_CMD);
-			//button_timer = 5;	//5 segundos suena seguro EVITA PROBLEMAS EN LA VUELTA
-			alarm_state++;
-			break;
+        //SirenCommands(SIREN_SINGLE_CMD);
+        SirenCommands(SIREN_SINGLE_CHOPP_CMD);
+        //button_timer_secs = 5;	//5 segundos suena seguro EVITA PROBLEMAS EN LA VUELTA
+        alarm_state++;
+        break;
 
-		case ALARM_BUTTON3_A:
-			if (!button_timer)
-			{
-				button_timer = param_struct.b3t;
-				alarm_state++;
-			}
-			break;
+    case ALARM_BUTTON3_A:
+        if (!button_timer_secs)
+        {
+            button_timer_secs = param_struct.b3t;
+            alarm_state++;
+        }
+        break;
 
-		case ALARM_BUTTON3_B:
-			//me quedo esperando que apaguen o timer
+    case ALARM_BUTTON3_B:
+        //me quedo esperando que apaguen o timer
 
-			button = CheckForButtons(&code_position, &code);
+        button = CheckForButtons(&code_position, &code);
 #ifdef PROGRAMA_NORMAL
-			if (button == 3)	//reviso solo boton 3
-			{
-				sprintf(str, "Desactivo: %03d\r\n", code_position);
-				Usart1Send(str);
-				alarm_state = ALARM_BUTTON3_FINISH;
-			}
+        if (button == 3)	//reviso solo boton 3
+        {
+            sprintf(str, "Desactivo: %03d\r\n", code_position);
+            Usart1Send(str);
+            alarm_state = ALARM_BUTTON3_FINISH;
+        }
 
-			if (button == 1)		//reviso el boton
-			{
-				sprintf(str, "Activo: %03d B1\r\n", code_position);
-				Usart1Send(str);
+        if (button == 1)		//reviso el boton
+        {
+            sprintf(str, "Activo: %03d B1\r\n", code_position);
+            Usart1Send(str);
 
-				last_one_or_three = code_position;
-				repetition_counter = param_struct.b1r;
-				button_timer = ACT_DESACT_IN_SECS;
+            last_one_or_three = code_position;
+            repetition_counter = param_struct.b1r;
+            button_timer_secs = ACT_DESACT_IN_SECS;
 
-				alarm_state = ALARM_BUTTON1;
-			}
+            alarm_state = ALARM_BUTTON1;
+        }
 #endif
 
 #ifdef PROGRAMA_DE_BUCLE
-			if (button == 1)		//reviso el boton
-			{
-				sprintf(str, "Activo: %03d B1\r\n", code_position);
-				Usart1Send(str);
+        if (button == 1)		//reviso el boton
+        {
+            sprintf(str, "Activo: %03d B1\r\n", code_position);
+            Usart1Send(str);
 
-				last_one_or_three = code_position;
-				repetition_counter = param_struct.b1r;
-				button_timer = ACT_DESACT_IN_SECS;
+            last_one_or_three = code_position;
+            repetition_counter = param_struct.b1r;
+            button_timer_secs = ACT_DESACT_IN_SECS;
 
-				alarm_state = ALARM_BUTTON1;
-			}
+            alarm_state = ALARM_BUTTON1;
+        }
 
-			if (button == 4)	//reviso solo boton 4
-			{
-				sprintf(str, "Desactivo: %03d\r\n", code_position);
-				Usart1Send(str);
-				alarm_state = ALARM_BUTTON3_FINISH;
-			}
+        if (button == 4)	//reviso solo boton 4
+        {
+            sprintf(str, "Desactivo: %03d\r\n", code_position);
+            Usart1Send(str);
+            alarm_state = ALARM_BUTTON3_FINISH;
+        }
 #endif
 
-			if (!button_timer)
-			{
-				//tengo timeout, avanzo al audio
+        if (!button_timer_secs)
+        {
+            //tengo timeout, avanzo al audio
 
-				alarm_state++;
-			}
-			break;
+            alarm_state++;
+        }
+        break;
 
-		case ALARM_BUTTON3_C:
-			//paso el audio y descuento un ciclo
-			if (repetition_counter > 1)
-			{
-				alarm_state++;
-				repetition_counter--;
-			}
-			else
-			{
-				Usart1Send((char*) "Timeout B3 ");
-				alarm_state = ALARM_BUTTON3_FINISH;
-			}
-			break;
+    case ALARM_BUTTON3_C:
+        //paso el audio y descuento un ciclo
+        if (repetition_counter > 1)
+        {
+            alarm_state++;
+            repetition_counter--;
+        }
+        else
+        {
+            Usart1Send((char*) "Timeout B3 ");
+            alarm_state = ALARM_BUTTON3_FINISH;
+        }
+        break;
 
-		case ALARM_BUTTON3_D:
-			SirenCommands(SIREN_STOP_CMD);
-			PositionToSpeak(last_one_or_three);
-			alarm_state++;
-			break;
+    case ALARM_BUTTON3_D:
+        SirenCommands(SIREN_STOP_CMD);
+        PositionToSpeak(last_one_or_three);
+        alarm_state++;
+        break;
 
-		case ALARM_BUTTON3_E:
-			if (audio_state == AUDIO_INIT)
-			{
-				//termino de enviar audio
-				alarm_state = ALARM_BUTTON3;
-			}
-			break;
+    case ALARM_BUTTON3_E:
+        if (audio_state == AUDIO_INIT)
+        {
+            //termino de enviar audio
+            alarm_state = ALARM_BUTTON3;
+        }
+        break;
 
-		case ALARM_BUTTON3_FINISH:
-			sprintf(str, "Desactivo: %03d\r\n", last_one_or_three);
-			Usart1Send(str);
+    case ALARM_BUTTON3_FINISH:
+        sprintf(str, "Desactivo: %03d\r\n", last_one_or_three);
+        Usart1Send(str);
 
-			SirenCommands(SIREN_STOP_CMD);
+        SirenCommands(SIREN_STOP_CMD);
 //			F12PLUS_OFF;
-			FPLUS_OFF;
+        FPLUS_OFF;
 
-			PositionToSpeak(last_one_or_three);
-			alarm_state++;
-			break;
+        PositionToSpeak(last_one_or_three);
+        alarm_state++;
+        break;
 
-		case ALARM_BUTTON3_FINISH_B:
-			if (audio_state == AUDIO_INIT)
-			{
-				//termino de enviar audio
-				return END_OK;
-			}
-			break;
+    case ALARM_BUTTON3_FINISH_B:
+        if (audio_state == AUDIO_INIT)
+        {
+            //termino de enviar audio
+            return END_OK;
+        }
+        break;
 
-		case ALARM_BUTTON4:
-			SirenCommands(SIREN_STOP_CMD);
-			PositionToSpeak(last_one_or_three);
-			alarm_state++;
-			break;
+    case ALARM_BUTTON4:
+        SirenCommands(SIREN_STOP_CMD);
+        PositionToSpeak(last_one_or_three);
+        alarm_state++;
+        break;
 
-		case ALARM_BUTTON4_A:
-			if (audio_state == AUDIO_INIT)
-			{
-				//termino de enviar audio
-				alarm_state++;
-			}
-			break;
+    case ALARM_BUTTON4_A:
+        if (audio_state == AUDIO_INIT)
+        {
+            //termino de enviar audio
+            alarm_state++;
+        }
+        break;
 
-		case ALARM_BUTTON4_FINISH:
-			return END_OK;
-			break;
+    case ALARM_BUTTON4_FINISH:
+        return END_OK;
+        break;
 
-		case ALARM_NO_CODE:
-			return END_OK;
-			break;
-		default:
-			alarm_state = 0;
-			break;
-	}
-	/*
-		if (sirena_sonando)
-		{
-			sirena_sonando = 0;
-			SirenCommands(SIREN_STOP_CMD);
-			sprintf(str, "Desactivo: %03d\r\n", code_position);
-			Usart1Send(str);
-		}
-		else
-		{
-			sirena_sonando = 1;
-			SirenCommands(SIREN_MULTIPLE_UP_CMD);
-			sprintf(str, "Activo: %03d\r\n", code_position);
-			Usart1Send(str);
-		}
-		main_state = MAIN_TO_MAIN_WAIT_5SEGS;
+    case ALARM_NO_CODE:
+        return END_OK;
+        break;
+    default:
+        alarm_state = 0;
+        break;
+    }
+    /*
+      if (sirena_sonando)
+      {
+      sirena_sonando = 0;
+      SirenCommands(SIREN_STOP_CMD);
+      sprintf(str, "Desactivo: %03d\r\n", code_position);
+      Usart1Send(str);
+      }
+      else
+      {
+      sirena_sonando = 1;
+      SirenCommands(SIREN_MULTIPLE_UP_CMD);
+      sprintf(str, "Activo: %03d\r\n", code_position);
+      Usart1Send(str);
+      }
+      main_state = MAIN_TO_MAIN_WAIT_5SEGS;
 
-	}
-	*/
+      }
+    */
 
-	return WORKING;
+    return WORKING;
 }
 
 
@@ -2344,6 +2389,9 @@ void TimingDelay_Decrement(void)
     if (timer_keypad_enabled)
         timer_keypad_enabled--;
 
+    if (f12_plus_timer)
+        f12_plus_timer--;
+    
 #ifdef CON_MODIFICACION_DIODO_BATERIA
     if (timer_battery)
         timer_battery--;
@@ -2353,9 +2401,9 @@ void TimingDelay_Decrement(void)
         button_timer_internal--;
     else
     {
-        if (button_timer)
+        if (button_timer_secs)
         {
-            button_timer--;
+            button_timer_secs--;
             button_timer_internal = 1000;
         }
     }
