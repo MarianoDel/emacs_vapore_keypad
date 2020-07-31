@@ -110,7 +110,7 @@ void USART1_IRQHandler(void)
         }
         else
         {
-            if (prx1 < &rx1buff[SIZEOF_DATA])
+            if (prx1 < &rx1buff[SIZEOF_DATA - 1])
             {
                 //al /r no le doy bola
                 if (dummy == '\r')
