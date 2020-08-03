@@ -96,7 +96,9 @@ SRC += ./src/sst25codes.c
 SRC += ./src/display_7seg.c
 SRC += ./src/keypad.c
 SRC += ./src/gestion.c
-
+SRC += ./src/hard.c
+SRC += ./src/porton_kirno.c
+SRC += ./src/codes.c
 
 
 ## Core Support

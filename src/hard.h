@@ -25,9 +25,10 @@
 // #define PROGRAMA_DE_BUCLE
 // #define PROGRAMA_FACTORY_TEST
 // #define PROGRAMA_DE_GESTION
+// #define PROGRAMA_PORTON_KIRNO
 
 //----------- Hardware Board Version -------------
-#define VER_1_3
+#define VER_1_3    // las conexiones del micro son iguales a la version 1.2
 
 //---- Configuration for Hardware Versions -------
 #ifdef VER_1_3
@@ -63,6 +64,9 @@
 #ifdef PROGRAMA_DE_GESTION
 #define KIND_OF_PROGRAM "Programa de Gestion para Grabar SST\r\n"
 #endif
+#ifdef PROGRAMA_PORTON_KIRNO
+#define KIND_OF_PROGRAM "Programa del Porton de Kirno\r\n"
+#endif
 //---- End of Program Configuration ----------
 
 
@@ -85,6 +89,7 @@
 #define WP_ON GPIOA->BSRR = 0x00080000
 
 //GPIOA pin4
+#define RX_CODE ((GPIOA->IDR & 0x0010) != 0)
 
 //GPIOA pin5
 #define PS ((GPIOA->ODR & 0x0020) == 0)
@@ -134,17 +139,6 @@
 #define CH_IN_TEMP ADC_Channel_0
 #define LAST_NUMBER		6
 #define LAST_NUMBER_SPEAK		5
-
-//--- TIMEOUTS DEL PROGRAMA ----//
-#define TIM_BIP_SHORT		50
-#define TIM_BIP_SHORT_WAIT		100
-#define TIM_BIP_HALF		200
-#define TIM_BIP_HALF_WAIT		500
-#define TIM_BIP_LONG		1200
-#define TIM_BIP_LONG_WAIT		1500
-
-
-//--- FIN TIMEOUTS          ----//
 
 
 //ESTADOS DEL PROGRAMA PRINCIPAL PARA TESTEO
@@ -199,22 +193,6 @@ enum TestStateEnum
 #define RK_MUST_BE_CONTROL			11
 
 
-//ESTADOS DEL BUZZER
-#define BUZZER_INIT		0
-#define BUZZER_TO_STOP		10
-
-#define BUZZER_MULTIPLE_LONG			40
-#define BUZZER_MULTIPLE_LONGA			41
-#define BUZZER_MULTIPLE_LONGB			42
-
-#define BUZZER_MULTIPLE_HALF			50
-#define BUZZER_MULTIPLE_HALFA			51
-#define BUZZER_MULTIPLE_HALFB			52
-
-#define BUZZER_MULTIPLE_SHORT			60
-#define BUZZER_MULTIPLE_SHORTA			61
-#define BUZZER_MULTIPLE_SHORTB			62
-
 //ESTADOS DE LA ALARMA
 #define ALARM_START				0
 #define ALARM_BUTTON1			10
@@ -258,11 +236,6 @@ enum TestStateEnum
 #define AUDIO_CHECK_NEXT			3
 #define AUDIO_FINISHING				4
 
-//COMANDOS DEL BUZZER	(tienen que ser los del estado de arriba)
-#define BUZZER_STOP_CMD		10
-#define BUZZER_LONG_CMD		40
-#define BUZZER_HALF_CMD		50
-#define BUZZER_SHORT_CMD	60
 
 //ESTADOS DE LA SIRENA
 #define SIREN_INIT				0
@@ -323,6 +296,18 @@ enum end_states
 	END_ERROR,
 	END_TIMEOUT
 };
+
+//COMANDOS DEL BUZZER
+#define BUZZER_STOP_CMD		0
+#define BUZZER_LONG_CMD		1
+#define BUZZER_HALF_CMD		2
+#define BUZZER_SHORT_CMD	3
+
+
+// Module Exported Functions ---------------------------------------------------
+void BuzzerCommands(unsigned char, unsigned char);
+void UpdateBuzzer (void);
+
 
 #endif /* _HARD_H_ */
 

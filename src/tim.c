@@ -430,26 +430,18 @@ void TIM16_IRQHandler (void)	//100uS
 
 void TIM_16_Init (void)
 {
+    if (!RCC_TIM16_CLK)
+        RCC_TIM16_CLK_ON;
 
-	// NVIC_InitTypeDef NVIC_InitStructure;
+    //Configuracion del timer.
+    TIM16->ARR = 0xFFFF;
+    TIM16->CNT = 0;
+    TIM16->PSC = 47;
+    TIM16->EGR = TIM_EGR_UG;
 
-	// if (!RCC_TIM16_CLK)
-	// 	RCC_TIM16_CLK_ON;
-
-	// //Configuracion del timer.
-	// TIM16->ARR = 2000; //10m
-	// TIM16->CNT = 0;
-	// TIM16->PSC = 479;
-	// TIM16->EGR = TIM_EGR_UG;
-
-	// // Enable timer ver UDIS
-	// TIM16->DIER |= TIM_DIER_UIE;
-	// TIM16->CR1 |= TIM_CR1_CEN;
-
-	// NVIC_InitStructure.NVIC_IRQChannel = TIM16_IRQn;
-	// NVIC_InitStructure.NVIC_IRQChannelPriority = 5;
-	// NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-	// NVIC_Init(&NVIC_InitStructure);
+    // Enable timer ver UDIS
+    // TIM16->DIER |= TIM_DIER_UIE;    //con int por update event
+    TIM16->CR1 |= TIM_CR1_CEN;
 }
 
 void TIM17_IRQHandler (void)	//100uS

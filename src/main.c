@@ -34,6 +34,10 @@
 #include "gestion.h"
 #endif
 
+#ifdef PROGRAMA_PORTON_KIRNO
+#include "porton_kirno.h"
+#endif
+
 
 
 /* Externals ------------------------------------------------------------------*/
@@ -66,6 +70,9 @@ volatile unsigned short code0 = 0;
 volatile unsigned short code1 = 0;
 volatile unsigned char errorcode = 0;
 
+// para el buzzer en hard.c
+volatile unsigned short buzzer_timeout = 0;
+
 #ifdef CONFIGURATION_IN_FLASH
 parameters_typedef __attribute__ ((section (".myStruct"))) const param_struct = {30, 5, 30, 5, 30, 5, 30, 5, 3000, 10000};
 
@@ -93,14 +100,12 @@ volatile short v_samples2[16];
 volatile unsigned char update_samples = 0;
 volatile unsigned char buff_in_use = 1;
 
-/* Globals ------------------------------------------------------------------*/
+// Globals ---------------------------------------------------------------------
 static __IO uint32_t TimingDelay;
 
 unsigned short counter = TIM3_ARR;
 
 
-unsigned char buzzer_state = 0;
-unsigned char buzz_multiple = 0;
 unsigned char siren_state = 0;
 unsigned short freq_us = 0;
 unsigned char siren_steps = 0;
@@ -110,7 +115,6 @@ unsigned char siren_steps = 0;
 
 volatile unsigned short wait_for_code_timeout;
 volatile unsigned short interdigit_timeout;
-volatile unsigned short buzzer_timeout;
 
 volatile unsigned short siren_timeout;
 
@@ -248,10 +252,13 @@ int main(void)
     /* TIMs configuration ------------------------------------------------------*/
     //para audio y sirena
     TIM_1_Init();
-    //para codigo
+
+    //para codigos
+#ifndef PROGRAMA_PORTON_KIRNO
     RxCode();	//trabo la interrupcion
     TIM_14_Init();
-
+#endif
+    
     Update_TIM1_CH1(100);
     Power_Ampli_Disa();
 
@@ -315,6 +322,15 @@ int main(void)
 #endif
     //--- FIN PROGRAMA DE GESTION y GRABAR MEMORIA SST ---//    
 
+    //--- EMPIEZO PROGRAMA DE PORTON KIRNO  ---//
+#ifdef PROGRAMA_PORTON_KIRNO
+    while (1)
+    {
+        FuncPortonKirno();
+    }
+#endif
+    //--- FIN PROGRAMA DE PORTON KIRNO ---//    
+    
     
     //--- EMPIEZO PROGRAMA DE PRUEBAS EN FABRICA ---//
 #ifdef PROGRAMA_FACTORY_TEST
@@ -2241,117 +2257,6 @@ void UpdateSiren (void)
 	}
 }
 
-void BuzzerCommands(unsigned char command, unsigned char multiple)
-{
-	buzzer_state = command;
-	buzz_multiple = multiple;
-}
-
-
-void UpdateBuzzer (void)
-{
-	switch (buzzer_state)
-	{
-		case BUZZER_INIT:
-			break;
-
-		case BUZZER_MULTIPLE_SHORT:
-			if (buzz_multiple > 0)
-			{
-				BUZZER_ON;
-				buzzer_state++;
-				buzzer_timeout = TIM_BIP_SHORT;
-			}
-			else
-				buzzer_state = BUZZER_TO_STOP;
-			break;
-
-		case BUZZER_MULTIPLE_SHORTA:
-			if (!buzzer_timeout)
-			{
-				buzzer_state++;
-				BUZZER_OFF;
-				buzzer_timeout = TIM_BIP_SHORT_WAIT;
-			}
-			break;
-
-		case BUZZER_MULTIPLE_SHORTB:
-			if (!buzzer_timeout)
-			{
-				if (buzz_multiple)
-					buzz_multiple--;
-
-				buzzer_state = BUZZER_MULTIPLE_SHORT;
-			}
-			break;
-
-		case BUZZER_MULTIPLE_HALF:
-			if (buzz_multiple > 0)
-			{
-				BUZZER_ON;
-				buzzer_state++;
-				buzzer_timeout = TIM_BIP_HALF;
-			}
-			else
-				buzzer_state = BUZZER_TO_STOP;
-			break;
-
-		case BUZZER_MULTIPLE_HALFA:
-			if (!buzzer_timeout)
-			{
-				buzzer_state++;
-				BUZZER_OFF;
-				buzzer_timeout = TIM_BIP_HALF_WAIT;
-			}
-			break;
-
-		case BUZZER_MULTIPLE_HALFB:
-			if (!buzzer_timeout)
-			{
-				if (buzz_multiple)
-					buzz_multiple--;
-
-				buzzer_state = BUZZER_MULTIPLE_HALF;
-			}
-			break;
-
-		case BUZZER_MULTIPLE_LONG:
-			if (buzz_multiple > 0)
-			{
-				BUZZER_ON;
-				buzzer_state++;
-				buzzer_timeout = TIM_BIP_LONG;
-			}
-			else
-				buzzer_state = BUZZER_TO_STOP;
-			break;
-
-		case BUZZER_MULTIPLE_LONGA:
-			if (!buzzer_timeout)
-			{
-				buzzer_state++;
-				BUZZER_OFF;
-				buzzer_timeout = TIM_BIP_LONG_WAIT;
-			}
-			break;
-
-		case BUZZER_MULTIPLE_LONGB:
-			if (!buzzer_timeout)
-			{
-				if (buzz_multiple)
-					buzz_multiple--;
-
-				buzzer_state = BUZZER_MULTIPLE_LONG;
-			}
-			break;
-
-		case BUZZER_TO_STOP:
-		default:
-			BUZZER_OFF;
-			buzzer_state = BUZZER_INIT;
-			break;
-	}
-}
 
 
 //One_ms Interrupt
