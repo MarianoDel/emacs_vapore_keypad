@@ -21,11 +21,11 @@
 #define USE_F12_PLUS_DIRECT
 // #define USE_F12_PLUS_NEGATE
 
-#define PROGRAMA_NORMAL
+// #define PROGRAMA_NORMAL
 // #define PROGRAMA_DE_BUCLE
 // #define PROGRAMA_FACTORY_TEST
 // #define PROGRAMA_DE_GESTION
-// #define PROGRAMA_PORTON_KIRNO
+#define PROGRAMA_PORTON_KIRNO
 
 //----------- Hardware Board Version -------------
 #define VER_1_3    // las conexiones del micro son iguales a la version 1.2

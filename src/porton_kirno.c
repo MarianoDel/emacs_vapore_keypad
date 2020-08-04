@@ -187,19 +187,21 @@ resp_t PortonKirnoCodes (porton_kirno_codes_t * new_code_st)
             if (resp == resp_ok)
             {
                 // sprintf(s_buf, "bits: %d OK\n", i);
+                // Usart1Send(s_buf);
                 kc_state = KC_GET_CODE_HT;
                 resp = resp_continue;
             }
 
             if (resp == resp_error)
             {
-                sprintf(s_buf, "bits: %d ERR\n", i);
+                // for debug, shows how many bits gets
+                // sprintf(s_buf, "bits: %d ERR\n", i);
+                // Usart1Send(s_buf);
                 kc_state = KC_WAIT_SILENCE_INIT;
             }
                 
             LED_OFF;
             OCODE_OFF;
-            Usart1Send(s_buf);
         }
         break;
 
