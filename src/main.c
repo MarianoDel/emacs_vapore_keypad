@@ -196,7 +196,7 @@ int main(void)
     char str [40];
 
     unsigned short position, mass_erase_position;
-    unsigned char seq_number = 0;
+    unsigned short seq_number = 0;
     unsigned short code_position;
     unsigned int code;
     unsigned char switches, switches_posi0, switches_posi1, switches_posi2;
@@ -301,11 +301,19 @@ int main(void)
 
     //-- HARDWARE pero para Display --
 #ifdef WITH_WELCOME_CODE_ON_DISPLAY
-#ifdef VER_1_3
+#ifdef HARDWARE_VERSION_1_3
     VectorToDisplayStr("h1.3");
     while (!DisplayIsFree())
         UpdateDisplaySM();
+#endif
 
+#ifdef SOFTWARE_VERSION_2_1
+    VectorToDisplayStr("s2.1");
+    while (!DisplayIsFree())
+        UpdateDisplaySM();    
+#endif
+
+#ifdef SOFTWARE_VERSION_2_0
     VectorToDisplayStr("s2.0");
     while (!DisplayIsFree())
         UpdateDisplaySM();    
@@ -630,6 +638,12 @@ int main(void)
             //voy pasando a otros casos
 
             switches = CheckKeypad(&switches_posi0, &switches_posi1, &switches_posi2, &position);
+            if (switches == KCANCEL)
+            {
+                //se cancelo y no debo ir a ningun lado, me quedo aca
+                digit_remote = 0;
+            }
+
             if (switches == KNUMBER_FINISH)
             {
                 if (position == 800)
@@ -801,6 +815,7 @@ int main(void)
                 {
                     position = mass_erase_position;	//update de posicion del control
                     main_state = MAIN_TO_DEL_CODE;
+                    switches = KNONE;
                 }
 
                 //se eligio borrar todos los codigos de memoria (BLANQUEO COMPLETO)
@@ -809,6 +824,7 @@ int main(void)
                 {
                     Usart1Send((char *) "\r\n- CUIDADO entrando en Blanqueo Completo -\r\n");
                     main_state = MAIN_TO_MASS_ERASE_AT_LAST;
+                    switches = KNONE;
                 }
 
                 //se eligio entrar en grabado de controles con secuencia
@@ -819,7 +835,8 @@ int main(void)
                     Usart1Send(str);
                     ShowNumbers(DISPLAY_S);
                     seq_number = 0;                
-                    main_state = MAIN_TO_SAVE_IN_SEQUENCE;                
+                    main_state = MAIN_TO_SAVE_IN_SEQUENCE;
+                    switches = KNONE;
                 }
             }
 

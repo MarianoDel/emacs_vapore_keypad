@@ -21,11 +21,11 @@
 #define USE_F12_PLUS_DIRECT
 // #define USE_F12_PLUS_NEGATE
 
-// #define PROGRAMA_NORMAL
+#define PROGRAMA_NORMAL
 // #define PROGRAMA_DE_BUCLE
 // #define PROGRAMA_FACTORY_TEST
 // #define PROGRAMA_DE_GESTION
-#define PROGRAMA_PORTON_KIRNO
+// #define PROGRAMA_PORTON_KIRNO
 
 //----------- Hardware Board Version -------------
 #define VER_1_3    // las conexiones del micro son iguales a la version 1.2
@@ -33,7 +33,10 @@
 //---- Configuration for Hardware Versions -------
 #ifdef VER_1_3
 #define HARDWARE_VERSION_1_3
-#define SOFTWARE_VERSION_2_0
+#define SOFTWARE_VERSION_2_1    //corrije problemas ver2.0 y agrega welcome code
+// #define SOFTWARE_VERSION_2_0
+// 2.0 tiene un problema con el grabado en secuencia con mas controles de 255
+//     no puede borrar controles de a uno, se confunde y entra a guardar en secuencia
 #endif
 
 
@@ -47,6 +50,9 @@
 #endif
 
 //--- Software Welcome Code ------------------//
+#ifdef SOFTWARE_VERSION_2_1
+#define SOFT "Software V: 2.1\r\n"
+#endif
 #ifdef SOFTWARE_VERSION_2_0
 #define SOFT "Software V: 2.0\r\n"
 #endif
@@ -79,61 +85,61 @@
 //GPIOA pin1
 
 //GPIOA pin2
-#define OE ((GPIOA->ODR & 0x0004) == 0)
-#define OE_OFF GPIOA->BSRR = 0x00000004
-#define OE_ON GPIOA->BSRR = 0x00040000
+#define OE    ((GPIOA->ODR & 0x0004) == 0)
+#define OE_OFF    (GPIOA->BSRR = 0x00000004)
+#define OE_ON    (GPIOA->BSRR = 0x00040000)
 
 //GPIOA pin3
-#define WP ((GPIOA->ODR & 0x0008) == 0)
-#define WP_OFF GPIOA->BSRR = 0x00000008
-#define WP_ON GPIOA->BSRR = 0x00080000
+#define WP    ((GPIOA->ODR & 0x0008) == 0)
+#define WP_OFF    (GPIOA->BSRR = 0x00000008)
+#define WP_ON    (GPIOA->BSRR = 0x00080000)
 
 //GPIOA pin4
 #define RX_CODE ((GPIOA->IDR & 0x0010) != 0)
 
 //GPIOA pin5
-#define PS ((GPIOA->ODR & 0x0020) == 0)
-#define PS_OFF GPIOA->BSRR = 0x00000020
-#define PS_ON GPIOA->BSRR = 0x00200000
+#define PS    ((GPIOA->ODR & 0x0020) == 0)
+#define PS_OFF    (GPIOA->BSRR = 0x00000020)
+#define PS_ON    (GPIOA->BSRR = 0x00200000)
 
 //GPIOA pin6
-#define CE ((GPIOA->ODR & 0x0040) == 0)
-#define CE_OFF GPIOA->BSRR = 0x00000040
-#define CE_ON GPIOA->BSRR = 0x00400000
+#define CE    ((GPIOA->ODR & 0x0040) == 0)
+#define CE_OFF    (GPIOA->BSRR = 0x00000040)
+#define CE_ON    (GPIOA->BSRR = 0x00400000)
 
 //GPIOA pin7
 //GPIOA pin8
 //GPIOA pin9
 
 //GPIOA pin11
-#define F5PLUS ((GPIOA->ODR & 0x0800) != 0)
-#define F5PLUS_ON GPIOA->BSRR = 0x00000800
-#define F5PLUS_OFF GPIOA->BSRR = 0x08000000
+#define F5PLUS    ((GPIOA->ODR & 0x0800) != 0)
+#define F5PLUS_ON    (GPIOA->BSRR = 0x00000800)
+#define F5PLUS_OFF    (GPIOA->BSRR = 0x08000000)
 
 //GPIOA pin12
-#define BUZZER ((GPIOA->ODR & 0x1000) != 0)
-#define BUZZER_ON GPIOA->BSRR = 0x00001000
-#define BUZZER_OFF GPIOA->BSRR = 0x10000000
+#define BUZZER    ((GPIOA->ODR & 0x1000) != 0)
+#define BUZZER_ON    (GPIOA->BSRR = 0x00001000)
+#define BUZZER_OFF    (GPIOA->BSRR = 0x10000000)
 
 //GPIOA pin13
 //GPIOA pin14
 //GPIOA pin15
-#define AC_PIN ((GPIOA->IDR & 0x8000) != 0)
+#define AC_PIN    ((GPIOA->IDR & 0x8000) != 0)
 
 //GPIOB pin0
-#define FPLUS ((GPIOB->ODR & 0x0001) != 0)
-#define FPLUS_ON GPIOB->BSRR = 0x00000001
-#define FPLUS_OFF GPIOB->BSRR = 0x00010000
+#define FPLUS    ((GPIOB->ODR & 0x0001) != 0)
+#define FPLUS_ON    (GPIOB->BSRR = 0x00000001)
+#define FPLUS_OFF    (GPIOB->BSRR = 0x00010000)
 
 //GPIOB pin1
-#define F12PLUS ((GPIOB->ODR & 0x0002) != 0)
-#define F12PLUS_ON GPIOB->BSRR = 0x00000002
-#define F12PLUS_OFF GPIOB->BSRR = 0x00020000
+#define F12PLUS    ((GPIOB->ODR & 0x0002) != 0)
+#define F12PLUS_ON    (GPIOB->BSRR = 0x00000002)
+#define F12PLUS_OFF    (GPIOB->BSRR = 0x00020000)
 
 //GPIOB pin6
-#define LED ((GPIOB->ODR & 0x0040) != 0)
-#define LED_ON GPIOB->BSRR = 0x00000040
-#define LED_OFF GPIOB->BSRR = 0x00400000
+#define LED    ((GPIOB->ODR & 0x0040) != 0)
+#define LED_ON    (GPIOB->BSRR = 0x00000040)
+#define LED_OFF    (GPIOB->BSRR = 0x00400000)
 
 
 #define CH_IN_TEMP ADC_Channel_0
