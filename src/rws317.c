@@ -207,6 +207,7 @@ unsigned char RxCode (void)
 			else
 			{
 				code_state = START;
+#ifdef DEBUG_ERROR_CODES
 				 if (errorcode == ERR_FIRST_HIGH)
 				 {
 					 Usart1Send((char *)"Error First High\r\n");
@@ -215,12 +216,12 @@ unsigned char RxCode (void)
 				 {
 					 sprintf(str, "Error in bit: %d\r\n", bitcount);
 					 Usart1Send(str);
-					 code_state = START;
 				 }
 				 else
 				 {
 					 Usart1Send((char *)"Error other??\r\n");
 				 }
+#endif
 			}
 			break;
 

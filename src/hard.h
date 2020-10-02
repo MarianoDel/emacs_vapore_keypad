@@ -27,6 +27,8 @@
 // #define PROGRAMA_DE_GESTION
 // #define PROGRAMA_PORTON_KIRNO
 
+// #define DEBUG_ERROR_CODES
+
 //----------- Hardware Board Version -------------
 #define VER_1_3    // las conexiones del micro son iguales a la version 1.2
 
