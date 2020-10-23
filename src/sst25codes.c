@@ -55,59 +55,100 @@ void SST_MemoryDump (unsigned int address)
 //Write New control-code into the SST Memory
 unsigned char SST_WriteCodeToMemory (unsigned short position, unsigned int new_code)
 {
+    unsigned int base_page_address = 0;
+    unsigned short address_offset_in_page = 0;
+    
     if (position < CODES_POSI_256)
     {
-        //backup de la pagina
-        readBufNVM8u((unsigned char *) memory_backup.v_bkp_8u, 1024, OFFSET_CODES_256);
-        //borro pagina
-        Clear4KNVM(OFFSET_CODES_256);
-
-        if (UpdateNewCode(memory_backup.v_bkp, position, new_code) == FAILED)
-            return FAILED;
-
-        //writeBufNVM((unsigned char *) memory_backup.v_bkp_8u, 1024, OFFSET_CODES_256);
-        writeBufNVM16u((unsigned short *) memory_backup.v_bkp_16u, 512, OFFSET_CODES_256);
+        base_page_address = OFFSET_CODES_256;
+        address_offset_in_page = 0;
     }
     else if (position < CODES_POSI_512)
     {
-        //backup de la pagina
-        readBufNVM8u((unsigned char *) memory_backup.v_bkp_8u, 1024, OFFSET_CODES_512);
-        //borro pagina
-        Clear4KNVM(OFFSET_CODES_512);
-
-        if (UpdateNewCode(memory_backup.v_bkp, (position - CODES_POSI_256), new_code) == FAILED)
-            return FAILED;
-
-        //writeBufNVM((unsigned char *) memory_backup.v_bkp_8u, 1024, OFFSET_CODES_512);
-        writeBufNVM16u((unsigned short *) memory_backup.v_bkp_16u, 512, OFFSET_CODES_512);
+        base_page_address = OFFSET_CODES_512;
+        address_offset_in_page = position - CODES_POSI_256;
     }
     else if (position < CODES_POSI_768)
     {
-        //backup de la pagina
-        readBufNVM8u((unsigned char *) memory_backup.v_bkp_8u, 1024, OFFSET_CODES_768);
-        //borro pagina
-        Clear4KNVM(OFFSET_CODES_768);
-
-        if (UpdateNewCode(memory_backup.v_bkp, (position - CODES_POSI_512), new_code) == FAILED)
-            return FAILED;
-
-        writeBufNVM16u((unsigned short *) memory_backup.v_bkp_16u, 1024, OFFSET_CODES_768);
+        base_page_address = OFFSET_CODES_768;
+        address_offset_in_page = position - CODES_POSI_512;
     }
     else if (position < CODES_POSI_1024)
     {
-        //backup de la pagina
-        readBufNVM8u((unsigned char *) memory_backup.v_bkp_8u, 1024, OFFSET_CODES_1024);
-        //borro pagina
-        Clear4KNVM(OFFSET_CODES_1024);
-
-        if (UpdateNewCode(memory_backup.v_bkp, (position - CODES_POSI_768), new_code) == FAILED)
-            return FAILED;
-
-        writeBufNVM16u((unsigned short *) memory_backup.v_bkp_16u, 1024, OFFSET_CODES_1024);
+        base_page_address = OFFSET_CODES_1024;
+        address_offset_in_page = position - CODES_POSI_768;
     }
     else
         return FAILED;
 
+    // page bkp -- 1kByte
+    readBufNVM8u((unsigned char *) memory_backup.v_bkp_8u, 1024, base_page_address);
+    
+    // page erase -- 4kBytes
+    Clear4KNVM(base_page_address);
+    
+    // update 4bytes code on 1kByte backuped page
+    if (UpdateNewCode(memory_backup.v_bkp, address_offset_in_page, new_code) == FAILED)
+        return FAILED;
+    
+    // write back 1kBytes from backuped page
+    writeBufNVM16u((unsigned short *) memory_backup.v_bkp_16u, 512, base_page_address);
+    
+
+    // original function
+    // if (position < CODES_POSI_256)
+    // {
+    //     //backup de la pagina
+    //     readBufNVM8u((unsigned char *) memory_backup.v_bkp_8u, 1024, OFFSET_CODES_256);
+    //     //borro pagina
+    //     Clear4KNVM(OFFSET_CODES_256);
+
+    //     if (UpdateNewCode(memory_backup.v_bkp, position, new_code) == FAILED)
+    //         return FAILED;
+
+    //     //writeBufNVM((unsigned char *) memory_backup.v_bkp_8u, 1024, OFFSET_CODES_256);
+    //     writeBufNVM16u((unsigned short *) memory_backup.v_bkp_16u, 512, OFFSET_CODES_256);
+    // }
+    // else if (position < CODES_POSI_512)
+    // {
+    //     //backup de la pagina
+    //     readBufNVM8u((unsigned char *) memory_backup.v_bkp_8u, 1024, OFFSET_CODES_512);
+    //     //borro pagina
+    //     Clear4KNVM(OFFSET_CODES_512);
+
+    //     if (UpdateNewCode(memory_backup.v_bkp, (position - CODES_POSI_256), new_code) == FAILED)
+    //         return FAILED;
+
+    //     //writeBufNVM((unsigned char *) memory_backup.v_bkp_8u, 1024, OFFSET_CODES_512);
+    //     writeBufNVM16u((unsigned short *) memory_backup.v_bkp_16u, 512, OFFSET_CODES_512);
+    // }
+    // else if (position < CODES_POSI_768)
+    // {
+    //     //backup de la pagina
+    //     readBufNVM8u((unsigned char *) memory_backup.v_bkp_8u, 1024, OFFSET_CODES_768);
+    //     //borro pagina
+    //     Clear4KNVM(OFFSET_CODES_768);
+
+    //     if (UpdateNewCode(memory_backup.v_bkp, (position - CODES_POSI_512), new_code) == FAILED)
+    //         return FAILED;
+
+    //     writeBufNVM16u((unsigned short *) memory_backup.v_bkp_16u, 1024, OFFSET_CODES_768);
+    // }
+    // else if (position < CODES_POSI_1024)
+    // {
+    //     //backup de la pagina
+    //     readBufNVM8u((unsigned char *) memory_backup.v_bkp_8u, 1024, OFFSET_CODES_1024);
+    //     //borro pagina
+    //     Clear4KNVM(OFFSET_CODES_1024);
+
+    //     if (UpdateNewCode(memory_backup.v_bkp, (position - CODES_POSI_768), new_code) == FAILED)
+    //         return FAILED;
+
+    //     writeBufNVM16u((unsigned short *) memory_backup.v_bkp_16u, 1024, OFFSET_CODES_1024);
+    // }
+    // else
+    //     return FAILED;
+    
     return PASSED;
 }
 
