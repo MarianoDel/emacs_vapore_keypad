@@ -421,20 +421,20 @@ int main(void)
                 }
                 else
                 {
-                    if ((unsigned short) SST_CheckIndexInMemory(1000) == 0xFFFF)
+                    unsigned short code_in_mem = SST_CheckIndexInMemory(1000);
+
+                    if ((code_in_mem == 0xFFFF) && (position == 416))
                     {
-                        if (position == 416)
-                        {
-                            keypad_locked = 0;                            
-                            Usart1Send("User default Unlock\r\n");
-                            main_state = MAIN_TO_UNLOCK;
-                        }
-                    }
-                    else if (position == (unsigned short) SST_CheckIndexInMemory(1000))
-                    {
-                        keypad_locked = 0;
-                        Usart1Send("User Unlock\r\n");
+                        Usart1Send("User default Unlock\r\n");
                         main_state = MAIN_TO_UNLOCK;
+                        keypad_locked = 0;
+                    }
+
+                    if (position == code_in_mem)                        
+                    {
+                        Usart1Send("User Unlock\r\n");                        
+                        main_state = MAIN_TO_UNLOCK;
+                        keypad_locked = 0;
                     }
                 }
                 //position = (unsigned short) SST_CheckIndexInMemory(1000);
@@ -460,17 +460,17 @@ int main(void)
                 }
                 else
                 {
-                    if ((unsigned short) SST_CheckIndexInMemory(1000) == 0xFFFF)
+                    unsigned short code_in_mem = SST_CheckIndexInMemory(1000);
+
+                    if ((code_in_mem == 0xFFFF) && (position == 416))
                     {
-                        if (position == 416)
-                        {
-                            Usart1Send("User default Remote Unlock\r\n");
-                            main_state = MAIN_TO_UNLOCK;
-                            unlock_by_remote = 1;
-                            keypad_locked = 0;
-                        }
+                        Usart1Send("User default Remote Unlock\r\n");
+                        main_state = MAIN_TO_UNLOCK;
+                        unlock_by_remote = 1;
+                        keypad_locked = 0;
                     }
-                    else if (position == (unsigned short) SST_CheckIndexInMemory(1000))
+
+                    if (position == code_in_mem)
                     {
                         Usart1Send("User Remote Unlock\r\n");
                         main_state = MAIN_TO_UNLOCK;
