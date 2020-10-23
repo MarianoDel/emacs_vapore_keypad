@@ -30,13 +30,9 @@
 #include "display_7seg.h"
 #include "keypad.h"
 
-#ifdef PROGRAMA_DE_GESTION
 #include "gestion.h"
-#endif
-
-#ifdef PROGRAMA_PORTON_KIRNO
 #include "porton_kirno.h"
-#endif
+#include "factory_test.h"
 
 
 
@@ -191,9 +187,6 @@ int main(void)
     unsigned char main_state = 0;
     // unsigned short dummy16 = 0;
     //unsigned char i;	//, j;
-#ifdef PROGRAMA_FACTORY_TEST
-    unsigned char last_switches = 0;
-#endif
     char str [40];
 
     unsigned short position, mass_erase_position;
