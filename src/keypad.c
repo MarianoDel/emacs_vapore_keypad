@@ -53,7 +53,7 @@ unsigned char UpdateSwitches (void)
     if (!keypad_timeout)
     {
         last_keypad_key = ReadSwitches_Internals ();
-        ShowNumbersAgain();
+        Display_ShowNumbersAgain();
         keypad_timeout = KEYPAD_TIMEOUT;
     }
     return last_keypad_key;
@@ -79,12 +79,12 @@ unsigned char CheckKeypad (unsigned char * sp0, unsigned char * sp1, unsigned ch
             if (switches == ZERO_KEY)
             {
                 *sp0 = 0;
-                ShowNumbers(DISPLAY_ZERO);
+                Display_ShowNumbers(DISPLAY_ZERO);
             }
             else
             {
                 *sp0 = switches;
-                ShowNumbers(switches);
+                Display_ShowNumbers(switches);
             }
             BuzzerCommands(BUZZER_SHORT_CMD, 1);
             *sp1 = 0;
@@ -102,7 +102,7 @@ unsigned char CheckKeypad (unsigned char * sp0, unsigned char * sp1, unsigned ch
         //para validar switch anterior necesito que lo liberen
         if (switches == NO_KEY)
         {
-            ShowNumbers(DISPLAY_NONE);
+            Display_ShowNumbers(DISPLAY_NONE);
             keypad_state = KRECEIVING_B;
             keypad_interdigit_timeout = param_struct.interdigit;
         }
@@ -121,12 +121,12 @@ unsigned char CheckKeypad (unsigned char * sp0, unsigned char * sp1, unsigned ch
             if (switches == ZERO_KEY)
             {
                 *sp1 = 0;
-                ShowNumbers(DISPLAY_ZERO);
+                Display_ShowNumbers(DISPLAY_ZERO);
             }
             else
             {
                 *sp1 = switches;
-                ShowNumbers(switches);
+                Display_ShowNumbers(switches);
             }
             BuzzerCommands(BUZZER_SHORT_CMD, 1);
             keypad_state = KRECEIVING_C;
@@ -153,7 +153,7 @@ unsigned char CheckKeypad (unsigned char * sp0, unsigned char * sp1, unsigned ch
         //para validar switch anterior necesito que lo liberen
         if (switches == NO_KEY)
         {
-            ShowNumbers(DISPLAY_NONE);
+            Display_ShowNumbers(DISPLAY_NONE);
             keypad_state = KRECEIVING_D;
             keypad_interdigit_timeout = param_struct.interdigit;
         }
@@ -172,12 +172,12 @@ unsigned char CheckKeypad (unsigned char * sp0, unsigned char * sp1, unsigned ch
             if (switches == ZERO_KEY)
             {
                 *sp2 = 0;
-                ShowNumbers(DISPLAY_ZERO);
+                Display_ShowNumbers(DISPLAY_ZERO);
             }
             else
             {
                 *sp2 = switches;
-                ShowNumbers(switches);
+                Display_ShowNumbers(switches);
             }
 
             BuzzerCommands(BUZZER_SHORT_CMD, 1);
@@ -204,7 +204,7 @@ unsigned char CheckKeypad (unsigned char * sp0, unsigned char * sp1, unsigned ch
         //para validar switch anterior necesito que lo liberen
         if (switches == NO_KEY)
         {
-            ShowNumbers(DISPLAY_NONE);
+            Display_ShowNumbers(DISPLAY_NONE);
             keypad_state = KRECEIVING_F;
             keypad_interdigit_timeout = param_struct.interdigit;
 
@@ -233,7 +233,7 @@ unsigned char CheckKeypad (unsigned char * sp0, unsigned char * sp1, unsigned ch
 
     case KCANCELLING:
             //se cancelo la operacion
-            ShowNumbers(DISPLAY_NONE);
+            Display_ShowNumbers(DISPLAY_NONE);
             BuzzerCommands(BUZZER_HALF_CMD, 1);
             keypad_state = KCANCEL;
             
@@ -269,8 +269,8 @@ unsigned char ReadSwitches_Internals (void)
     OE_OFF;
     PS_ON;
 
-    sw0 = Receive_SPI_Single();
-    sw1 = Receive_SPI_Single();
+    sw0 = SPI_Receive_Single();
+    sw1 = SPI_Receive_Single();
 
     PS_OFF;
     OE_ON;

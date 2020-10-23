@@ -145,20 +145,8 @@
 
 
 #define CH_IN_TEMP ADC_Channel_0
-#define LAST_NUMBER		6
 #define LAST_NUMBER_SPEAK		5
 
-
-//ESTADOS DEL PROGRAMA PRINCIPAL PARA TESTEO
-enum TestStateEnum
-{
-	TEST_INIT,
-	TEST_CHECK_BUZZER,
-	TEST_CHECK_MEMORY_WRITE,
-	TEST_CHECK_MEMORY_READ,
-	TEST_CHECK_KEYPAD,
-	TEST_ERROR
-} TestState;
 
 
 //ESTADOS DEL PROGRAMA PRINCIPAL
@@ -315,7 +303,7 @@ enum end_states
 // Module Exported Functions ---------------------------------------------------
 void BuzzerCommands(unsigned char, unsigned char);
 void UpdateBuzzer (void);
-
+unsigned char BuzzerIsFree (void);
 
 #endif /* _HARD_H_ */
 

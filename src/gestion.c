@@ -70,7 +70,7 @@ void FuncGestion (void)
     ShowConfiguration();
 #endif
 
-    ShowNumbers(DISPLAY_PROG);
+    Display_ShowNumbers(DISPLAY_PROG);
     
     while (1)
     {
@@ -88,7 +88,7 @@ void FuncGestion (void)
             timer_standby = 50;
 
             Usart1Send((char *) "Monitoring on 115200 confirmed\r\n");
-            ShowNumbers(DISPLAY_REMOTE);
+            Display_ShowNumbers(DISPLAY_REMOTE);
 
             LoadConfiguration();
             gestion_state = GESTION_SM_TO_MONITORINGA;
@@ -569,7 +569,7 @@ void FuncGestion (void)
         case GESTION_SM_TO_MONITORING_LEAVE:
             Usart1Send((char *) "Leaving monitoring confirmed\r\n");
             timer_standby = 300;	//espero que se limpien los buffers
-            ShowNumbers(DISPLAY_PROG);
+            Display_ShowNumbers(DISPLAY_PROG);
             gestion_state++;
             break;
 
@@ -604,7 +604,7 @@ void FuncGestion (void)
 
         }
 
-        ShowNumbersAgain();
+        Display_ShowNumbersAgain();
         //ojo esta funcion puede cambiar el estado del programa de gestion
         gestion_state = UpdateUart (gestion_state);
     }

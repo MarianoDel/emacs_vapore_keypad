@@ -129,7 +129,7 @@ void initNVM(void)
 void writeSPI2(unsigned char data)
 {
 	//return (Send_Receive_SPI(data));
-	Send_SPI_Single(data);
+	SPI_Send_Single(data);
 }
 
 

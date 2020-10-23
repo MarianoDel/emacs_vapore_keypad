@@ -46,10 +46,10 @@ void FuncPortonKirno (void)
     Usart1Send((char *) "Programa de Porton Kirno - Hard Vapore Keypad\r\n");
 
     //reset a la SM del display
-    UpdateDisplayResetSM();
+    Display_ResetSM();
     //apago el display
-    ShowNumbers(DISPLAY_PROG);
-    // ShowNumbers(DISPLAY_NONE);
+    Display_ShowNumbers(DISPLAY_PROG);
+    // Display_ShowNumbers(DISPLAY_NONE);
     
     BuzzerCommands(BUZZER_LONG_CMD, 2);
 

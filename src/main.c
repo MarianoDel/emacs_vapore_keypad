@@ -151,7 +151,8 @@ unsigned char slow_toggle = 0;
 #endif
 
 
-/* Module Functions -----------------------------------------------------------*/
+// Module Functions ------------------------------------------------------------
+void SysTickError (void);
 void Delay(__IO uint32_t nTime);
 void TimingDelay_Decrement(void);
 
@@ -188,7 +189,7 @@ void F12_State_Machine (void);
 int main(void)
 {
     unsigned char main_state = 0;
-    unsigned short dummy16 = 0;
+    // unsigned short dummy16 = 0;
     //unsigned char i;	//, j;
 #ifdef PROGRAMA_FACTORY_TEST
     unsigned char last_switches = 0;
@@ -209,12 +210,6 @@ int main(void)
     unsigned char keypad_locked = 1;
     unsigned char remote_is_working = 0;
 
-    //!< At this stage the microcontroller clock setting is already configured,
-    //   this is done through SystemInit() function which is called from startup
-    //   file (startup_stm32f0xx.s) before to branch to application main.
-    //   To reconfigure the default setting of SystemInit() function, refer to
-    //   system_stm32f0xx.c file
-
     //GPIO Configuration.
     GPIO_Config();
     CE_OFF;
@@ -227,22 +222,9 @@ int main(void)
     BUZZER_OFF;
     LED_OFF;
 
-    //ACTIVAR SYSTICK TIMER
+    // Systick Timer Activation
     if (SysTick_Config(48000))
-    {
-        while (1)	/* Capture error */
-        {
-            if (LED)
-                LED_OFF;
-            else
-                LED_ON;
-
-            for (dummy16 = 0; dummy16 < 65000; dummy16++)
-            {
-                asm("nop");
-            }
-        }
-    }
+        SysTickError();
 
 
 #ifndef PROGRAMA_FACTORY_TEST
@@ -302,174 +284,55 @@ int main(void)
     //-- HARDWARE pero para Display --
 #ifdef WITH_WELCOME_CODE_ON_DISPLAY
 #ifdef HARDWARE_VERSION_1_3
-    VectorToDisplayStr("h1.3");
-    while (!DisplayIsFree())
-        UpdateDisplaySM();
+    Display_VectorToStr("h1.3");
+    while (!Display_IsFree())
+        Display_UpdateSM();
 #endif
 
 #ifdef SOFTWARE_VERSION_2_1
-    VectorToDisplayStr("s2.1");
-    while (!DisplayIsFree())
-        UpdateDisplaySM();    
+    Display_VectorToStr("s2.1");
+    while (!Display_IsFree())
+        Display_UpdateSM();    
 #endif
 
 #ifdef SOFTWARE_VERSION_2_0
-    VectorToDisplayStr("s2.0");
-    while (!DisplayIsFree())
-        UpdateDisplaySM();    
+    Display_VectorToStr("s2.0");
+    while (!Display_IsFree())
+        Display_UpdateSM();    
 #endif
 #endif
     /* End of Welcome Code ------------------------------------------------------*/    
     
     //--- EMPIEZO PROGRAMA DE GESTION y GRABAR MEMORIA SST ---//
 #ifdef PROGRAMA_DE_GESTION
-    while (1)
-    {
-        FuncGestion();        
-    }
+
+    FuncGestion();
+
 #endif
     //--- FIN PROGRAMA DE GESTION y GRABAR MEMORIA SST ---//    
 
     //--- EMPIEZO PROGRAMA DE PORTON KIRNO  ---//
 #ifdef PROGRAMA_PORTON_KIRNO
-    while (1)
-    {
-        FuncPortonKirno();
-    }
+
+    FuncPortonKirno();
+
 #endif
     //--- FIN PROGRAMA DE PORTON KIRNO ---//    
     
     
     //--- EMPIEZO PROGRAMA DE PRUEBAS EN FABRICA ---//
 #ifdef PROGRAMA_FACTORY_TEST
-    UpdateDisplayResetSM();
-    // dummy16 = 0;
-    // while (1)
-    // {
-    //     if (!timer_standby)
-    //     {
-    //         timer_standby = 5000;
-    //         BuzzerCommands(BUZZER_SHORT_CMD, 1);
-    //         if (dummy16 < 1000)
-    //         {
-    //             ConvertPositionToDisplay(dummy16);
-    //             dummy16++;
-    //         }
-    //         else
-    //             dummy16 = 0;
-    //     }
 
-    //     UpdateBuzzer();
-    //     UpdateDisplaySM();
-    // }
-
-    main_state = TEST_INIT;
-
-    while (1)
-    {
-        switch (main_state)
-        {
-        case TEST_INIT:
-            ShowNumbers(3);
-            BuzzerCommands(BUZZER_SHORT_CMD, 2);
-            TimingDelay = 900;
-            main_state++;
-            break;
-
-        case TEST_CHECK_BUZZER:
-            if ((!TimingDelay) && (buzzer_state == BUZZER_INIT)) //espero que termine de enviar el buzzer
-            {
-                main_state++;
-            }
-            break;
-
-        case TEST_CHECK_MEMORY_WRITE:
-            if (SST_WriteCodeToMemory(100, 0x5555) == PASSED)
-            {
-                TimingDelay = 900;
-                main_state++;
-            }
-            else
-                main_state = TEST_ERROR;
-
-            ShowNumbers(2);
-//				  main_state++;
-            break;
-
-        case TEST_CHECK_MEMORY_READ:
-            if (!TimingDelay)			//grabo memoria
-            {
-                if (SST_CheckIndexInMemory(100) == 0x5555)
-                {
-                    ShowNumbers(0);
-                    TimingDelay = 900;
-                    main_state++;
-                }
-                else
-                    main_state = TEST_ERROR;
-
-                ShowNumbers(1);
-            }
-            break;
-
-        case TEST_CHECK_KEYPAD:
-            if (!TimingDelay)
-            {
-                // switches = ReadSwitches();
-                switches = UpdateSwitches();
-
-                if (switches == NO_KEY)
-                {
-                    ShowNumbers(DISPLAY_NONE);
-                    last_switches = switches;
-                }
-                else
-                {
-                    if (last_switches != switches)
-                    {
-                        last_switches = switches;
-                        if (switches == ZERO_KEY)
-                            ShowNumbers(DISPLAY_ZERO);
-                        else if (switches == STAR_KEY)
-                            ShowNumbers(DISPLAY_SQR_UP);
-                        else if (switches == POUND_KEY)
-                            ShowNumbers(DISPLAY_SQR_DOWN);
-                        else
-                        {
-                            ShowNumbers(switches);
-                        }
-                        BuzzerCommands(BUZZER_SHORT_CMD, 1);
-                    }
-                }
-            }
-            break;
-
-        case TEST_ERROR:
-            if (!TimingDelay)			//me quedo trabado mostrando el error
-            {
-                BuzzerCommands(BUZZER_SHORT_CMD, 1);
-                TimingDelay = 700;
-            }
-            break;
-
-
-        default:
-            main_state = TEST_INIT;
-            break;
-        }
-
-        UpdateBuzzer();
-
-    }
+    FuncFactoryTest();
 
 #endif
     //--- FIN PROGRAMA DE PRUEBAS EN FABRICA ---//
 
     //--- INICIO PROGRAMA DE PRODUCCION ---//
     //reset a la SM del display
-    UpdateDisplayResetSM();
+    Display_ResetSM();
     //apago el display
-    ShowNumbers(DISPLAY_NONE);
+    Display_ShowNumbers(DISPLAY_NONE);
     
     BuzzerCommands(BUZZER_LONG_CMD, 2);
 
@@ -488,7 +351,7 @@ int main(void)
     if (files.posi0 == 0xFFFFFFFF)
     {
         //memoria no grabada
-        ShowNumbers(DISPLAY_ERROR);
+        Display_ShowNumbers(DISPLAY_ERROR);
         BuzzerCommands(BUZZER_LONG_CMD, 10);
         while (1)
             UpdateBuzzer();
@@ -511,7 +374,7 @@ int main(void)
     if (param_struct.b1t == 0xFF)
     {
         //memoria no configurada
-        ShowNumbers(DISPLAY_ERROR2);
+        Display_ShowNumbers(DISPLAY_ERROR2);
         BuzzerCommands(BUZZER_LONG_CMD, 10);
         while (1)
             UpdateBuzzer();
@@ -622,9 +485,9 @@ int main(void)
             timer_keypad_enabled = 60000;
 
             //si se esta mostrando algo espero
-            if (DisplayIsFree())
+            if (Display_IsFree())
             {
-                ShowNumbers(DISPLAY_REMOTE);
+                Display_ShowNumbers(DISPLAY_REMOTE);
                 digit_remote = 1;
             }
             else
@@ -648,14 +511,14 @@ int main(void)
             {
                 if (position == 800)
                 {
-                    ShowNumbers(DISPLAY_PROG);
+                    Display_ShowNumbers(DISPLAY_PROG);
                     main_state = MAIN_TO_CHANGE_USER_PASSWORD;
                     Usart1Send("Change User Password\r\n");
                     wait_for_code_timeout = param_struct.wait_for_code;
                 }
                 else
                 {
-                    ShowNumbers(DISPLAY_LINE);
+                    Display_ShowNumbers(DISPLAY_LINE);
                     main_state = MAIN_TO_SAVE_AT_LAST;
                     wait_for_code_timeout = param_struct.wait_for_code;
                     sprintf(str, "Guardar en: %03d\r\n", position);
@@ -665,9 +528,9 @@ int main(void)
 
             if (!digit_remote)
             {
-                if (DisplayIsFree())
+                if (Display_IsFree())
                 {
-                    ShowNumbers(DISPLAY_REMOTE);
+                    Display_ShowNumbers(DISPLAY_REMOTE);
                     digit_remote = 1;
                 }
             }
@@ -688,6 +551,9 @@ int main(void)
                 Usart1Send(str);
                 main_state = MAIN_TO_SAVE_AT_LAST;                
             }
+            else if (switches == RK_CANCEL)
+                digit_remote = 0;
+            
 
 #ifdef CON_BLOQUEO_DE_KEYPAD
             if (!timer_keypad_enabled)
@@ -697,7 +563,7 @@ int main(void)
                 main_state = MAIN_MAIN;
                 unlock_by_remote = 0;
                 remote_is_working = 0;
-                ShowNumbers(DISPLAY_NONE);
+                Display_ShowNumbers(DISPLAY_NONE);
             }
 #endif
             break;
@@ -758,7 +624,7 @@ int main(void)
                 {
                     sprintf(str, "Grabar en secuencia remota desde: %d\r\n", position);
                     Usart1Send(str);
-                    ShowNumbers(DISPLAY_S);
+                    Display_ShowNumbers(DISPLAY_S);
                     SirenCommands(SIREN_CONFIRM_OK_CMD);
                     seq_number = 0;                
                     main_state = MAIN_TO_SAVE_IN_SEQUENCE;                
@@ -780,7 +646,7 @@ int main(void)
                     else
                         Usart1Send((char *) "Error al guardar\r\n");
 
-                    ConvertPositionToDisplay(position);
+                    Display_ConvertPosition(position);
                     BuzzerCommands(BUZZER_SHORT_CMD, 7);
                     if (remote_is_working)
                         SirenCommands(SIREN_CONFIRM_OK_CMD);                    
@@ -792,7 +658,7 @@ int main(void)
                     sprintf(str, "Error codigo ya esta en: %03d\r\n", code_position);
                     Usart1Send(str);
 
-                    ConvertPositionToDisplay(code_position);
+                    Display_ConvertPosition(code_position);
                     BuzzerCommands(BUZZER_HALF_CMD, 2);
                     if (remote_is_working)
                         SirenCommands(SIREN_HALF_CMD);
@@ -833,7 +699,7 @@ int main(void)
                 {
                     sprintf(str, "Grabar en secuencia desde: %d\r\n", position);
                     Usart1Send(str);
-                    ShowNumbers(DISPLAY_S);
+                    Display_ShowNumbers(DISPLAY_S);
                     seq_number = 0;                
                     main_state = MAIN_TO_SAVE_IN_SEQUENCE;
                     switches = KNONE;
@@ -849,7 +715,7 @@ int main(void)
             if (Write_Code_To_Memory(position, 0xFFFFFFFF) != 0)
             {
                 Usart1Send((char *) "Codigo Borrado OK\r\n");
-                VectorToDisplayStr("0.");
+                Display_VectorToStr("0.");
                 BuzzerCommands(BUZZER_SHORT_CMD, 7);
                 if (remote_is_working)
                     SirenCommands(SIREN_CONFIRM_OK_CMD);                    
@@ -857,7 +723,7 @@ int main(void)
             else
             {
                 Usart1Send((char *) "Error al borrar\r\n");
-                ShowNumbers(DISPLAY_NONE);
+                Display_ShowNumbers(DISPLAY_NONE);
                 BuzzerCommands(BUZZER_HALF_CMD, 1);
                 if (remote_is_working)
                     SirenCommands(SIREN_HALF_CMD);                    
@@ -871,14 +737,14 @@ int main(void)
             if (EraseAllMemory() != 0)
             {
                 Usart1Send((char *) "Memoria Completa Borrada OK\r\n");
-                VectorToDisplayStr("0.");
+                Display_VectorToStr("0.");
                 BuzzerCommands(BUZZER_SHORT_CMD, 7);
                 main_state = MAIN_TO_MAIN_WAIT_5SEGS;
             }
             else
             {
                 Usart1Send((char *) "Error al borrar memoria\r\n");
-                ShowNumbers(DISPLAY_NONE);
+                Display_ShowNumbers(DISPLAY_NONE);
                 BuzzerCommands(BUZZER_HALF_CMD, 1);
                 main_state = MAIN_TO_MAIN_CANCEL;
             }
@@ -900,7 +766,7 @@ int main(void)
                     {
                         sprintf(str, "Codigo Guardado OK en: %d\r\n", (position + seq_number));
                         Usart1Send(str);
-                        ConvertPositionToDisplay((position + seq_number));
+                        Display_ConvertPosition((position + seq_number));
                         BuzzerCommands(BUZZER_SHORT_CMD, 7);                        
                         seq_number++;
                         main_state = MAIN_TO_SAVE_IN_SEQUENCE_WAITING;
@@ -912,7 +778,7 @@ int main(void)
                     {
                         Usart1Send((char *) "Error al guardar, problemas de memoria??\r\n");
                         //salgo por error
-                        VectorToDisplayStr("e");
+                        Display_VectorToStr("e");
                         main_state = MAIN_TO_MAIN_WAIT_5SEGS;                        
                     }
                 }
@@ -921,7 +787,7 @@ int main(void)
                     //se habia utilizado en otra posicion
                     sprintf(str, "Error codigo ya esta en: %03d\r\n", code_position);
                     Usart1Send(str);
-                    ConvertPositionToDisplay(code_position);
+                    Display_ConvertPosition(code_position);
                     BuzzerCommands(BUZZER_HALF_CMD, 2);
                     //salgo por error
                     main_state = MAIN_TO_MAIN_WAIT_5SEGS;
@@ -948,13 +814,13 @@ int main(void)
             }
 
             //si no estoy en enviado la secuencia de numeros pongo la S
-            if (DisplayIsFree())
-                ShowNumbers(DISPLAY_S);
+            if (Display_IsFree())
+                Display_ShowNumbers(DISPLAY_S);
             
             break;
             
         case MAIN_TO_SAVE_IN_SEQUENCE_WAITING:
-            if (DisplayIsFree())
+            if (Display_IsFree())
                 main_state = MAIN_TO_SAVE_IN_SEQUENCE;
             
             break;
@@ -1008,7 +874,7 @@ int main(void)
         }
 
         UpdateBuzzer();
-        UpdateDisplaySM();
+        Display_UpdateSM();
         UpdateSiren();
         UpdateAudio();
 #ifdef CON_MODIFICACION_DIODO_BATERIA
@@ -1018,91 +884,8 @@ int main(void)
         main_state = UpdateUart(main_state);
     }
 
-    //--- FIN PRUEBA DE NUMEROS DEL 0 AL 9 y TACT SWITCHES
-
-    //--- PRUEBA DE SALIDAS A TRANSISTOR
-    /*
-      while (1)
-      {
-      FPLUS_ON;
-      F12PLUS_ON;
-      F5PLUS_ON;
-      LED_ON;
-      BUZZER_ON;
-
-      Wait_ms(1000);
-
-      FPLUS_OFF;
-      F12PLUS_OFF;
-      F5PLUS_OFF;
-      LED_OFF;
-      BUZZER_OFF;
-
-      Wait_ms(1000);
-      }
-    */
-    //--- FIN PRUEBA DE SALIDAS A TRANSISTOR
-
-    //--- PRUEBA LEER MEMORIA
-    /*
-      while (1)
-      {
-      if (LED)
-      LED_OFF;
-      else
-      LED_ON;
-
-      if (readJEDEC())
-      //if (readStatusNVM())
-      Wait_ms(50);
-      else
-      Wait_ms(500);
-      }
-    */
-    //--- FIN PRUEBA LEER MEMORIA
-
-
-
-    //FIN PRUEBA DE SPI
-
-
-    //--- PRUEBAS PWM
-    /*
-    //Update_PWM(1024);
-    Update_PWM(666, 333, 1);
-    while (1)
-    {
-    if (LED)
-    {
-    LED_OFF;
-    Update_PWM(1000, 500, 1);
-    }
-    else
-    {
-    LED_ON;
-    Update_PWM(500, 250, 1);
-    }
-
-
-    Wait_ms(800);
-
-    }
-    */
-    //--- FIN PRUEBAS PWM
-
-    //ADC configuration.
-    //if (ADC_Conf() == 0)
-    //{
-    //	while (1)
-    //	{
-    //		if (LED)
-    //			LED_OFF;
-    //		else
-    //			LED_ON;
-    //	}
-    //}
-
     return 0;
+    
 }
 //--- End of Main ---//
 
@@ -1635,7 +1418,7 @@ unsigned char CheckRemoteKeypad (unsigned char * sp0, unsigned char * sp1, unsig
                 //se cancelo la operacion
                 if (button_remote == REM_B10)
                 {
-                    ShowNumbers(DISPLAY_NONE);
+                    Display_ShowNumbers(DISPLAY_NONE);
                     if (unlock_by_remote)
                         SirenCommands(SIREN_HALF_CMD);
                     BuzzerCommands(BUZZER_HALF_CMD, 1);
@@ -1646,12 +1429,12 @@ unsigned char CheckRemoteKeypad (unsigned char * sp0, unsigned char * sp1, unsig
                     //se presiono un numero - reviso si fue 0
                     if (button_remote == REM_B11)
                     {
-                        ShowNumbers(DISPLAY_ZERO);
+                        Display_ShowNumbers(DISPLAY_ZERO);
                         *sp0 = 0;
                     }
                     else
                     {
-                        ShowNumbers(button_remote);
+                        Display_ShowNumbers(button_remote);
                         *sp0 = button_remote;
                     }
                     if (unlock_by_remote)
@@ -1686,7 +1469,7 @@ unsigned char CheckRemoteKeypad (unsigned char * sp0, unsigned char * sp1, unsig
             //se cancelo la operacion
             if (button_remote == REM_B10)
             {
-                ShowNumbers(DISPLAY_NONE);
+                Display_ShowNumbers(DISPLAY_NONE);
                 if (unlock_by_remote)
                     SirenCommands(SIREN_HALF_CMD);
                 BuzzerCommands(BUZZER_HALF_CMD, 1);
@@ -1696,7 +1479,7 @@ unsigned char CheckRemoteKeypad (unsigned char * sp0, unsigned char * sp1, unsig
             //si esta apurado un solo numero
             if (button_remote == REM_B12)
             {
-                ShowNumbers(DISPLAY_LINE);
+                Display_ShowNumbers(DISPLAY_LINE);
                 if (unlock_by_remote)
                     SirenCommands(SIREN_SHORT_CMD);
                 BuzzerCommands(BUZZER_SHORT_CMD, 2);
@@ -1713,12 +1496,12 @@ unsigned char CheckRemoteKeypad (unsigned char * sp0, unsigned char * sp1, unsig
                 if (button_remote == REM_B11)
                 {
                     *sp1 = 0;
-                    ShowNumbers(DISPLAY_ZERO);
+                    Display_ShowNumbers(DISPLAY_ZERO);
                 }
                 else
                 {
                     *sp1 = button_remote;
-                    ShowNumbers(button_remote);
+                    Display_ShowNumbers(button_remote);
                 }
 
                 if (unlock_by_remote)
@@ -1754,7 +1537,7 @@ unsigned char CheckRemoteKeypad (unsigned char * sp0, unsigned char * sp1, unsig
             //se cancelo la operacion
             if (button_remote == REM_B10)
             {
-                ShowNumbers(DISPLAY_NONE);
+                Display_ShowNumbers(DISPLAY_NONE);
                 if (unlock_by_remote)
                     SirenCommands(SIREN_HALF_CMD);
                 BuzzerCommands(BUZZER_HALF_CMD, 1);
@@ -1764,7 +1547,7 @@ unsigned char CheckRemoteKeypad (unsigned char * sp0, unsigned char * sp1, unsig
             //si esta apurado dos numeros
             if (button_remote == REM_B12)
             {
-                ShowNumbers(DISPLAY_LINE);
+                Display_ShowNumbers(DISPLAY_LINE);
                 if (unlock_by_remote)
                     SirenCommands(SIREN_SHORT_CMD);
                 BuzzerCommands(BUZZER_SHORT_CMD, 2);
@@ -1780,12 +1563,12 @@ unsigned char CheckRemoteKeypad (unsigned char * sp0, unsigned char * sp1, unsig
                 if (button_remote == ZERO_KEY)
                 {
                     *sp2 = 0;
-                    ShowNumbers(DISPLAY_ZERO);
+                    Display_ShowNumbers(DISPLAY_ZERO);
                 }
                 else
                 {
                     *sp2 = button_remote;
-                    ShowNumbers(button_remote);
+                    Display_ShowNumbers(button_remote);
                 }
                 if (unlock_by_remote)
                     SirenCommands(SIREN_SHORT_CMD);
@@ -1818,7 +1601,7 @@ unsigned char CheckRemoteKeypad (unsigned char * sp0, unsigned char * sp1, unsig
             //se cancelo la operacion
             if (button_remote == REM_B10)
             {
-                ShowNumbers(DISPLAY_NONE);
+                Display_ShowNumbers(DISPLAY_NONE);
                 if (unlock_by_remote)
                     SirenCommands(SIREN_HALF_CMD);
                 BuzzerCommands(BUZZER_HALF_CMD, 1);
@@ -1828,7 +1611,7 @@ unsigned char CheckRemoteKeypad (unsigned char * sp0, unsigned char * sp1, unsig
             //es la confirmacion
             if (button_remote == REM_B12)
             {
-                ShowNumbers(DISPLAY_LINE);
+                Display_ShowNumbers(DISPLAY_LINE);
                 if (unlock_by_remote)
                     SirenCommands(SIREN_SHORT_CMD);
                 BuzzerCommands(BUZZER_SHORT_CMD, 2);
@@ -2336,5 +2119,26 @@ void TimingDelay_Decrement(void)
         }
     }
 }
+
+
+void SysTickError (void)
+{
+    //Capture systick error...
+    while (1)
+    {
+        if (LED)
+            LED_OFF;
+        else
+            LED_ON;
+
+        for (unsigned char i = 0; i < 255; i++)
+        {
+            asm ("nop \n\t"
+                 "nop \n\t"
+                 "nop \n\t" );
+        }
+    }
+}
+
 
 //--- end of file ---//

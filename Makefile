@@ -34,7 +34,6 @@ DDEFS = -DSTM32F030
 # List all default ASM defines here, like -D_DEBUG=1
 DADEFS =
 
-
 # List all default directories to look for include files here
 DINCDIR = ./src
 
@@ -53,35 +52,18 @@ DLIBS =
 #
 
 #
-# Define project name and Ram = 0/Flash = 1 mode here
+# Define project name here
 PROJECT        = Template_F030
 
-# List all user C define here, like -D_DEBUG=1
-UDEFS =
-
-# Define ASM defines here
-UADEFS =
-
 # List C source files here
-LIBSDIR    = ../STM32F0xx_StdPeriph_Lib_V1.3.1/Libraries/STM32F0xx_StdPeriph_Driver
 CORELIBDIR = ./cmsis_core
-DEVDIR  =	./cmsis_boot
-
-
-STMSPDDIR    = ./stm_lib
-
-STMSPSRCDDIR = $(LIBSDIR)/src
-STMSPINCDDIR = $(LIBSDIR)/inc
-#STMSPSRCDDIR = $(STMSPDDIR)/src
-#STMSPINCDDIR = $(STMSPDDIR)/inc
-
-#DISCOVERY    = ../STM32F0-Discovery_FW_V1.0.0/Utilities/STM32F0-Discovery
+BOOTDIR = ./cmsis_boot
 
 LINKER = ./cmsis_boot/startup
 
 SRC  = ./src/main.c
-SRC += $(DEVDIR)/system_stm32f0xx.c
-SRC += $(DEVDIR)/syscalls/syscalls.c
+SRC += $(BOOTDIR)/system_stm32f0xx.c
+SRC += $(BOOTDIR)/syscalls/syscalls.c
 
 SRC += ./src/it.c
 SRC += ./src/gpio.c
@@ -99,6 +81,8 @@ SRC += ./src/gestion.c
 SRC += ./src/hard.c
 SRC += ./src/porton_kirno.c
 SRC += ./src/codes.c
+SRC += ./src/factory_test.c
+SRC += ./src/send_segments.c
 
 
 ## Core Support
@@ -110,14 +94,10 @@ SRC += $(CORELIBDIR)/core_cm0.c
 # List ASM source files here
 ASRC = ./cmsis_boot/startup/startup_stm32f0xx.s
 
-# List all user directories here
-UINCDIR = $(DEVDIR) \
-          $(CORELIBDIR) \
-          $(STMSPINCDDIR) \
-          $(DISCOVERY)    \
-          ./inc  \
-          ./cmsis_boot
-			 #../paho.mqtt.embedded-c/MQTTPacket/src
+# List User Directories for Libs Headers
+UINCDIR = $(BOOTDIR) \
+          $(CORELIBDIR)
+	#../paho.mqtt.embedded-c/MQTTPacket/src
 
 # List the user directory to look for the libraries here
 ULIBDIR =
@@ -155,8 +135,8 @@ ASFLAGS = $(MCFLAGS) -g -gdwarf-2 -mthumb  -Wa,-amhls=$(<:.s=.lst) $(ADEFS)
 # SIN INFO DEL DEBUGGER
 #CPFLAGS = $(MCFLAGS) $(OPT) -gdwarf-2 -mthumb   -fomit-frame-pointer -Wall -Wstrict-prototypes -fverbose-asm -Wa,-ahlms=$(<:.c=.lst) $(DEFS)
 
-# CON INFO PARA DEBUGGER
-#CPFLAGS = $(MCFLAGS) $(OPT) -g -gdwarf-2 -mthumb -fomit-frame-pointer -Wall -fverbose-asm -Wa,-ahlms=$(<:.c=.lst) $(DEFS)
+# INFO PARA DEBUGGER + STRIP CODE + DUPLICATE GLOBALS ERROR
+# CPFLAGS = $(MCFLAGS) $(OPT) -g -gdwarf-2 -fno-common -mthumb -fomit-frame-pointer -Wall -fdata-sections -ffunction-sections -fverbose-asm -Wa,-ahlms=$(<:.c=.lst) $(DDEFS)
 
 # CON INFO PARA DEBUGGER + STRIP CODE
 CPFLAGS = $(MCFLAGS) $(OPT) -g -gdwarf-2 -mthumb -fomit-frame-pointer -Wall -fdata-sections -ffunction-sections -fverbose-asm -Wa,-ahlms=$(<:.c=.lst) $(DDEFS)
@@ -166,15 +146,6 @@ LDFLAGS = $(MCFLAGS) -mthumb -lm --specs=nano.specs -Wl,--gc-sections -nostartfi
 # CON DEAD CODE
 #LDFLAGS = $(MCFLAGS) -mthumb --specs=nano.specs -nostartfiles -T$(LDSCRIPT) -Wl,-Map=$(FULL_PRJ).map,--cref,--no-warn-mismatch $(LIBDIR)
 #LDFLAGS = $(MCFLAGS) -mthumb -T$(LDSCRIPT) -Wl,-Map=$(FULL_PRJ).map,--cref,--no-warn-mismatch $(LIBDIR)
-
-#
-# OPENOCD Command Options
-#
-OCDCMN = -c "program $(FULL_PRJ).bin verify reset exit"
-#OCDCMN = -c "flash probe 0"
-# OCDCMN += -c "stm32f1x mass_erase 0"
-# OCDCMN += -c "flash write_bank 0 $(FULL_PRJ).bin 0"
-# OCDCMN += -c "reset run"
 
 #
 # makefile rules
@@ -226,7 +197,18 @@ clean:
 	rm -f $(FULL_PRJ).bin
 #	rm $(SRC:.c=.c.bak)
 	rm -f $(SRC:.c=.lst)
+	rm -f $(SRC:.c=.su)
 #   rm $(ASRC:.s=.s.bak)
 	rm -f $(ASRC:.s=.lst)
+
+tests:
+	# primero objetos de los modulos a testear, solo si son tipo HAL sin dependencia del hard
+	gcc -c src/display_7seg.c -I. $(INCDIR)
+	# gcc -c src/gen_signal.c -I. $(INCDIR)
+	gcc src/tests.c display_7seg.o
+	./a.out
+	# sino copiar funcion a testear al main de tests.c
+	# gcc src/tests.c
+	# ./a.out
 
 # *** EOF ***

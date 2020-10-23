@@ -68,7 +68,7 @@
 #define NVM_On          CE_ON
 #define NVM_Off         CE_OFF
 
-#define readSPI2()      Receive_SPI_Single()
+#define readSPI2()      SPI_Receive_Single()
 #define busyNVM()   (readStatusNVM()& SST5_BUSY)// Returns the state of the Busy bit on the status register
 
 

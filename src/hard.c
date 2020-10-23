@@ -111,4 +111,14 @@ void UpdateBuzzer (void)
     }
 }
 
+
+unsigned char BuzzerIsFree (void)
+{
+    if (buzzer_state == BUZZER_WAIT_COMMANDS)
+        return 1;
+
+    return 0;
+}
+
+
 //--- end of file ---//
