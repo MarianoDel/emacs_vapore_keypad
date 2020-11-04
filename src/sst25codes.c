@@ -8,7 +8,7 @@
 // #### SST25CODES.C ###################################
 //------------------------------------------------------
 
-/* Includes ------------------------------------------------------------------*/
+// Includes --------------------------------------------------------------------
 #include "sst25codes.h"
 #include "sst25.h"
 #include "flash_program.h"
@@ -19,16 +19,22 @@
 #include <stdio.h>
 
 
+// Private Types Constants and Macros ------------------------------------------
+const unsigned short v_offset_codes_in_sst [4] = { OFFSET_CODES_256,
+                                                   OFFSET_CODES_512,
+                                                   OFFSET_CODES_768,
+                                                   OFFSET_CODES_1024 };
 
-/* Externals variables ---------------------------------------------------------*/
+
+// Externals variables ---------------------------------------------------------
 extern mem_bkp_typedef memory_backup;
 
 
-/* Global variables ------------------------------------------------------------*/
+// Globals ---------------------------------------------------------------------
 
 
 
-//---------------------Module Functions --------------------------------
+// Module Functions ------------------------------------------------------------
 void SST_MemoryDump (unsigned int address)
 {
     unsigned char i;
@@ -52,6 +58,7 @@ void SST_MemoryDump (unsigned int address)
     }
 }
 
+
 //Write New control-code into the SST Memory
 unsigned char SST_WriteCodeToMemory (unsigned short position, unsigned int new_code)
 {
@@ -61,7 +68,7 @@ unsigned char SST_WriteCodeToMemory (unsigned short position, unsigned int new_c
     if (position < CODES_POSI_256)
     {
         base_page_address = OFFSET_CODES_256;
-        address_offset_in_page = 0;
+        address_offset_in_page = position;
     }
     else if (position < CODES_POSI_512)
     {
@@ -94,130 +101,38 @@ unsigned char SST_WriteCodeToMemory (unsigned short position, unsigned int new_c
     // write back 1kBytes from backuped page
     writeBufNVM16u((unsigned short *) memory_backup.v_bkp_16u, 512, base_page_address);
     
-
-    // original function
-    // if (position < CODES_POSI_256)
-    // {
-    //     //backup de la pagina
-    //     readBufNVM8u((unsigned char *) memory_backup.v_bkp_8u, 1024, OFFSET_CODES_256);
-    //     //borro pagina
-    //     Clear4KNVM(OFFSET_CODES_256);
-
-    //     if (UpdateNewCode(memory_backup.v_bkp, position, new_code) == FAILED)
-    //         return FAILED;
-
-    //     //writeBufNVM((unsigned char *) memory_backup.v_bkp_8u, 1024, OFFSET_CODES_256);
-    //     writeBufNVM16u((unsigned short *) memory_backup.v_bkp_16u, 512, OFFSET_CODES_256);
-    // }
-    // else if (position < CODES_POSI_512)
-    // {
-    //     //backup de la pagina
-    //     readBufNVM8u((unsigned char *) memory_backup.v_bkp_8u, 1024, OFFSET_CODES_512);
-    //     //borro pagina
-    //     Clear4KNVM(OFFSET_CODES_512);
-
-    //     if (UpdateNewCode(memory_backup.v_bkp, (position - CODES_POSI_256), new_code) == FAILED)
-    //         return FAILED;
-
-    //     //writeBufNVM((unsigned char *) memory_backup.v_bkp_8u, 1024, OFFSET_CODES_512);
-    //     writeBufNVM16u((unsigned short *) memory_backup.v_bkp_16u, 512, OFFSET_CODES_512);
-    // }
-    // else if (position < CODES_POSI_768)
-    // {
-    //     //backup de la pagina
-    //     readBufNVM8u((unsigned char *) memory_backup.v_bkp_8u, 1024, OFFSET_CODES_768);
-    //     //borro pagina
-    //     Clear4KNVM(OFFSET_CODES_768);
-
-    //     if (UpdateNewCode(memory_backup.v_bkp, (position - CODES_POSI_512), new_code) == FAILED)
-    //         return FAILED;
-
-    //     writeBufNVM16u((unsigned short *) memory_backup.v_bkp_16u, 1024, OFFSET_CODES_768);
-    // }
-    // else if (position < CODES_POSI_1024)
-    // {
-    //     //backup de la pagina
-    //     readBufNVM8u((unsigned char *) memory_backup.v_bkp_8u, 1024, OFFSET_CODES_1024);
-    //     //borro pagina
-    //     Clear4KNVM(OFFSET_CODES_1024);
-
-    //     if (UpdateNewCode(memory_backup.v_bkp, (position - CODES_POSI_768), new_code) == FAILED)
-    //         return FAILED;
-
-    //     writeBufNVM16u((unsigned short *) memory_backup.v_bkp_16u, 1024, OFFSET_CODES_1024);
-    // }
-    // else
-    //     return FAILED;
-    
     return PASSED;
 }
+
 
 //Answers between 0 - 1023 if the control-code is already in SST Memory, else answers 0xFFFF
 unsigned short SST_CheckBaseMask (unsigned int code_to_find, unsigned int mask)
 {
-    unsigned short i;
     unsigned int * p_mem;
-    //char str [64];
 
     code_to_find = code_to_find & mask;
 
-    //cargo 256 numeros al vector de 1024 posiciones
-    readBufNVM8u((unsigned char *) memory_backup.v_bkp_8u, 1024, OFFSET_CODES_256);
-    p_mem = memory_backup.v_bkp;
-
-    //sprintf(str, "\r\ncomparo %08X %08X", *p_mem, code_to_find);
-    //Usart1Send(str);
-    //Wait_ms(200);
-    //if ((*p_mem & mask) == code_to_find)
-    //	return 1;
-
-
-    for (i = 0; i < 256; i++)
+    for (unsigned char i = 0; i < 4; i++)
     {
-        if (code_to_find == (*p_mem & mask))
-            return i;
-        p_mem++;
-    }
+        //cargo el segmento de memoria
+        readBufNVM8u((unsigned char *) memory_backup.v_bkp_8u, 1024, v_offset_codes_in_sst[i]);
+        p_mem = memory_backup.v_bkp;
 
-
-    //no aparecio cargo 1024 posiciones mas
-    readBufNVM8u((unsigned char *) memory_backup.v_bkp_8u, 1024, OFFSET_CODES_512);
-    p_mem = memory_backup.v_bkp;
-
-    for (i = 0; i < 256; i++)
-    {
-        if (code_to_find == (*p_mem & mask))
-            return i + CODES_POSI_256;
-        p_mem++;
-    }
-
-    //no aparecio cargo 1024 posiciones mas
-    readBufNVM8u((unsigned char *) memory_backup.v_bkp_8u, 1024, OFFSET_CODES_768);
-    p_mem = memory_backup.v_bkp;
-
-    for (i = 0; i < 256; i++)
-    {
-        if (code_to_find == (*p_mem & mask))
-            return i + CODES_POSI_512;
-        p_mem++;
-    }
-
-    //no aparecio cargo 1024 posiciones mas
-    readBufNVM8u((unsigned char *) memory_backup.v_bkp_8u, 1024, OFFSET_CODES_1024);
-    p_mem = memory_backup.v_bkp;
-
-    for (i = 0; i < 256; i++)
-    {
-        if (code_to_find == (*p_mem & mask))
-            return i + CODES_POSI_768;
-        p_mem++;
+        for (unsigned short j = 0; j < 256; j++)
+        {
+            if (code_to_find == (*p_mem & mask))
+                return (j + CODES_POSI_256 * i);
+            
+            p_mem++;
+        }
+        
     }
 
     return 0xffff;
-
 }
 
-//0 sino existe el boton sino de 1 a 4
+
+//Answers 0 if not button, else 1 to 4 
 unsigned char SST_CheckButton (unsigned int code_to_check, unsigned int button_mask)
 {
 #ifdef EV1527_BUTTONS
@@ -312,41 +227,43 @@ unsigned char SST_CheckButton (unsigned int code_to_check, unsigned int button_m
     */
 }
 
+
+//answers with the data in memory position of the index, even if its empty
 unsigned int SST_CheckIndexInMemory (unsigned short index_to_find)
 {
     unsigned int * p_mem;
 
-    if (index_to_find < 256)
+    unsigned int base_page_address = 0;
+    unsigned short address_offset_in_page = 0;
+    
+    if (index_to_find < CODES_POSI_256)
     {
-        //cargo 256 numeros al vector de 1024 posiciones
-        readBufNVM8u((unsigned char *) memory_backup.v_bkp_8u, 1024, OFFSET_CODES_256);
-        p_mem = memory_backup.v_bkp;
-
-        return *(p_mem + index_to_find);
+        base_page_address = OFFSET_CODES_256;
+        address_offset_in_page = index_to_find;
     }
-    else if (index_to_find < 512)
+    else if (index_to_find < CODES_POSI_512)
     {
-        readBufNVM8u((unsigned char *) memory_backup.v_bkp_8u, 1024, OFFSET_CODES_512);
-        p_mem = memory_backup.v_bkp;
-
-        return *(p_mem + index_to_find - 256);
+        base_page_address = OFFSET_CODES_512;
+        address_offset_in_page = index_to_find - CODES_POSI_256;
     }
-    else if (index_to_find < 768)
+    else if (index_to_find < CODES_POSI_768)
     {
-        readBufNVM8u((unsigned char *) memory_backup.v_bkp_8u, 1024, OFFSET_CODES_768);
-        p_mem = memory_backup.v_bkp;
-
-        return *(p_mem + index_to_find - 512);
+        base_page_address = OFFSET_CODES_768;
+        address_offset_in_page = index_to_find - CODES_POSI_512;
     }
-    else if (index_to_find < 1024)
+    else if (index_to_find < CODES_POSI_1024)
     {
-        readBufNVM8u((unsigned char *) memory_backup.v_bkp_8u, 1024, OFFSET_CODES_1024);
-        p_mem = memory_backup.v_bkp;
-
-        return *(p_mem + index_to_find - 768);
+        base_page_address = OFFSET_CODES_1024;
+        address_offset_in_page = index_to_find - CODES_POSI_768;
     }
     else
         return 0xffffffff;
+
+
+    readBufNVM8u((unsigned char *) memory_backup.v_bkp_8u, 1024, base_page_address);
+    p_mem = memory_backup.v_bkp;
+
+    return *(p_mem + address_offset_in_page);
 }
 
 
