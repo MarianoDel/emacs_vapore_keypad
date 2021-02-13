@@ -172,10 +172,13 @@ void VectorToSpeak (unsigned char);
 void PositionToSpeak(unsigned short);
 // ------- para la bateria -------
 void UpdateBattery (void);
+
 // ------- para la salida F12+ -------
+#ifdef USE_F12_PLUS_WITH_SM
 void F12_State_Machine_Start (void);
 void F12_State_Machine_Reset (void);
 void F12_State_Machine (void);
+#endif
 
 //-------------------------------------------//
 // @brief  Main program.
@@ -210,7 +213,11 @@ int main(void)
     PS_OFF;
     OE_OFF;
     FPLUS_OFF;
+#ifdef USE_F12_PLUS_WITH_SM
     F12_State_Machine_Reset();
+#else
+    F12PLUS_OFF;
+#endif
     F5PLUS_OFF;
     BUZZER_OFF;
     LED_OFF;
@@ -915,8 +922,10 @@ unsigned char FuncAlarm (void)
                 alarm_state = ALARM_BUTTON1;
                 strcat(str, (char *) "B1\r\n");
                 repetition_counter = param_struct.b1r;
+#ifdef USE_F12_PLUS_WITH_SM
                 //modificacion 24-01-2019 F12PLUS espera 10 segundos y se activa 5 segundos
                 F12_State_Machine_Start();
+#endif
 
             }
             else if (button == 2)
@@ -925,15 +934,6 @@ unsigned char FuncAlarm (void)
                 last_two = code_position;
                 alarm_state = ALARM_BUTTON2;
                 strcat(str, (char *) "B2\r\n");
-                //para pruebas boton 2 -> 3
-                //last_one_or_three = code_position;
-                //repetition_counter = b3r;
-                //alarm_state = ALARM_BUTTON3;
-                //strcat(str, (char *) "B3\r\n");
-                //para pruebas boton 2 -> 4
-                //alarm_state = ALARM_BUTTON4;
-                //strcat(str, (char *) "B4\r\n");
-                //repetition_counter = b4r;
             }
             else if (button == 3)
             {
@@ -960,6 +960,9 @@ unsigned char FuncAlarm (void)
     case ALARM_BUTTON1:
         FPLUS_ON;
         F5PLUS_ON;
+#ifdef USE_F12_PLUS_ON_BUTTON1
+        F12PLUS_ON;
+#endif
 
         SirenCommands(SIREN_MULTIPLE_UP_CMD);
         alarm_state++;
@@ -1031,7 +1034,11 @@ unsigned char FuncAlarm (void)
         SirenCommands(SIREN_STOP_CMD);
         FPLUS_OFF;
         F5PLUS_OFF;
+#ifdef USE_F12_PLUS_WITH_SM
         F12_State_Machine_Reset();
+#else
+        F12PLUS_OFF;
+#endif
 
         PositionToSpeak(last_one_or_three);
         alarm_state++;
@@ -1323,10 +1330,22 @@ unsigned char FuncAlarm (void)
         break;
     }
 
+#ifdef USE_F12_PLUS_WITH_SM
     F12_State_Machine();
+#endif
 
     return WORKING;
 }
+
+#ifdef USE_F12_PLUS_WITH_SM
+#ifdef USE_F12_PLUS_SM_DIRECT
+#define F12PLUS_ACTIVE    F12PLUS_ON
+#define F12PLUS_INACTIVE    F12PLUS_OFF
+#endif
+#ifdef USE_F12_PLUS_SM_NEGATE
+#define F12PLUS_ACTIVE    F12PLUS_OFF
+#define F12PLUS_INACTIVE    F12PLUS_ON
+#endif
 
 typedef enum {
     F12_PLUS_WAITING = 0,    
@@ -1339,12 +1358,7 @@ f12_plus_state_t f12_plus_state;
 void F12_State_Machine_Reset (void)
 {
     f12_plus_state = F12_PLUS_DONE;
-#ifdef USE_F12_PLUS_DIRECT
-    F12PLUS_OFF;
-#endif
-#ifdef USE_F12_PLUS_NEGATE
-    F12PLUS_ON;
-#endif    
+    F12PLUS_INACTIVE;
 }
 
 void F12_State_Machine_Start (void)
@@ -1360,12 +1374,7 @@ void F12_State_Machine (void)
     case F12_PLUS_WAITING:
         if (!f12_plus_timer)
         {
-#ifdef USE_F12_PLUS_DIRECT
-            F12PLUS_ON;
-#endif
-#ifdef USE_F12_PLUS_NEGATE
-            F12PLUS_OFF;
-#endif
+            F12PLUS_ACTIVE;
             f12_plus_timer = 5000;
             f12_plus_state = F12_PLUS_ACTIVE;                
         }
@@ -1374,12 +1383,7 @@ void F12_State_Machine (void)
     case F12_PLUS_ACTIVE:
         if (!f12_plus_timer)
         {
-#ifdef USE_F12_PLUS_DIRECT
-            F12PLUS_OFF;
-#endif
-#ifdef USE_F12_PLUS_NEGATE
-            F12PLUS_ON;
-#endif                
+            F12PLUS_INACTIVE;
             f12_plus_state = F12_PLUS_DONE;
         }
         break;
@@ -1389,6 +1393,7 @@ void F12_State_Machine (void)
     }
 }
 
+#endif    //USE_F12PLUS_WITH_SM
 
 unsigned char CheckRemoteKeypad (unsigned char * sp0, unsigned char * sp1, unsigned char * sp2, unsigned short * posi)
 {

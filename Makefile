@@ -200,6 +200,8 @@ clean:
 	rm -f $(SRC:.c=.su)
 #   rm $(ASRC:.s=.s.bak)
 	rm -f $(ASRC:.s=.lst)
+	rm -f *.o
+	rm -f *.out
 
 tests:
 	# primero objetos de los modulos a testear, solo si son tipo HAL sin dependencia del hard
