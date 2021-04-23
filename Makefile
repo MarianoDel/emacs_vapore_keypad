@@ -26,10 +26,14 @@ BIN  = $(CP) -O binary -S
 MCU  = cortex-m0
 
 # List all default C defines here, like -D_DEBUG=1
-#para el micro STM32F051C8T6
+# for STM32F103RCT6 micro
+# DDEFS = -DSTM32F10X_HD
+# for STM32F051C8T6 micro
 # DDEFS = -DSTM32F051
-#para el micro STM32F030K6T6
+# for STM32F030K6T6 micro or STM32F030R8T6
 DDEFS = -DSTM32F030
+# for STM32G030J6M6 micro
+# DDEFS = -DSTM32G030xx
 
 # List all default ASM defines here, like -D_DEBUG=1
 DADEFS =
@@ -132,8 +136,8 @@ MCFLAGS = -mcpu=$(MCU)
 
 ASFLAGS = $(MCFLAGS) -g -gdwarf-2 -mthumb  -Wa,-amhls=$(<:.s=.lst) $(ADEFS)
 
-# SIN INFO DEL DEBUGGER
-#CPFLAGS = $(MCFLAGS) $(OPT) -gdwarf-2 -mthumb   -fomit-frame-pointer -Wall -Wstrict-prototypes -fverbose-asm -Wa,-ahlms=$(<:.c=.lst) $(DEFS)
+# SIN INFO DEL DEBUGGER + STRIP CODE
+# CPFLAGS = $(MCFLAGS) $(OPT) -gdwarf-2 -mthumb -fomit-frame-pointer -Wall -fdata-sections -ffunction-sections -fverbose-asm -Wa,-ahlms=$(<:.c=.lst)
 
 # INFO PARA DEBUGGER + STRIP CODE + DUPLICATE GLOBALS ERROR
 # CPFLAGS = $(MCFLAGS) $(OPT) -g -gdwarf-2 -fno-common -mthumb -fomit-frame-pointer -Wall -fdata-sections -ffunction-sections -fverbose-asm -Wa,-ahlms=$(<:.c=.lst) $(DDEFS)
@@ -195,7 +199,6 @@ clean:
 	rm -f $(FULL_PRJ).map
 	rm -f $(FULL_PRJ).hex
 	rm -f $(FULL_PRJ).bin
-#	rm $(SRC:.c=.c.bak)
 	rm -f $(SRC:.c=.lst)
 	rm -f $(SRC:.c=.su)
 #   rm $(ASRC:.s=.s.bak)
@@ -204,13 +207,41 @@ clean:
 	rm -f *.out
 
 tests:
-	# primero objetos de los modulos a testear, solo si son tipo HAL sin dependencia del hard
-	gcc -c src/display_7seg.c -I. $(INCDIR)
-	# gcc -c src/gen_signal.c -I. $(INCDIR)
-	gcc src/tests.c display_7seg.o
+	# simple functions tests, copy functions to tests module into main
+	gcc src/tests.c
 	./a.out
-	# sino copiar funcion a testear al main de tests.c
-	# gcc src/tests.c
-	# ./a.out
+
+tests_display:
+	# first module objects to test
+	gcc -c src/display_7seg.c -I. $(INCDIR)
+	# second auxiliary helper modules
+	gcc -c src/tests_ok.c -I $(INCDIR)
+	# compile the test and link with modules
+	gcc src/tests_display.c display_7seg.o tests_ok.o
+	# test execution
+	./a.out
+
+tests_comm:
+	# first module objects to test
+	gcc -c src/comm.c -I. $(INCDIR)
+	# second auxiliary helper modules
+	gcc -c src/tests_ok.c -I $(INCDIR)
+	# compile the test and link with modules
+	gcc src/tests_comm.c comm.o tests_ok.o
+	# test execution
+	./a.out
+
+tests_comm_coverage:
+	# first module objects to test
+	gcc -c --coverage src/comm.c -I. $(INCDIR)
+	# second auxiliary helper modules
+	gcc -c --coverage src/tests_ok.c -I $(INCDIR)
+	# compile the test and link with modules
+	gcc --coverage src/tests_comm.c comm.o tests_ok.o
+	# test execution
+	./a.out
+	# process coverage
+	gcov src/comm.c -m
+
 
 # *** EOF ***

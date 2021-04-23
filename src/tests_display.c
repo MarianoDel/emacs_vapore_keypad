@@ -1,11 +1,11 @@
-//---------------------------------------------
+//-----------------------------------------------------
 // ## @Author: Med
 // ## @Editor: Emacs - ggtags
 // ## @TAGS:   Global
 // ## @CPU:    TEST PLATFORM FOR FIRMWARE
 // ##
-// #### TESTS.C ###############################
-//---------------------------------------------
+// #### TESTS_DISPLAY.C ###############################
+//-----------------------------------------------------
 
 // Includes Modules for tests --------------------------------------------------
 #include "display_7seg.h"
@@ -25,9 +25,11 @@ volatile unsigned short display_timeout = 0;
 extern char display_vector_numbers [];
 extern const unsigned char v_display_numbers [];
 
+
 // Globals ---------------------------------------------------------------------
 unsigned char v_show = 0;
 unsigned char new_segment = 0;
+
 
 // Module Functions to Test ----------------------------------------------------
 void TEST_Display_7Seg (void);

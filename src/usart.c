@@ -39,29 +39,15 @@ volatile unsigned char * prx1;
 //inline void UpdateUart(void)
 unsigned char UpdateUart(unsigned char last_state)
 {
-    //TODO: mejorar esto revisando con usart_have_data
-    //realizarla cpia de otraforma para no depender del llamado
-    //a interpretar mensje desde aca
-
-    //ya cambio bufrx_ready por usart_have_data
-
-	if (usart1_have_data)            
-	{
-		usart1_have_data  = 0;
-		last_state = InterpretarMsg (last_state, (char *) rx1buff);
-		// memset((char *) rx1buff, '\0', sizeof(rx1buff));
-		memset((char *) rx1buff, '\0', SIZEOF_DATA);
-                prx1 = rx1buff;
-	}
-	return last_state;
-        
-	// if (buffrx_ready)        
-	// {
-	// 	buffrx_ready  = 0;                
-	// 	last_state = InterpretarMsg (last_state, (char *) buffrx);
-	// 	memset(buffrx, '\0', sizeof(buffrx));
-	// }
-	// return last_state;        
+    if (usart1_have_data)            
+    {
+        usart1_have_data  = 0;
+        last_state = InterpretarMsg (last_state, (char *) rx1buff);
+        memset((char *) rx1buff, '\0', SIZEOF_DATA);
+        prx1 = rx1buff;
+    }
+    
+    return last_state;
 }
 
 

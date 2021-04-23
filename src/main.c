@@ -152,17 +152,13 @@ void SysTickError (void);
 void Delay(__IO uint32_t nTime);
 void TimingDelay_Decrement(void);
 
-unsigned char FuncAlarm (void);
+unsigned char FuncAlarm (unsigned char);
 //unsigned char FuncProgCod (unsigned char);
 
 
 // ------- de los switches ---
 unsigned char CheckRemoteKeypad (unsigned char *, unsigned char *, unsigned char *, unsigned short *);
 
-
-// ------- del buzzer --------
-void BuzzerCommands(unsigned char, unsigned char);
-void UpdateBuzzer (void);
 // ------- de la sirena ------
 void SirenCommands(unsigned char);
 void UpdateSiren (void);
@@ -479,6 +475,14 @@ int main(void)
                     }
                 }
             }
+
+            // check at last for a SMS activation
+            if (CheckSMS())
+            {
+                alarm_state = ALARM_START;	//resetea la maquina de estados de FuncAlarm()
+                main_state = MAIN_IN_ALARM;
+            }
+            
             break;
 
         case MAIN_TO_UNLOCK:
@@ -566,6 +570,13 @@ int main(void)
                 Display_ShowNumbers(DISPLAY_NONE);
             }
 #endif
+            // check at last for a SMS activation
+            if (CheckSMS())
+            {
+                alarm_state = ALARM_START;	//resetea la maquina de estados de FuncAlarm()
+                main_state = MAIN_IN_ALARM;
+            }
+            
             break;
 
         case MAIN_TO_CHANGE_USER_PASSWORD:
@@ -589,8 +600,15 @@ int main(void)
             break;
 
         case MAIN_IN_ALARM:
-            result = FuncAlarm();
-            //if ((result == ENDED_OK) || (result == NO_CODE))
+            //check if we get here from sms or control
+            if (CheckSMS())
+            {
+                result = FuncAlarm(1);    //sms activation only needs one kick
+                ResetSMS();
+            }
+            else
+                result = FuncAlarm(0);
+            
             if (result == END_OK)
             {
                 main_state = MAIN_TO_MAIN_WAIT_5SEGS;
@@ -891,7 +909,7 @@ int main(void)
 
 
 //funcion de alarmas, revisa codigo en memoria y actua en consecuencia
-unsigned char FuncAlarm (void)
+unsigned char FuncAlarm (unsigned char sms_alarm)
 {
     unsigned char button;
     unsigned int code;
@@ -907,53 +925,68 @@ unsigned char FuncAlarm (void)
         code <<= 16;
         code |= code1;
 
-        //code_position = CheckCodeInMemory(code);
-        code_position = CheckBaseCodeInMemory(code);
-
-        if ((code_position >= 0) && (code_position <= 1023))
+        if (sms_alarm)
         {
-            sprintf(str, (char *) "Activo: %03d ", code_position);
-            //el codigo existe en memoria
-            //reviso el boton
-            button = SST_CheckButtonInCode(code);
-            if (button == 1)
-            {
-                last_one_or_three = code_position;
-                alarm_state = ALARM_BUTTON1;
-                strcat(str, (char *) "B1\r\n");
-                repetition_counter = param_struct.b1r;
+            Usart1Send("SMS Activo: 999 B1\r\n");
+            last_one_or_three = 999;
+            alarm_state = ALARM_BUTTON1;
+            repetition_counter = param_struct.b1r;
+            button_timer_secs = ACT_DESACT_IN_SECS;	//2 segundos OK y buena distancia 20-5-15
 #ifdef USE_F12_PLUS_WITH_SM
-                //modificacion 24-01-2019 F12PLUS espera 10 segundos y se activa 5 segundos
-                F12_State_Machine_Start();
+            //modificacion 24-01-2019 F12PLUS espera 10 segundos y se activa 5 segundos
+            F12_State_Machine_Start();
+#endif
+            
+        }
+        else
+        {
+            //code_position = CheckCodeInMemory(code);
+            code_position = CheckBaseCodeInMemory(code);
+
+            if ((code_position >= 0) && (code_position <= 1023))
+            {
+                sprintf(str, (char *) "Activo: %03d ", code_position);
+                //el codigo existe en memoria
+                //reviso el boton
+                button = SST_CheckButtonInCode(code);
+                if (button == 1)
+                {
+                    last_one_or_three = code_position;
+                    alarm_state = ALARM_BUTTON1;
+                    strcat(str, (char *) "B1\r\n");
+                    repetition_counter = param_struct.b1r;
+#ifdef USE_F12_PLUS_WITH_SM
+                    //modificacion 24-01-2019 F12PLUS espera 10 segundos y se activa 5 segundos
+                    F12_State_Machine_Start();
 #endif
 
-            }
-            else if (button == 2)
-            {
-                //original boton 2
-                last_two = code_position;
-                alarm_state = ALARM_BUTTON2;
-                strcat(str, (char *) "B2\r\n");
-            }
-            else if (button == 3)
-            {
-                last_one_or_three = code_position;
-                alarm_state = ALARM_BUTTON3;
-                strcat(str, (char *) "B3\r\n");
-                repetition_counter = param_struct.b3r;
-            }
-            else if (button == 4)
-            {
-                alarm_state = ALARM_BUTTON4;
-                strcat(str, (char *) "B4\r\n");
-                repetition_counter = param_struct.b4r;
-            }
+                }
+                else if (button == 2)
+                {
+                    //original boton 2
+                    last_two = code_position;
+                    alarm_state = ALARM_BUTTON2;
+                    strcat(str, (char *) "B2\r\n");
+                }
+                else if (button == 3)
+                {
+                    last_one_or_three = code_position;
+                    alarm_state = ALARM_BUTTON3;
+                    strcat(str, (char *) "B3\r\n");
+                    repetition_counter = param_struct.b3r;
+                }
+                else if (button == 4)
+                {
+                    alarm_state = ALARM_BUTTON4;
+                    strcat(str, (char *) "B4\r\n");
+                    repetition_counter = param_struct.b4r;
+                }
 
-            //button_timer_secs = 5;	//5 segundos suena seguro EVITA PROBLEMAS EN LA VUELTA
-            button_timer_secs = ACT_DESACT_IN_SECS;	//2 segundos OK y buena distancia 20-5-15
+                //button_timer_secs = 5;	//5 segundos suena seguro EVITA PROBLEMAS EN LA VUELTA
+                button_timer_secs = ACT_DESACT_IN_SECS;	//2 segundos OK y buena distancia 20-5-15
 
-
-            Usart1Send(str);
+                Usart1Send(str);
+            }
         }
         break;
 
@@ -1100,12 +1133,21 @@ unsigned char FuncAlarm (void)
             alarm_state = ALARM_BUTTON2_FINISH;
         }
 
-        if (button == 1)		//reviso el boton
+        //reviso el boton1 o sms
+        if ((button == 1) || (sms_alarm))
         {
-            sprintf(str, "Activo: %03d B1\r\n", code_position);
+            if (sms_alarm)
+            {
+                strcpy(str, "SMS Activo: 999 B1\r\n");
+                last_one_or_three = 999;
+            }
+            else
+            {
+                sprintf(str, "Activo: %03d B1\r\n", code_position);
+                last_one_or_three = code_position;
+            }
+            
             Usart1Send(str);
-
-            last_one_or_three = code_position;
             repetition_counter = param_struct.b1r;
             button_timer_secs = ACT_DESACT_IN_SECS;
 
@@ -1214,12 +1256,21 @@ unsigned char FuncAlarm (void)
             alarm_state = ALARM_BUTTON3_FINISH;
         }
 
-        if (button == 1)		//reviso el boton
+        //reviso el boton1 o sms
+        if ((button == 1) || (sms_alarm))
         {
-            sprintf(str, "Activo: %03d B1\r\n", code_position);
+            if (sms_alarm)
+            {
+                strcpy(str, "SMS Activo: 999 B1\r\n");
+                last_one_or_three = 999;
+            }
+            else
+            {
+                sprintf(str, "Activo: %03d B1\r\n", code_position);
+                last_one_or_three = code_position;
+            }
+        
             Usart1Send(str);
-
-            last_one_or_three = code_position;
             repetition_counter = param_struct.b1r;
             button_timer_secs = ACT_DESACT_IN_SECS;
 

@@ -12,7 +12,7 @@
 #include "comm.h"
 #include "hard.h"
 #include "usart.h"
-#include "flash_program.h"
+// #include "flash_program.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -84,8 +84,6 @@ const char s_grabar [] = {"Grabar,"};
 //TODO copiar payload solo en las cuestiones de LCD y no en los comandos
 unsigned char InterpretarMsg (unsigned char lstate, char * pStr)	
 {
-    char str [96];
-
 #ifdef PROGRAMA_DE_GESTION
     // unsigned char mem[16];
     // unsigned char i;
@@ -158,43 +156,31 @@ unsigned char InterpretarMsg (unsigned char lstate, char * pStr)
 
 #endif
 
-
-    // if (strncmp(pStr, (const char *) "Starting Goto 115200\r",
-    //             sizeof((const char *) "Starting Goto 115200\r") - 1) == 0)
-    // {
-    //     return MAIN_TO_MONITORING;
-    // }
-
-    // if (strncmp(pStr, (const char *) "Leaving Goto 9600\r",
-    //             sizeof((const char *) "Leaving Goto 9600\r") - 1) == 0)
-    // {
-    //     return MAIN_TO_MONITORING_LEAVE;
-    // }
-
-    // if (strncmp(pStr, s_256, sizeof(s_256) - 1) == 0)
-    // {
-    //     return MAIN_MEMORY_DUMP;
-    // }
-
-    // if (strncmp(pStr, s_512, sizeof(s_512) - 1) == 0)
-    // {
-    //     return MAIN_MEMORY_DUMP2;
-    // }
-
-    
-    if (strncmp(pStr, s_tiempos, sizeof(s_tiempos) - 1) == 0)
+    // Give posibility to activate alarm from serial port (Activation by SMS)
+    if (strncmp(pStr, "ACT_12V ACTIVO", sizeof("ACT_12V ACTIVO") - 1) == 0)
     {
-        //sprintf(str, "B1T: %d\r\n", p_params->b1t);
+        SetSMS();
+        Usart1Send("sms activation!\n");
+    }
+    
+    else if (strncmp(pStr, s_tiempos, sizeof(s_tiempos) - 1) == 0)
+    {
+        char s_to_send [96] = { 0 };
 #ifdef INFO_IN_FLASH
-        sprintf(str, "Tiempos %d,%d,%d,%d,%d,%d,%d,%d,\r\n", b1t, b1r, b2t, b2r, b3t, b3r, b4t, b4r);
+        sprintf(s_to_send, "Tiempos %d,%d,%d,%d,%d,%d,%d,%d,\r\n",
+                b1t, b1r,
+                b2t, b2r,
+                b3t, b3r,
+                b4t, b4r);
 #endif
 #ifdef INFO_IN_SST
-        sprintf(str, "Tiempos %d,%d,%d,%d,%d,%d,%d,%d,\r\n", param_struct.b1t, param_struct.b1r,
+        sprintf(s_to_send, "Tiempos %d,%d,%d,%d,%d,%d,%d,%d,\r\n",
+                param_struct.b1t, param_struct.b1r,
                 param_struct.b2t, param_struct.b2r,
                 param_struct.b3t, param_struct.b3r,
                 param_struct.b4t, param_struct.b4r);
 #endif
-        Usart1Send(str);
+        Usart1Send(s_to_send);
     }
 
     return lstate;
@@ -213,5 +199,26 @@ unsigned short ToInt3 (char * p)
     }
     return result;
 }
+
+
+unsigned char sms_activation = 0;
+unsigned char CheckSMS (void)
+{
+    return sms_activation;
+}
+
+
+void ResetSMS (void)
+{
+    sms_activation = 0;
+}
+
+
+void SetSMS (void)
+{
+    sms_activation = 1;
+}
+
+
 
 //--- end of file ---//

@@ -16,6 +16,9 @@
 // Exported Module Functions ------------------------------------------
 unsigned char InterpretarMsg (unsigned char, char *);
 unsigned short ToInt3 (char *);
+unsigned char CheckSMS (void);
+void ResetSMS (void);
+void SetSMS (void);
 
 #endif    /* _COMM_H_ */
 
