@@ -927,8 +927,8 @@ unsigned char FuncAlarm (unsigned char sms_alarm)
 
         if (sms_alarm)
         {
-            Usart1Send("SMS Activo: 999 B1\r\n");
-            last_one_or_three = 999;
+            Usart1Send("SMS Activo: 911 B1\r\n");
+            last_one_or_three = 911;
             alarm_state = ALARM_BUTTON1;
             repetition_counter = param_struct.b1r;
             button_timer_secs = ACT_DESACT_IN_SECS;	//2 segundos OK y buena distancia 20-5-15
@@ -1138,8 +1138,8 @@ unsigned char FuncAlarm (unsigned char sms_alarm)
         {
             if (sms_alarm)
             {
-                strcpy(str, "SMS Activo: 999 B1\r\n");
-                last_one_or_three = 999;
+                strcpy(str, "SMS Activo: 911 B1\r\n");
+                last_one_or_three = 911;
             }
             else
             {
@@ -1261,8 +1261,8 @@ unsigned char FuncAlarm (unsigned char sms_alarm)
         {
             if (sms_alarm)
             {
-                strcpy(str, "SMS Activo: 999 B1\r\n");
-                last_one_or_three = 999;
+                strcpy(str, "SMS Activo: 911 B1\r\n");
+                last_one_or_three = 911;
             }
             else
             {
