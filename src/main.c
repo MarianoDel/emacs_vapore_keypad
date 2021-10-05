@@ -907,7 +907,8 @@ int main(void)
 }
 //--- End of Main ---//
 
-
+//TODO: para prueba audio despues borrar
+unsigned char audio_cnt = 0;
 //funcion de alarmas, revisa codigo en memoria y actua en consecuencia
 unsigned char FuncAlarm (unsigned char sms_alarm)
 {
@@ -1038,6 +1039,7 @@ unsigned char FuncAlarm (unsigned char sms_alarm)
         {
             alarm_state++;
             repetition_counter--;
+            audio_cnt = 3;
         }
         else
         {
@@ -1046,13 +1048,51 @@ unsigned char FuncAlarm (unsigned char sms_alarm)
         }
         break;
 
+        // secuencia original
+    // case ALARM_BUTTON1_D:
+    //     SirenCommands(SIREN_STOP_CMD);
+    //     PositionToSpeak(last_one_or_three);
+    //     alarm_state++;
+    //     break;
+
+    // case ALARM_BUTTON1_E:
+    //     if (audio_state == AUDIO_INIT)
+    //     {
+    //         //termino de enviar audio
+    //         alarm_state = ALARM_BUTTON1;
+    //     }
+    //     break;
+
+        // secuencia modificada envia 9 numeros para simular un audio de 6 segundos
     case ALARM_BUTTON1_D:
+        SirenCommands(SIREN_STOP_CMD);
+        PositionToSpeak(111);
+        alarm_state++;
+        break;
+
+    case ALARM_BUTTON1_E:
+        if (audio_state == AUDIO_INIT)
+        {
+            if (!audio_cnt)
+            {
+                //termino de enviar audio
+                alarm_state = ALARM_BUTTON1_F;
+            }
+            else
+            {
+                audio_cnt--;
+                alarm_state--;
+            }
+        }
+        break;
+
+    case ALARM_BUTTON1_F:
         SirenCommands(SIREN_STOP_CMD);
         PositionToSpeak(last_one_or_three);
         alarm_state++;
         break;
 
-    case ALARM_BUTTON1_E:
+    case ALARM_BUTTON1_G:
         if (audio_state == AUDIO_INIT)
         {
             //termino de enviar audio
@@ -1060,6 +1100,8 @@ unsigned char FuncAlarm (unsigned char sms_alarm)
         }
         break;
 
+        // fin modificacion de prueba audio
+        
     case ALARM_BUTTON1_FINISH:
         sprintf(str, "Desactivo: %03d\r\n", last_one_or_three);
         Usart1Send(str);

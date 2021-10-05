@@ -12,7 +12,7 @@
 #include "comm.h"
 #include "hard.h"
 #include "usart.h"
-// #include "flash_program.h"
+#include "flash_program.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -174,11 +174,26 @@ unsigned char InterpretarMsg (unsigned char lstate, char * pStr)
                 b4t, b4r);
 #endif
 #ifdef INFO_IN_SST
-        sprintf(s_to_send, "Tiempos %d,%d,%d,%d,%d,%d,%d,%d,\r\n",
-                param_struct.b1t, param_struct.b1r,
-                param_struct.b2t, param_struct.b2r,
-                param_struct.b3t, param_struct.b3r,
-                param_struct.b4t, param_struct.b4r);
+        sprintf(s_to_send, "Tiempos %d,%d,%d,%d,%d,%d,%d,%d,",
+                param_struct.b1t,
+                param_struct.b1r,
+                param_struct.b2t,
+                param_struct.b2r,
+                param_struct.b3t,
+                param_struct.b3r,
+                param_struct.b4t,
+                param_struct.b4r);
+
+          if (param_struct.audio_buttons & B1_AUDIO_MASK)
+              strcat(s_to_send, "1,");
+          else
+              strcat(s_to_send, "0,");
+
+          if (param_struct.audio_buttons & B3_AUDIO_MASK)
+              strcat(s_to_send, "1,\r\n");
+          else
+              strcat(s_to_send,"0,\r\n");
+        
 #endif
         Usart1Send(s_to_send);
     }

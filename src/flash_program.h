@@ -99,23 +99,27 @@ typedef union mem_bkp {
 		unsigned short v_bkp_16u [FLASH_PAGE_SIZE_DIV2];
 } mem_bkp_typedef;
 
+#define B1_AUDIO_MASK    0x01
+#define B3_AUDIO_MASK    0x04
 typedef struct parameters {
 
-	//para Boton 1
-	unsigned char b1t;
-	unsigned char b1r;
-	//para Boton 2
-	unsigned char b2t;
-	unsigned char b2r;
-	//para Boton 3
-	unsigned char b3t;
-	unsigned char b3r;
-	//para Boton 4
-	unsigned char b4t;
-	unsigned char b4r;
+    // conf for Button1
+    unsigned char b1t;
+    unsigned char b1r;
+    // conf for Button2
+    unsigned char b2t;
+    unsigned char b2r;
+    // conf for Button3
+    unsigned char b3t;
+    unsigned char b3r;
+    // conf for Button4
+    unsigned char b4t;
+    unsigned char b4r;
+    // audio in Buttons
+    unsigned char audio_buttons;
 
-	unsigned short interdigit;
-	unsigned short wait_for_code;
+    unsigned short interdigit;
+    unsigned short wait_for_code;
 
 } parameters_typedef;
 

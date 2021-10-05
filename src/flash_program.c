@@ -14,7 +14,9 @@
 #include "sst25.h"
 #include "usart.h"
 #include "tim.h"
+
 #include <stdio.h>
+#include <string.h>
 
 
 
@@ -203,6 +205,7 @@ void LoadConfiguration (void)
 	param_struct.b3r = *(posi + 5);
 	param_struct.b4t = *(posi + 6);
 	param_struct.b4r = *(posi + 7);
+        param_struct.audio_buttons = *(posi + 8);
 
 	//ahora los tiempos internos
 	//param_struct.interdigit = *(unsigned short *) (posi + 8);
@@ -239,6 +242,19 @@ void ShowConfiguration(void)
 	  Wait_ms(100);
 
 	  sprintf(str, "B4T: %d, B4R: %d\r\n", param_struct.b4t, param_struct.b4r);
+	  Usart1Send(str);
+	  Wait_ms(100);
+
+          if (param_struct.audio_buttons & B1_AUDIO_MASK)
+              strcpy(str, "B1 audio: 1, ");
+          else
+              strcpy(str, "B1 audio: 0, ");
+
+          if (param_struct.audio_buttons & B3_AUDIO_MASK)
+              strcat(str, "B3 audio: 1\r\n");
+          else
+              strcat(str, "B3 audio: 0\r\n");
+          
 	  Usart1Send(str);
 	  Wait_ms(100);
 #endif

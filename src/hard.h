@@ -27,10 +27,10 @@
 // #define USE_F12_PLUS_SM_NEGATE
 #endif
 
-#define PROGRAMA_NORMAL
+// #define PROGRAMA_NORMAL
 // #define PROGRAMA_DE_BUCLE
 // #define PROGRAMA_FACTORY_TEST
-// #define PROGRAMA_DE_GESTION
+#define PROGRAMA_DE_GESTION
 // #define PROGRAMA_PORTON_KIRNO
 
 // #define DEBUG_ERROR_CODES
@@ -196,6 +196,18 @@
 
 
 //ESTADOS DE LA ALARMA
+// originales
+// #define ALARM_START				0
+// #define ALARM_BUTTON1			10
+// #define ALARM_BUTTON1_A			11
+// #define ALARM_BUTTON1_B			12
+// #define ALARM_BUTTON1_C			13
+// #define ALARM_BUTTON1_D			14
+// #define ALARM_BUTTON1_E			15
+// #define ALARM_BUTTON1_FINISH	16
+// #define ALARM_BUTTON1_FINISH_B	17
+
+// para prueba audio
 #define ALARM_START				0
 #define ALARM_BUTTON1			10
 #define ALARM_BUTTON1_A			11
@@ -203,8 +215,10 @@
 #define ALARM_BUTTON1_C			13
 #define ALARM_BUTTON1_D			14
 #define ALARM_BUTTON1_E			15
-#define ALARM_BUTTON1_FINISH	16
-#define ALARM_BUTTON1_FINISH_B	17
+#define ALARM_BUTTON1_F			16
+#define ALARM_BUTTON1_G			17
+#define ALARM_BUTTON1_FINISH	18
+#define ALARM_BUTTON1_FINISH_B	19
 
 #define ALARM_NO_CODE			100
 
