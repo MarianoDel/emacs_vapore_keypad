@@ -153,17 +153,7 @@ unsigned char InterpretarMsg (unsigned char lstate, char * pStr)
         return lstate;
     }
 
-
-#endif
-
-    // Give posibility to activate alarm from serial port (Activation by SMS)
-    if (strncmp(pStr, "ACT_12V ACTIVO", sizeof("ACT_12V ACTIVO") - 1) == 0)
-    {
-        SetSMS();
-        Usart1Send("sms activation!\n");
-    }
-    
-    else if (strncmp(pStr, s_tiempos, sizeof(s_tiempos) - 1) == 0)
+    if (strncmp(pStr, s_tiempos, sizeof(s_tiempos) - 1) == 0)
     {
         char s_to_send [96] = { 0 };
 #ifdef INFO_IN_FLASH
@@ -198,6 +188,16 @@ unsigned char InterpretarMsg (unsigned char lstate, char * pStr)
         Usart1Send(s_to_send);
     }
 
+
+#endif
+
+    // Give posibility to activate alarm from serial port (Activation by SMS)
+    if (strncmp(pStr, "ACT_12V ACTIVO", sizeof("ACT_12V ACTIVO") - 1) == 0)
+    {
+        SetSMS();
+        Usart1Send("sms activation!\n");
+    }
+    
     return lstate;
 }
 

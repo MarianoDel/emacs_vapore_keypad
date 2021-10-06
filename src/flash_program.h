@@ -123,6 +123,7 @@ typedef struct parameters {
 
 } parameters_typedef;
 
+// at least 2 bytes aligned
 typedef struct filesystem {
 
 	//para num0

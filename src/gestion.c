@@ -20,7 +20,7 @@
 #include "display_7seg.h"
 
 
-/* Externals variables ---------------------------------------------------------*/
+// Externals -------------------------------------------------------------------
 extern volatile unsigned short timer_standby;
 extern volatile unsigned char binary_full;
 extern mem_bkp_typedef memory_backup;
@@ -29,7 +29,7 @@ extern unsigned char next_pckt;
 extern unsigned char file_done;
 
 
-/* Global variables ------------------------------------------------------------*/
+// Globals ---------------------------------------------------------------------
 gestion_sm_t gestion_state = GESTION_SM_INIT;
 unsigned int file_size = 0;
 
@@ -39,28 +39,33 @@ const char s_1024_conf [] = {"1024 config bytes\r\n"};
 const char s_ok [] = {"OK\r\n"};
 const char s_ok_finish_conf [] = {"FINISH CONF\r\n"};
 
+unsigned int * pfile_position;
+unsigned int * pfile_size;
+unsigned char file_last_action = 0;
+#define LAST_ACTION_SAVE_FILESYSTEM    1
+#define LAST_ACTION_SAVE_CONFIGURATION    2
 
-/* Private Module Functions ----------------------------------------------------*/
+// Private Module Functions ----------------------------------------------------
 
 
-/* Module Functions ------------------------------------------------------------*/
+// Module Functions ------------------------------------------------------------
 void FuncGestion (void)
 {
-    Usart1Send((char *) "STM32F030K6 Programa de Gestion de Memoria\r\n");
+    Usart1Send((char *) "STM32F030K6 Memory Manager Program\r\n");
 
     //cargo los valores de memoria
     if (readJEDEC() == 0)
     {
         while (1)
         {
-            Usart1Send((char *) "Memoria MAL\r\n");
+            Usart1Send((char *) "Memory WRONG!\r\n");
             Wait_ms(2000);
-            Usart1Send((char *) "Memoria con JEDEC MAL\r\n");
+            Usart1Send((char *) "Memory with wrong JEDEC\r\n");
             Wait_ms(2000);
         }
     }
 
-    Usart1Send((char *) "Memoria con JEDEC OK\r\n");
+    Usart1Send((char *) "Memory JEDEC is good\r\n");
     Wait_ms(100);
 
     ShowFileSystem();
@@ -77,67 +82,41 @@ void FuncGestion (void)
         switch (gestion_state)
         {
         case GESTION_SM_INIT:
-
             gestion_state = GESTION_SM_MAIN;
-            //binary_bytes = 1024;
-            // current_size = 0;
-
+            
             break;
 
         case GESTION_SM_TO_MONITORING:
-            timer_standby = 50;
-
             Usart1Send((char *) "Monitoring on 115200 confirmed\r\n");
             Display_ShowNumbers(DISPLAY_REMOTE);
-
             LoadConfiguration();
-            gestion_state = GESTION_SM_TO_MONITORINGA;
+            Wait_ms(50);
+
+            if (readJEDEC())
+                Usart1Send((char *) "Memory OK\r\n");
+            else
+                Usart1Send((char *) "Memory WRONG!\r\n");
+            Wait_ms(50);
+            
+            if (readNVM(0) != 0xFF)
+                Usart1Send((char *) "Filesystem seems OK\r\n");
+            else
+                Usart1Send((char *) "No Filesystem finded\r\n");
+            Wait_ms(50);
+
+            if (readNVM(OFFSET_CONFIGURATION) != 0xFF)
+                Usart1Send((char *) "Configuration seems OK\r\n");
+            else
+                Usart1Send((char *) "No Configuration finded\r\n");
+            Wait_ms(50);
+            
+            gestion_state = GESTION_SM_IN_MONITORING;
             break;
 
-        case GESTION_SM_TO_MONITORINGA:
-            if (!timer_standby)
-            {
-                if (readJEDEC())
-                    Usart1Send((char *) "Memoria OK\r\n");
-                else
-                    Usart1Send((char *) "Memoria MAL\r\n");
-
-                gestion_state = GESTION_SM_TO_MONITORINGB;
-                timer_standby = 50;
-            }
-            break;
-
-        case GESTION_SM_TO_MONITORINGB:
-            if (!timer_standby)
-            {
-                if (readNVM(0) != 0xFF)
-                    Usart1Send((char *) "Parece grabado el Filesystem\r\n");
-                else
-                    Usart1Send((char *) "Parece no tener Filesystem\r\n");
-
-                timer_standby = 50;
-                gestion_state++;
-            }
-            break;
-
-        case GESTION_SM_TO_MONITORINGB2:
-            if (!timer_standby)
-            {
-                if (readNVM(OFFSET_CONFIGURATION) != 0xFF)
-                    Usart1Send((char *) "Parece tener configuracion\r\n");
-                else
-                    Usart1Send((char *) "Parece no tener configuracion\r\n");
-
-                timer_standby = 50;
-                gestion_state = GESTION_SM_TO_MONITORINGC;
-            }
-            break;
-
-        case GESTION_SM_TO_MONITORINGC:
+        case GESTION_SM_IN_MONITORING:
             break;
 
         case GESTION_SM_MAIN:
-
             break;
 
         case GESTION_SM_TO_MAIN_TIMEOUT:
@@ -149,40 +128,41 @@ void FuncGestion (void)
         case GESTION_SM_TO_FLUSH_SST:
             if (readJEDEC())
             {
-                Usart1Send((char *) "Memoria OK\r\n");
+                Usart1Send((char *) "Memory OK...");
                 clearNVM();
-                Usart1Send((char *) "Borrada Completa\r\n");
+                Usart1Send((char *) " - Complete Blank\r\n");
             }
             else
-            {
-                Usart1Send((char *) "Memoria MAL\r\n");
-            }
-            gestion_state = GESTION_SM_TO_MONITORINGC;
+                Usart1Send((char *) "Memory WRONG!\r\n");
+            
+            gestion_state = GESTION_SM_IN_MONITORING;
             break;
 
         case GESTION_SM_TO_WRITE_SST_CONF:
             if (readJEDEC())
             {
-                Usart1Send((char *) "Memoria OK\r\n");
+                Usart1Send((char *) "Memory OK...");
                 Clear4KNVM(OFFSET_CONFIGURATION);
-                Usart1Send((char *) "Borrada 4K\r\n");
-                gestion_state++;
-                timer_standby = 50;
+                Usart1Send((char *) " - Blank 4K\r\n");
+                Wait_ms(50);
+
+                //reuse of files.posi0 for save config
+                // files.posi0 = OFFSET_CONFIGURATION;
+                // pfile_position = &files.posi0;
+                // file_size = 0;
+                gestion_state = GESTION_SM_TO_WRITE_SST_CONFA;
             }
             else
             {
-                Usart1Send((char *) "Memoria MAL\r\n");
-                gestion_state = GESTION_SM_TO_MONITORINGC;
+                Usart1Send((char *) "Memory WRONG!\r\n");
+                gestion_state = GESTION_SM_IN_MONITORING;
             }
             break;
 
         case GESTION_SM_TO_WRITE_SST_CONFA:
-            if (!timer_standby)
-            {
-                Usart1Send((char *) s_1024_conf);
-                UsartRxBinary();
-                gestion_state++;
-            }
+            Usart1Send((char *) s_1024_conf);
+            UsartRxBinary();
+            gestion_state++;
             break;
 
         case GESTION_SM_TO_WRITE_SST_CONFB:	//me quedo esperando completar el buffer
@@ -196,406 +176,153 @@ void FuncGestion (void)
 
         case GESTION_SM_TO_WRITE_SST_CONFC:	//inicializo la nueva configuracion
             LoadConfiguration();
-            gestion_state = GESTION_SM_TO_MONITORINGC;
+            gestion_state = GESTION_SM_IN_MONITORING;
             break;
 
         case GESTION_SM_TO_WRITE_SST0:
             if (readJEDEC())
             {
-                Usart1Send((char *) "Memoria OK\r\n");
+                Usart1Send((char *) "Memory OK - clearing all!\r\n");
                 clearNVM();
+
                 files.posi0 = OFFSET_FIRST_FILE;
+                pfile_position = &files.posi0;
+                pfile_size = &files.lenght0;
                 file_size = 0;
-                gestion_state++;
+                gestion_state = GESTION_SM_GET_READY_FOR_CHUNK;
             }
             else
             {
-                Usart1Send((char *) "Memoria MAL\r\n");
-                gestion_state = GESTION_SM_TO_MONITORINGC;
+                Usart1Send((char *) "Memory WRONG!\r\n");
+                gestion_state = GESTION_SM_IN_MONITORING;
             }
             break;
 
-        case GESTION_SM_TO_WRITE_SST0_A:
+        case GESTION_SM_GET_READY_FOR_CHUNK:
             Usart1Send((char *) s_1024);
             UsartRxBinary();
-            gestion_state++;
+            gestion_state = GESTION_SM_WAIT_BINARY_CHUNK;
             break;
-
-        case GESTION_SM_TO_WRITE_SST0_B:	//me quedo esperando completar el buffer
+            
+        case GESTION_SM_WAIT_BINARY_CHUNK:    // get the chunk bytes and save it to mem
             if (binary_full)
             {
-                writeBufNVM16u(memory_backup.v_bkp_16u, 512, files.posi0 + file_size);
+                writeBufNVM16u(memory_backup.v_bkp_16u, 512, *pfile_position + file_size);
                 file_size += 1024;
-                Usart1Send((char *) s_ok);	//termine de recibir 1024
-                gestion_state++;
+                Usart1Send((char *) s_ok);	//end of chunk and process
+                gestion_state = GESTION_SM_WAIT_NEXT_CHUNK;
             }
             break;
 
-        case GESTION_SM_TO_WRITE_SST0_C:	//espero proximo paquete o terminar (terminar me saca solo)
+        case GESTION_SM_WAIT_NEXT_CHUNK:    // wait next chunk or finish
             if (next_pckt)
             {
                 next_pckt = 0;
-                gestion_state = GESTION_SM_TO_WRITE_SST0_A;
-            }
-
-
-            if (file_done)
-            {
-                file_done = 0;
-                files.lenght0 = file_size;
-                files.posi1 = files.posi0 + file_size;
-                file_size = 0;
-                gestion_state = GESTION_SM_TO_MONITORINGC;
-            }
-
-            break;
-
-        case GESTION_SM_TO_WRITE_SST1:
-            Usart1Send((char *) s_1024);
-            UsartRxBinary();
-            gestion_state++;
-            break;
-
-        case GESTION_SM_TO_WRITE_SST1_A:	//me quedo esperando completar el buffer
-            if (binary_full)
-            {
-                //writeBufNVM(memory_backup.v_bkp_8u, 1024, files.posi1 + file_size);
-                //writeBufNVM8u(memory_backup.v_bkp_8u, 1024, files.posi1 + file_size);
-                writeBufNVM16u(memory_backup.v_bkp_16u, 512, files.posi1 + file_size);
-                file_size += 1024;
-                Usart1Send((char *) s_ok);	  //termine de recibir 1024
-                gestion_state++;
-            }
-            break;
-
-        case GESTION_SM_TO_WRITE_SST1_B:	//espero proximo paquete o terminar (terminar me saca solo)
-            if (next_pckt)
-            {
-                next_pckt = 0;
-                gestion_state = GESTION_SM_TO_WRITE_SST1;
+                gestion_state = GESTION_SM_GET_READY_FOR_CHUNK;
             }
 
             if (file_done)
             {
                 file_done = 0;
-                files.lenght1 = file_size;
-                files.posi2 = files.posi1 + file_size;
-                file_size = 0;
-                gestion_state = GESTION_SM_TO_MONITORINGC;
+                *pfile_size = file_size;
+
+                if (file_last_action)
+                {
+                    file_last_action = 0;
+                    Usart1Send((char *) "Filesystem saved\r\n");
+                    SaveFilesIndex();
+                }
+                
+                gestion_state = GESTION_SM_IN_MONITORING;
             }
+            break;
+
+        case GESTION_SM_TO_WRITE_SST1:            
+            files.posi1 = files.posi0 + files.lenght0;
+            pfile_position = &files.posi1;
+            pfile_size = &files.lenght1;
+            file_size = 0;
+            gestion_state = GESTION_SM_GET_READY_FOR_CHUNK;
             break;
 
         case GESTION_SM_TO_WRITE_SST2:
-            Usart1Send((char *) s_1024);
-            UsartRxBinary();
-            gestion_state++;
-            break;
-
-        case GESTION_SM_TO_WRITE_SST2_A:	//me quedo esperando completar el buffer
-            if (binary_full)
-            {
-                //writeBufNVM(memory_backup.v_bkp_8u, 1024, files.posi2 + file_size);
-                //writeBufNVM8u(memory_backup.v_bkp_8u, 1024, files.posi2 + file_size);
-                writeBufNVM16u(memory_backup.v_bkp_16u, 512, files.posi2 + file_size);
-                file_size += 1024;
-                Usart1Send((char *) s_ok);	//termine de recibir 1024
-                gestion_state++;
-            }
-            break;
-
-        case GESTION_SM_TO_WRITE_SST2_B:	//espero proximo paquete o terminar (terminar me saca solo)
-            if (next_pckt)
-            {
-                next_pckt = 0;
-                gestion_state = GESTION_SM_TO_WRITE_SST2;
-            }
-
-            if (file_done)
-            {
-                file_done = 0;
-                files.lenght2 = file_size;
-                files.posi3 = files.posi2 + file_size;
-                file_size = 0;
-                gestion_state = GESTION_SM_TO_MONITORINGC;
-            }
+            files.posi2 = files.posi1 + files.lenght1;
+            pfile_position = &files.posi2;
+            pfile_size = &files.lenght2;
+            file_size = 0;
+            gestion_state = GESTION_SM_GET_READY_FOR_CHUNK;
             break;
 
         case GESTION_SM_TO_WRITE_SST3:
-            Usart1Send((char *) s_1024);
-            UsartRxBinary();
-            gestion_state++;
-            break;
-
-        case GESTION_SM_TO_WRITE_SST3_A:	//me quedo esperando completar el buffer
-            if (binary_full)
-            {
-                //writeBufNVM(memory_backup.v_bkp_8u, 1024, files.posi3 + file_size);
-                //writeBufNVM8u(memory_backup.v_bkp_8u, 1024, files.posi3 + file_size);
-                writeBufNVM16u(memory_backup.v_bkp_16u, 512, files.posi3 + file_size);
-                file_size += 1024;
-                Usart1Send((char *) s_ok);	//termine de recibir 1024
-                gestion_state++;
-            }
-            break;
-
-        case GESTION_SM_TO_WRITE_SST3_B:	//espero proximo paquete o terminar (terminar me saca solo)
-            if (next_pckt)
-            {
-                next_pckt = 0;
-                gestion_state = GESTION_SM_TO_WRITE_SST3;
-            }
-
-            if (file_done)
-            {
-                file_done = 0;
-                files.lenght3 = file_size;
-                files.posi4 = files.posi3 + file_size;
-                file_size = 0;
-                gestion_state = GESTION_SM_TO_MONITORINGC;
-            }
+            files.posi3 = files.posi2 + files.lenght2;
+            pfile_position = &files.posi3;
+            pfile_size = &files.lenght3;
+            file_size = 0;
+            gestion_state = GESTION_SM_GET_READY_FOR_CHUNK;
             break;
 
         case GESTION_SM_TO_WRITE_SST4:
-            Usart1Send((char *) s_1024);
-            UsartRxBinary();
-            gestion_state++;
-            break;
-
-        case GESTION_SM_TO_WRITE_SST4_A:	//me quedo esperando completar el buffer
-            if (binary_full)
-            {
-                //writeBufNVM(memory_backup.v_bkp_8u, 1024, files.posi4 + file_size);
-                //writeBufNVM8u(memory_backup.v_bkp_8u, 1024, files.posi4 + file_size);
-                writeBufNVM16u(memory_backup.v_bkp_16u, 512, files.posi4 + file_size);
-                file_size += 1024;
-                Usart1Send((char *) s_ok);	//termine de recibir 1024
-                gestion_state++;
-            }
-            break;
-
-        case GESTION_SM_TO_WRITE_SST4_B:	//espero proximo paquete o terminar (terminar me saca solo)
-            if (next_pckt)
-            {
-                next_pckt = 0;
-                gestion_state = GESTION_SM_TO_WRITE_SST4;
-            }
-
-            if (file_done)
-            {
-                file_done = 0;
-                files.lenght4 = file_size;
-                files.posi5 = files.posi4 + file_size;
-                file_size = 0;
-                gestion_state = GESTION_SM_TO_MONITORINGC;
-            }
+            files.posi4 = files.posi3 + files.lenght3;
+            pfile_position = &files.posi4;
+            pfile_size = &files.lenght4;
+            file_size = 0;
+            gestion_state = GESTION_SM_GET_READY_FOR_CHUNK;
             break;
 
         case GESTION_SM_TO_WRITE_SST5:
-            Usart1Send((char *) s_1024);
-            UsartRxBinary();
-            gestion_state++;
-            break;
-
-        case GESTION_SM_TO_WRITE_SST5_A:	//me quedo esperando completar el buffer
-            if (binary_full)
-            {
-                //writeBufNVM(memory_backup.v_bkp_8u, 1024, files.posi5 + file_size);
-                //writeBufNVM8u(memory_backup.v_bkp_8u, 1024, files.posi5 + file_size);
-                writeBufNVM16u(memory_backup.v_bkp_16u, 512, files.posi5 + file_size);
-                file_size += 1024;
-                Usart1Send((char *) s_ok);	//termine de recibir 1024
-                gestion_state++;
-            }
-            break;
-
-        case GESTION_SM_TO_WRITE_SST5_B:	//espero proximo paquete o terminar (terminar me saca solo)
-            if (next_pckt)
-            {
-                next_pckt = 0;
-                gestion_state = GESTION_SM_TO_WRITE_SST5;
-            }
-
-            if (file_done)
-            {
-                file_done = 0;
-                files.lenght5 = file_size;
-                files.posi6 = files.posi5 + file_size;
-                file_size = 0;
-                gestion_state = GESTION_SM_TO_MONITORINGC;
-            }
+            files.posi5 = files.posi4 + files.lenght4;
+            pfile_position = &files.posi5;
+            pfile_size = &files.lenght5;
+            file_size = 0;
+            gestion_state = GESTION_SM_GET_READY_FOR_CHUNK;
             break;
 
         case GESTION_SM_TO_WRITE_SST6:
-            Usart1Send((char *) s_1024);
-            UsartRxBinary();
-            gestion_state++;
-            break;
-
-        case GESTION_SM_TO_WRITE_SST6_A:	//me quedo esperando completar el buffer
-            if (binary_full)
-            {
-                //writeBufNVM(memory_backup.v_bkp_8u, 1024, files.posi6 + file_size);
-                //writeBufNVM8u(memory_backup.v_bkp_8u, 1024, files.posi6 + file_size);
-                writeBufNVM16u(memory_backup.v_bkp_16u, 512, files.posi6 + file_size);
-                file_size += 1024;
-                Usart1Send((char *) s_ok);	//termine de recibir 1024
-                gestion_state++;
-            }
-            break;
-
-        case GESTION_SM_TO_WRITE_SST6_B:	//espero proximo paquete o terminar (terminar me saca solo)
-            if (next_pckt)
-            {
-                next_pckt = 0;
-                gestion_state = GESTION_SM_TO_WRITE_SST6;
-            }
-
-            if (file_done)
-            {
-                file_done = 0;
-                files.lenght6 = file_size;
-                files.posi7 = files.posi6 + file_size;
-                file_size = 0;
-                gestion_state = GESTION_SM_TO_MONITORINGC;
-            }
+            files.posi6 = files.posi5 + files.lenght5;
+            pfile_position = &files.posi6;
+            pfile_size = &files.lenght6;
+            file_size = 0;
+            gestion_state = GESTION_SM_GET_READY_FOR_CHUNK;
             break;
 
         case GESTION_SM_TO_WRITE_SST7:
-            Usart1Send((char *) s_1024);
-            UsartRxBinary();
-            gestion_state++;
-            break;
-
-        case GESTION_SM_TO_WRITE_SST7_A:	//me quedo esperando completar el buffer
-            if (binary_full)
-            {
-                //writeBufNVM(memory_backup.v_bkp_8u, 1024, files.posi7 + file_size);
-                //writeBufNVM8u(memory_backup.v_bkp_8u, 1024, files.posi7 + file_size);
-                writeBufNVM16u(memory_backup.v_bkp_16u, 512, files.posi7 + file_size);
-                file_size += 1024;
-                Usart1Send((char *) s_ok);	//termine de recibir 1024
-                gestion_state++;
-            }
-            break;
-
-        case GESTION_SM_TO_WRITE_SST7_B:	//espero proximo paquete o terminar (terminar me saca solo)
-            if (next_pckt)
-            {
-                next_pckt = 0;
-                gestion_state = GESTION_SM_TO_WRITE_SST7;
-            }
-
-            if (file_done)
-            {
-                file_done = 0;
-                files.lenght7 = file_size;
-                files.posi8 = files.posi7 + file_size;
-                file_size = 0;
-                gestion_state = GESTION_SM_TO_MONITORINGC;
-            }
+            files.posi7 = files.posi6 + files.lenght6;
+            pfile_position = &files.posi7;
+            pfile_size = &files.lenght7;
+            file_size = 0;
+            gestion_state = GESTION_SM_GET_READY_FOR_CHUNK;
             break;
 
         case GESTION_SM_TO_WRITE_SST8:
-            Usart1Send((char *) s_1024);
-            UsartRxBinary();
-            gestion_state++;
-            break;
-
-        case GESTION_SM_TO_WRITE_SST8_A:	//me quedo esperando completar el buffer
-            if (binary_full)
-            {
-                //writeBufNVM(memory_backup.v_bkp_8u, 1024, files.posi8 + file_size);
-                //writeBufNVM8u(memory_backup.v_bkp_8u, 1024, files.posi8 + file_size);
-                writeBufNVM16u(memory_backup.v_bkp_16u, 512, files.posi8 + file_size);
-                file_size += 1024;
-                Usart1Send((char *) s_ok);	//termine de recibir 1024
-                gestion_state++;
-            }
-            break;
-
-        case GESTION_SM_TO_WRITE_SST8_B:	//espero proximo paquete o terminar (terminar me saca solo)
-            if (next_pckt)
-            {
-                next_pckt = 0;
-                gestion_state = GESTION_SM_TO_WRITE_SST8;
-            }
-
-            if (file_done)
-            {
-                file_done = 0;
-                files.lenght8 = file_size;
-                files.posi9 = files.posi8 + file_size;
-                file_size = 0;
-                gestion_state = GESTION_SM_TO_MONITORINGC;
-            }
+            files.posi8 = files.posi7 + files.lenght7;
+            pfile_position = &files.posi8;
+            pfile_size = &files.lenght8;
+            file_size = 0;
+            gestion_state = GESTION_SM_GET_READY_FOR_CHUNK;
             break;
 
         case GESTION_SM_TO_WRITE_SST9:
-            Usart1Send((char *) s_1024);
-            UsartRxBinary();
-            gestion_state++;
-            break;
-
-        case GESTION_SM_TO_WRITE_SST9_A:	//me quedo esperando completar el buffer
-            if (binary_full)
-            {
-                //writeBufNVM(memory_backup.v_bkp_8u, 1024, files.posi9 + file_size);
-                //writeBufNVM8u(memory_backup.v_bkp_8u, 1024, files.posi9 + file_size);
-                writeBufNVM16u(memory_backup.v_bkp_16u, 512, files.posi9 + file_size);
-                file_size += 1024;
-                Usart1Send((char *) s_ok);	//termine de recibir 1024
-                gestion_state++;
-            }
-            break;
-
-        case GESTION_SM_TO_WRITE_SST9_B:	//espero proximo paquete o terminar (terminar me saca solo)
-            if (next_pckt)
-            {
-                next_pckt = 0;
-                gestion_state = GESTION_SM_TO_WRITE_SST9;
-            }
-
-            if (file_done)
-            {
-                file_done = 0;
-                files.lenght9 = file_size;
-                file_size = 0;
-                Usart1Send((char *) "File system grabado\r\n");
-                SaveFilesIndex();
-                gestion_state = GESTION_SM_TO_MONITORINGC;
-            }
+            files.posi9 = files.posi8 + files.lenght8;
+            pfile_position = &files.posi9;
+            pfile_size = &files.lenght9;
+            file_size = 0;
+            
+            file_last_action = 1;
+            
+            gestion_state = GESTION_SM_GET_READY_FOR_CHUNK;
             break;
 
         case GESTION_SM_TO_MONITORING_LEAVE:
             Usart1Send((char *) "Leaving monitoring confirmed\r\n");
-            timer_standby = 300;	//espero que se limpien los buffers
+            timer_standby = 300;
             Display_ShowNumbers(DISPLAY_PROG);
-            gestion_state++;
+            gestion_state = GESTION_SM_WAIT_TO_LEAVE;
             break;
 
-        case GESTION_SM_TO_MONITORINGE:
+        case GESTION_SM_WAIT_TO_LEAVE:
             if (!timer_standby)
-            {
-                gestion_state = GESTION_SM_TO_MAIN_OK;
-            }
-            break;
+                gestion_state = GESTION_SM_INIT;
 
-        case GESTION_SM_TO_SAVE_TIME:
-            gestion_state = GESTION_SM_TO_MONITORINGC;		//seguro que llegué desde MONITORINGC
-            break;
-
-        case GESTION_SM_TO_MAIN_WAIT_5SEGS:
-            timer_standby = 5000;	//espero 5 segundos luego del codigo grabado OK
-            gestion_state = GESTION_SM_TO_MAIN_WAIT_5SEGSA;
-            break;
-
-        case GESTION_SM_TO_MAIN_WAIT_5SEGSA:
-            if (!timer_standby)
-                gestion_state = GESTION_SM_TO_MAIN_OK;
-            break;
-
-        case GESTION_SM_TO_MAIN_OK:
-            gestion_state = GESTION_SM_INIT;
             break;
 
         default:
@@ -605,7 +332,8 @@ void FuncGestion (void)
         }
 
         Display_ShowNumbersAgain();
-        //ojo esta funcion puede cambiar el estado del programa de gestion
+
+        // look careful this function can change the program state
         gestion_state = UpdateUart (gestion_state);
     }
 }
