@@ -59,6 +59,8 @@ const char s_grabar_sst6[] = {"Grabar SST6"};
 const char s_grabar_sst7[] = {"Grabar SST7"};
 const char s_grabar_sst8[] = {"Grabar SST8"};
 const char s_grabar_sst9[] = {"Grabar SST9"};
+const char s_grabar_sstb1[] = {"Grabar SSTB1"};
+const char s_grabar_sstb3[] = {"Grabar SSTB3"};
 const char s_grabar_sstconf[] = {"Grabar Conf SST"};
 const char s_grabar_prox[] = {"Proximo"};
 const char s_grabar_term[] = {"Terminado"};
@@ -137,6 +139,12 @@ unsigned char InterpretarMsg (unsigned char lstate, char * pStr)
     //SST9
     if (strncmp(pStr, s_grabar_sst9, sizeof(s_grabar_sst9) - 1) == 0)
         return GESTION_SM_TO_WRITE_SST9;
+    //SSTB1
+    if (strncmp(pStr, s_grabar_sstb1, sizeof(s_grabar_sstb1) - 1) == 0)
+        return GESTION_SM_TO_WRITE_SSTB1;
+    //SSTB3
+    if (strncmp(pStr, s_grabar_sstb3, sizeof(s_grabar_sstb3) - 1) == 0)
+        return GESTION_SM_TO_WRITE_SSTB3;
 
 
     if (strncmp(pStr, s_grabar_prox, sizeof(s_grabar_prox) - 1) == 0)

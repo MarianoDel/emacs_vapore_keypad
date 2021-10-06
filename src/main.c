@@ -135,7 +135,7 @@ unsigned char audio_state = 0;
 unsigned char numbers_speak[LAST_NUMBER_SPEAK];
 unsigned char * p_numbers_speak;
 unsigned int * p_files_addr;
-unsigned int * p_files_lenght;
+unsigned int * p_files_length;
 unsigned int current_size = 0;
 
 //--- Para revisar la bateria
@@ -1796,52 +1796,52 @@ void UpdateAudio (void)
 			{
 				case 10:
 					p_files_addr = &files.posi0;
-					p_files_lenght = &files.lenght0;
+					p_files_length = &files.length0;
 					break;
 
 				case 1:
 					p_files_addr = &files.posi1;
-					p_files_lenght = &files.lenght1;
+					p_files_length = &files.length1;
 					break;
 
 				case 2:
 					p_files_addr = &files.posi2;
-					p_files_lenght = &files.lenght2;
+					p_files_length = &files.length2;
 					break;
 
 				case 3:
 					p_files_addr = &files.posi3;
-					p_files_lenght = &files.lenght3;
+					p_files_length = &files.length3;
 					break;
 
 				case 4:
 					p_files_addr = &files.posi4;
-					p_files_lenght = &files.lenght4;
+					p_files_length = &files.length4;
 					break;
 
 				case 5:
 					p_files_addr = &files.posi5;
-					p_files_lenght = &files.lenght5;
+					p_files_length = &files.length5;
 					break;
 
 				case 6:
 					p_files_addr = &files.posi6;
-					p_files_lenght = &files.lenght6;
+					p_files_length = &files.length6;
 					break;
 
 				case 7:
 					p_files_addr = &files.posi7;
-					p_files_lenght = &files.lenght7;
+					p_files_length = &files.length7;
 					break;
 
 				case 8:
 					p_files_addr = &files.posi8;
-					p_files_lenght = &files.lenght8;
+					p_files_length = &files.length8;
 					break;
 
 				case 9:
 					p_files_addr = &files.posi9;
-					p_files_lenght = &files.lenght9;
+					p_files_length = &files.length9;
 					break;
 			}
 
@@ -1861,7 +1861,7 @@ void UpdateAudio (void)
 			  {
 				  update_samples = 0;
 
-				  if (current_size < (*p_files_lenght - FILE_OFFSET))
+				  if (current_size < (*p_files_length - FILE_OFFSET))
 				  {
 					  //LED_ON;
 					  //DESDE ACA LEVANTO DE LA MEMORIA SST

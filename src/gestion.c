@@ -83,7 +83,9 @@ void FuncGestion (void)
         {
         case GESTION_SM_INIT:
             gestion_state = GESTION_SM_MAIN;
-            
+            break;
+
+        case GESTION_SM_MAIN:
             break;
 
         case GESTION_SM_TO_MONITORING:
@@ -114,15 +116,6 @@ void FuncGestion (void)
             break;
 
         case GESTION_SM_IN_MONITORING:
-            break;
-
-        case GESTION_SM_MAIN:
-            break;
-
-        case GESTION_SM_TO_MAIN_TIMEOUT:
-            Usart1Send((char *) "Timeout\r\n");
-            gestion_state = GESTION_SM_INIT;
-            timer_standby = 300;	//espero que se limpien las teclas
             break;
 
         case GESTION_SM_TO_FLUSH_SST:
@@ -187,7 +180,7 @@ void FuncGestion (void)
 
                 files.posi0 = OFFSET_FIRST_FILE;
                 pfile_position = &files.posi0;
-                pfile_size = &files.lenght0;
+                pfile_size = &files.length0;
                 file_size = 0;
                 gestion_state = GESTION_SM_GET_READY_FOR_CHUNK;
             }
@@ -238,82 +231,97 @@ void FuncGestion (void)
             break;
 
         case GESTION_SM_TO_WRITE_SST1:            
-            files.posi1 = files.posi0 + files.lenght0;
+            files.posi1 = files.posi0 + files.length0;
             pfile_position = &files.posi1;
-            pfile_size = &files.lenght1;
+            pfile_size = &files.length1;
             file_size = 0;
             gestion_state = GESTION_SM_GET_READY_FOR_CHUNK;
             break;
 
         case GESTION_SM_TO_WRITE_SST2:
-            files.posi2 = files.posi1 + files.lenght1;
+            files.posi2 = files.posi1 + files.length1;
             pfile_position = &files.posi2;
-            pfile_size = &files.lenght2;
+            pfile_size = &files.length2;
             file_size = 0;
             gestion_state = GESTION_SM_GET_READY_FOR_CHUNK;
             break;
 
         case GESTION_SM_TO_WRITE_SST3:
-            files.posi3 = files.posi2 + files.lenght2;
+            files.posi3 = files.posi2 + files.length2;
             pfile_position = &files.posi3;
-            pfile_size = &files.lenght3;
+            pfile_size = &files.length3;
             file_size = 0;
             gestion_state = GESTION_SM_GET_READY_FOR_CHUNK;
             break;
 
         case GESTION_SM_TO_WRITE_SST4:
-            files.posi4 = files.posi3 + files.lenght3;
+            files.posi4 = files.posi3 + files.length3;
             pfile_position = &files.posi4;
-            pfile_size = &files.lenght4;
+            pfile_size = &files.length4;
             file_size = 0;
             gestion_state = GESTION_SM_GET_READY_FOR_CHUNK;
             break;
 
         case GESTION_SM_TO_WRITE_SST5:
-            files.posi5 = files.posi4 + files.lenght4;
+            files.posi5 = files.posi4 + files.length4;
             pfile_position = &files.posi5;
-            pfile_size = &files.lenght5;
+            pfile_size = &files.length5;
             file_size = 0;
             gestion_state = GESTION_SM_GET_READY_FOR_CHUNK;
             break;
 
         case GESTION_SM_TO_WRITE_SST6:
-            files.posi6 = files.posi5 + files.lenght5;
+            files.posi6 = files.posi5 + files.length5;
             pfile_position = &files.posi6;
-            pfile_size = &files.lenght6;
+            pfile_size = &files.length6;
             file_size = 0;
             gestion_state = GESTION_SM_GET_READY_FOR_CHUNK;
             break;
 
         case GESTION_SM_TO_WRITE_SST7:
-            files.posi7 = files.posi6 + files.lenght6;
+            files.posi7 = files.posi6 + files.length6;
             pfile_position = &files.posi7;
-            pfile_size = &files.lenght7;
+            pfile_size = &files.length7;
             file_size = 0;
             gestion_state = GESTION_SM_GET_READY_FOR_CHUNK;
             break;
 
         case GESTION_SM_TO_WRITE_SST8:
-            files.posi8 = files.posi7 + files.lenght7;
+            files.posi8 = files.posi7 + files.length7;
             pfile_position = &files.posi8;
-            pfile_size = &files.lenght8;
+            pfile_size = &files.length8;
             file_size = 0;
             gestion_state = GESTION_SM_GET_READY_FOR_CHUNK;
             break;
 
         case GESTION_SM_TO_WRITE_SST9:
-            files.posi9 = files.posi8 + files.lenght8;
+            files.posi9 = files.posi8 + files.length8;
             pfile_position = &files.posi9;
-            pfile_size = &files.lenght9;
+            pfile_size = &files.length9;
+            file_size = 0;
+            gestion_state = GESTION_SM_GET_READY_FOR_CHUNK;
+            break;
+
+        case GESTION_SM_TO_WRITE_SSTB1:
+            files.posi10 = files.posi9 + files.length9;
+            pfile_position = &files.posi10;
+            pfile_size = &files.length10;
+            file_size = 0;
+            gestion_state = GESTION_SM_GET_READY_FOR_CHUNK;
+            break;
+
+        case GESTION_SM_TO_WRITE_SSTB3:
+            files.posi11 = files.posi10 + files.length10;
+            pfile_position = &files.posi11;
+            pfile_size = &files.length11;
             file_size = 0;
             
             file_last_action = 1;
             
             gestion_state = GESTION_SM_GET_READY_FOR_CHUNK;
             break;
-
+            
         case GESTION_SM_TO_MONITORING_LEAVE:
-            Usart1Send((char *) "Leaving monitoring confirmed\r\n");
             timer_standby = 300;
             Display_ShowNumbers(DISPLAY_PROG);
             gestion_state = GESTION_SM_WAIT_TO_LEAVE;
@@ -321,8 +329,10 @@ void FuncGestion (void)
 
         case GESTION_SM_WAIT_TO_LEAVE:
             if (!timer_standby)
+            {
+                Usart1Send((char *) "Leaving monitoring confirmed\r\n");
                 gestion_state = GESTION_SM_INIT;
-
+            }
             break;
 
         default:

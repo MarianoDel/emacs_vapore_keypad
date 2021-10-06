@@ -128,34 +128,40 @@ typedef struct filesystem {
 
 	//para num0
 	unsigned int posi0;
-	unsigned int lenght0;
+	unsigned int length0;
 	//para num1
 	unsigned int posi1;
-	unsigned int lenght1;
+	unsigned int length1;
 	//para num2
 	unsigned int posi2;
-	unsigned int lenght2;
+	unsigned int length2;
 	//para num3
 	unsigned int posi3;
-	unsigned int lenght3;
+	unsigned int length3;
 	//para num4
 	unsigned int posi4;
-	unsigned int lenght4;
+	unsigned int length4;
 	//para num5
 	unsigned int posi5;
-	unsigned int lenght5;
+	unsigned int length5;
 	//para num6
 	unsigned int posi6;
-	unsigned int lenght6;
+	unsigned int length6;
 	//para num7
 	unsigned int posi7;
-	unsigned int lenght7;
+	unsigned int length7;
 	//para num8
 	unsigned int posi8;
-	unsigned int lenght8;
+	unsigned int length8;
 	//para num9
 	unsigned int posi9;
-	unsigned int lenght9;
+	unsigned int length9;
+	// for audio in Button 1
+	unsigned int posi10;
+	unsigned int length10;
+	// for audio in Button 3
+	unsigned int posi11;
+	unsigned int length11;
 
 } filesystem_typedef;
 

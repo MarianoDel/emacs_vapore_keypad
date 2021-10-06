@@ -83,101 +83,38 @@ void Load16SamplesChar (unsigned char * buf, unsigned int posi)
 
 void ShowFileSystem(void)
 {
-	char str [100];
+    char str [100];
 
-	  Usart1Send((char *) "File System:\r\n");
-	  Wait_ms(100);
-	  // LoadFilesIndex();
+    Usart1Send((char *) "File System:\r\n");
+    Wait_ms(100);
+    LoadFilesIndex();
 
-	  sprintf(str, "num0: %08x %08x %d\r\n", files.posi0, files.lenght0, files.lenght0);
-	  Usart1Send(str);
-	  Wait_ms(100);
+    int filesystem_index = sizeof(files) >> 3;    // /4 for ints, /2 for pos and len
+    for (int i = 0; i < filesystem_index; i++)
+    {
+        unsigned int * pfile = &files.posi0;
+        unsigned int * psize = &files.posi0;    //offset comes next
 
-	  sprintf(str, "num1: %08x %08x %d\r\n", files.posi1, files.lenght1, files.lenght1);
-	  Usart1Send(str);
-	  Wait_ms(100);
-
-	  sprintf(str, "num2: %08x %08x %d\r\n", files.posi2, files.lenght2, files.lenght2);
-	  Usart1Send(str);
-	  Wait_ms(100);
-
-	  sprintf(str, "num3: %08x %08x %d\r\n", files.posi3, files.lenght3, files.lenght3);
-	  Usart1Send(str);
-	  Wait_ms(100);
-
-	  sprintf(str, "num4: %08x %08x %d\r\n", files.posi4, files.lenght4, files.lenght4);
-	  Usart1Send(str);
-	  Wait_ms(100);
-
-	  sprintf(str, "num5: %08x %08x %d\r\n", files.posi5, files.lenght5, files.lenght5);
-	  Usart1Send(str);
-	  Wait_ms(100);
-
-	  sprintf(str, "num6: %08x %08x %d\r\n", files.posi6, files.lenght6, files.lenght6);
-	  Usart1Send(str);
-	  Wait_ms(100);
-
-	  sprintf(str, "num7: %08x %08x %d\r\n", files.posi7, files.lenght7, files.lenght7);
-	  Usart1Send(str);
-	  Wait_ms(100);
-
-	  sprintf(str, "num8: %08x %08x %d\r\n", files.posi8, files.lenght8, files.lenght8);
-	  Usart1Send(str);
-	  Wait_ms(100);
-
-	  sprintf(str, "num9: %08x %08x %d\r\n", files.posi9, files.lenght9, files.lenght9);
-	  Usart1Send(str);
-	  Wait_ms(100);
+        pfile += (i * 2);
+        psize += (i * 2 + 1);
+        sprintf(str, "file[%d]: %08x %08x %d\r\n",
+                i,
+                *pfile,
+                *psize,
+                *psize);
+        
+        Usart1Send(str);
+        Wait_ms(100);
+    }
 }
+
 
 void LoadFilesIndex (void)
 {
-	unsigned char posi [80];
-	unsigned int * p_memory;
-
-	readBufNVM8u(posi, 80, OFFSET_FILESYSTEM);
-	p_memory = (unsigned int *) posi;
-
-	//num0
-	files.posi0 = *p_memory;
-	files.lenght0 = *(p_memory + 1);	//probar asi o incrementando el puntero
-
-	//num1
-	files.posi1 = *(p_memory + 2);
-	files.lenght1 = *(p_memory + 3);
-
-	//num2
-	files.posi2 = *(p_memory + 4);
-	files.lenght2 = *(p_memory + 5);
-
-	//num3
-	files.posi3 = *(p_memory + 6);
-	files.lenght3 = *(p_memory + 7);
-
-	//num4
-	files.posi4 = *(p_memory + 8);
-	files.lenght4 = *(p_memory + 9);
-
-	//num5
-	files.posi5 = *(p_memory + 10);
-	files.lenght5 = *(p_memory + 11);
-
-	//num6
-	files.posi6 = *(p_memory + 12);
-	files.lenght6 = *(p_memory + 13);
-
-	//num7
-	files.posi7 = *(p_memory + 14);
-	files.lenght7 = *(p_memory + 15);
-
-	//num8
-	files.posi8 = *(p_memory + 16);
-	files.lenght8 = *(p_memory + 17);
-
-	//num9
-	files.posi9 = *(p_memory + 18);
-	files.lenght9 = *(p_memory + 19);
+    // read SST memory directly to files struct
+    readBufNVM8u((unsigned char *) &files, sizeof(files), OFFSET_FILESYSTEM);
 }
+
 
 #ifdef CONFIGURATION_IN_SST
 void LoadConfiguration (void)
@@ -227,7 +164,7 @@ void ShowConfiguration(void)
 
 	  Usart1Send((char *) "Configuration:\r\n");
 #ifdef CONFIGURATION_IN_SST
-	  LoadFilesIndex();
+	  // LoadFilesIndex();
 
 	  sprintf(str, "B1T: %d, B1R: %d\r\n", param_struct.b1t, param_struct.b1r);
 	  Usart1Send(str);
@@ -278,14 +215,14 @@ void ShowConfiguration(void)
 #endif
 }
 
-void UpdateFileIndex (unsigned char numfile, unsigned int index, unsigned int lenght)
+void UpdateFileIndex (unsigned char numfile, unsigned int index, unsigned int length)
 {
 	unsigned int * p_memory;
 
 	p_memory = (unsigned int *) &files.posi0;
 
 	*(p_memory + numfile * 2) = index;
-	*(p_memory + numfile * 2 + 1) = lenght;
+	*(p_memory + numfile * 2 + 1) = length;
 
 }
 
@@ -298,7 +235,7 @@ void SaveFilesIndex (void)
 	//ojo la memoria debe estar borrada de antes
 	p_memory = (unsigned short *) &files.posi0;
 	//writeBufNVM(p_memory, sizeof(filesystem_typedef), 0);
-	writeBufNVM16u(p_memory, sizeof(filesystem_typedef) >> 1, 0);
+	writeBufNVM16u(p_memory, sizeof(filesystem_typedef) >> 1, OFFSET_FILESYSTEM);
 }
 
 unsigned char ReadMem (void)
