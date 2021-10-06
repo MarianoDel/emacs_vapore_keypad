@@ -1039,7 +1039,7 @@ unsigned char FuncAlarm (unsigned char sms_alarm)
         {
             alarm_state++;
             repetition_counter--;
-            audio_cnt = 3;
+            // audio_cnt = 3;
         }
         else
         {
@@ -1049,56 +1049,60 @@ unsigned char FuncAlarm (unsigned char sms_alarm)
         break;
 
         // secuencia original
-    // case ALARM_BUTTON1_D:
-    //     SirenCommands(SIREN_STOP_CMD);
-    //     PositionToSpeak(last_one_or_three);
-    //     alarm_state++;
-    //     break;
-
-    // case ALARM_BUTTON1_E:
-    //     if (audio_state == AUDIO_INIT)
-    //     {
-    //         //termino de enviar audio
-    //         alarm_state = ALARM_BUTTON1;
-    //     }
-    //     break;
-
-        // secuencia modificada envia 9 numeros para simular un audio de 6 segundos
     case ALARM_BUTTON1_D:
         SirenCommands(SIREN_STOP_CMD);
-        PositionToSpeak(111);
+
+        if (param_struct.audio_buttons & B1_AUDIO_MASK)
+            VectorToSpeak('a');
+        
+        PositionToSpeak(last_one_or_three);
         alarm_state++;
         break;
 
     case ALARM_BUTTON1_E:
         if (audio_state == AUDIO_INIT)
         {
-            if (!audio_cnt)
-            {
-                //termino de enviar audio
-                alarm_state = ALARM_BUTTON1_F;
-            }
-            else
-            {
-                audio_cnt--;
-                alarm_state--;
-            }
-        }
-        break;
-
-    case ALARM_BUTTON1_F:
-        SirenCommands(SIREN_STOP_CMD);
-        PositionToSpeak(last_one_or_three);
-        alarm_state++;
-        break;
-
-    case ALARM_BUTTON1_G:
-        if (audio_state == AUDIO_INIT)
-        {
             //termino de enviar audio
             alarm_state = ALARM_BUTTON1;
         }
         break;
+
+        // secuencia modificada pasa audio antes del numero si corresponde
+    // case ALARM_BUTTON1_D:
+    //     SirenCommands(SIREN_STOP_CMD);
+    //     PositionToSpeak(111);
+    //     alarm_state++;
+    //     break;
+
+    // case ALARM_BUTTON1_E:
+    //     if (audio_state == AUDIO_INIT)
+    //     {
+    //         if (!audio_cnt)
+    //         {
+    //             //termino de enviar audio
+    //             alarm_state = ALARM_BUTTON1_F;
+    //         }
+    //         else
+    //         {
+    //             audio_cnt--;
+    //             alarm_state--;
+    //         }
+    //     }
+    //     break;
+
+    // case ALARM_BUTTON1_F:
+    //     SirenCommands(SIREN_STOP_CMD);
+    //     PositionToSpeak(last_one_or_three);
+    //     alarm_state++;
+    //     break;
+
+    // case ALARM_BUTTON1_G:
+    //     if (audio_state == AUDIO_INIT)
+    //     {
+    //         //termino de enviar audio
+    //         alarm_state = ALARM_BUTTON1;
+    //     }
+    //     break;
 
         // fin modificacion de prueba audio
         
@@ -1763,7 +1767,7 @@ void VectorToSpeak (unsigned char new_number)
 {
 	unsigned char i;
 	//me fijo si hay espacio
-	if (p_numbers_speak < &numbers_speak[LAST_NUMBER_SPEAK])
+	if (p_numbers_speak < &numbers_speak[LAST_NUMBER_SPEAK])            
 	{
 		//busco la primer posicion vacia y pongo el nuevo numero
 		for (i = 0; i < LAST_NUMBER_SPEAK; i++)
@@ -1782,134 +1786,144 @@ void VectorToSpeak (unsigned char new_number)
 void UpdateAudio (void)
 {
 
-	switch (audio_state)
-	{
-		case AUDIO_INIT:
-			if (*p_numbers_speak != 0)		//ojo ver esto que no son char
-				audio_state++;
-			break;
+    switch (audio_state)
+    {
+    case AUDIO_INIT:
+        if (*p_numbers_speak != 0)		//ojo ver esto que no son char
+            audio_state++;
+        break;
 
-		case AUDIO_UPDATE:
-			//habilitar amplificador y pasarlo a audio
-			//cargo el audio
-			switch (*p_numbers_speak)
-			{
-				case 10:
-					p_files_addr = &files.posi0;
-					p_files_length = &files.length0;
-					break;
+    case AUDIO_UPDATE:
+        //habilitar amplificador y pasarlo a audio
+        //cargo el audio
+        switch (*p_numbers_speak)
+        {
+        case 10:
+            p_files_addr = &files.posi0;
+            p_files_length = &files.length0;
+            break;
 
-				case 1:
-					p_files_addr = &files.posi1;
-					p_files_length = &files.length1;
-					break;
+        case 1:
+            p_files_addr = &files.posi1;
+            p_files_length = &files.length1;
+            break;
 
-				case 2:
-					p_files_addr = &files.posi2;
-					p_files_length = &files.length2;
-					break;
+        case 2:
+            p_files_addr = &files.posi2;
+            p_files_length = &files.length2;
+            break;
 
-				case 3:
-					p_files_addr = &files.posi3;
-					p_files_length = &files.length3;
-					break;
+        case 3:
+            p_files_addr = &files.posi3;
+            p_files_length = &files.length3;
+            break;
 
-				case 4:
-					p_files_addr = &files.posi4;
-					p_files_length = &files.length4;
-					break;
+        case 4:
+            p_files_addr = &files.posi4;
+            p_files_length = &files.length4;
+            break;
 
-				case 5:
-					p_files_addr = &files.posi5;
-					p_files_length = &files.length5;
-					break;
+        case 5:
+            p_files_addr = &files.posi5;
+            p_files_length = &files.length5;
+            break;
 
-				case 6:
-					p_files_addr = &files.posi6;
-					p_files_length = &files.length6;
-					break;
+        case 6:
+            p_files_addr = &files.posi6;
+            p_files_length = &files.length6;
+            break;
 
-				case 7:
-					p_files_addr = &files.posi7;
-					p_files_length = &files.length7;
-					break;
+        case 7:
+            p_files_addr = &files.posi7;
+            p_files_length = &files.length7;
+            break;
 
-				case 8:
-					p_files_addr = &files.posi8;
-					p_files_length = &files.length8;
-					break;
+        case 8:
+            p_files_addr = &files.posi8;
+            p_files_length = &files.length8;
+            break;
 
-				case 9:
-					p_files_addr = &files.posi9;
-					p_files_length = &files.length9;
-					break;
-			}
+        case 9:
+            p_files_addr = &files.posi9;
+            p_files_length = &files.length9;
+            break;
 
-			Load16SamplesShort((unsigned short *)v_samples1, *p_files_addr + FILE_OFFSET);
-			Load16SamplesShort((unsigned short *)v_samples2, *p_files_addr + FILE_OFFSET + 32);
-			current_size = 64;
-			update_samples = 0;
+        case 'a':
+            p_files_addr = &files.posi10;
+            p_files_length = &files.length10;            
+            break;
 
-			Power_Ampli_Ena ();
-			Ampli_to_Audio ();
-			Usart1Send((char *) "-> To Audio\r\n");
-			audio_state++;
-			break;
+        case 'b':
+            p_files_addr = &files.posi11;
+            p_files_length = &files.length11;            
+            break;
+        }
 
-		case AUDIO_SENDING:
-			  if (update_samples)	//el update lo hace la interrupcion para la funcion seno
-			  {
-				  update_samples = 0;
+        Load16SamplesShort((unsigned short *)v_samples1, *p_files_addr + FILE_OFFSET);
+        Load16SamplesShort((unsigned short *)v_samples2, *p_files_addr + FILE_OFFSET + 32);
+        current_size = 64;
+        update_samples = 0;
 
-				  if (current_size < (*p_files_length - FILE_OFFSET))
-				  {
-					  //LED_ON;
-					  //DESDE ACA LEVANTO DE LA MEMORIA SST
-					  //cargo el buffer que no esta en uso
-					  if (buff_in_use == 1)
-					  {
-						  //cargo el buffer 2
-						  Load16SamplesShort((unsigned short *)v_samples2, *p_files_addr + FILE_OFFSET + current_size);
-					  }
-					  else if (buff_in_use == 2)
-					  {
-						  //cargo el buffer 1
-						  Load16SamplesShort((unsigned short *)v_samples1, *p_files_addr + FILE_OFFSET + current_size);
-					  }
-					  current_size += 32;
-					  //LED_OFF;
-				  }
-				  else
-				  {
-					  //termine de enviar avanzo para ver si hay mas numeros
-					  audio_state++;
-				  }
-			  }
-			break;
+        Power_Ampli_Ena ();
+        Ampli_to_Audio ();
+        Usart1Send((char *) "-> To Audio\r\n");
+        audio_state++;
+        break;
 
-		case AUDIO_CHECK_NEXT:
-			p_numbers_speak++;
-			if (*p_numbers_speak != '\0')		//ojo ver esto que no son char
-				audio_state = AUDIO_UPDATE;
-			else
-				audio_state = AUDIO_FINISHING;
+    case AUDIO_SENDING:
+        if (update_samples)	//el update lo hace la interrupcion para la funcion seno
+        {
+            update_samples = 0;
 
-			break;
+            if (current_size < (*p_files_length - FILE_OFFSET))
+            {
+                //LED_ON;
+                //DESDE ACA LEVANTO DE LA MEMORIA SST
+                //cargo el buffer que no esta en uso
+                if (buff_in_use == 1)
+                {
+                    //cargo el buffer 2
+                    Load16SamplesShort((unsigned short *)v_samples2, *p_files_addr + FILE_OFFSET + current_size);
+                }
+                else if (buff_in_use == 2)
+                {
+                    //cargo el buffer 1
+                    Load16SamplesShort((unsigned short *)v_samples1, *p_files_addr + FILE_OFFSET + current_size);
+                }
+                current_size += 32;
+                //LED_OFF;
+            }
+            else
+            {
+                //termine de enviar avanzo para ver si hay mas numeros
+                audio_state++;
+            }
+        }
+        break;
 
-		case AUDIO_FINISHING:
-			//llegue al final
-			p_numbers_speak = numbers_speak;
-			memset (numbers_speak, '\0', sizeof(numbers_speak));
-			Power_Ampli_Disa ();
-			Ampli_to_Sirena ();
-			Usart1Send((char *) "-> To Sirena\r\n");
-			audio_state = AUDIO_INIT;
-			break;
+    case AUDIO_CHECK_NEXT:
+        p_numbers_speak++;
+        if (*p_numbers_speak != '\0')		//ojo ver esto que no son char
+            audio_state = AUDIO_UPDATE;
+        else
+            audio_state = AUDIO_FINISHING;
 
-		default:
-			audio_state = AUDIO_INIT;
-			break;
-	}
+        break;
+
+    case AUDIO_FINISHING:
+        //llegue al final
+        p_numbers_speak = numbers_speak;
+        memset (numbers_speak, '\0', sizeof(numbers_speak));
+        Power_Ampli_Disa ();
+        Ampli_to_Sirena ();
+        Usart1Send((char *) "-> To Sirena\r\n");
+        audio_state = AUDIO_INIT;
+        break;
+
+    default:
+        audio_state = AUDIO_INIT;
+        break;
+    }
 
 }
 
