@@ -14,6 +14,7 @@
 #include "sst25.h"
 #include "usart.h"
 #include "tim.h"
+#include "parameters.h"
 
 #include <stdio.h>
 #include <string.h>

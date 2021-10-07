@@ -201,10 +201,12 @@ clean:
 	rm -f $(FULL_PRJ).bin
 	rm -f $(SRC:.c=.lst)
 	rm -f $(SRC:.c=.su)
-#   rm $(ASRC:.s=.s.bak)
 	rm -f $(ASRC:.s=.lst)
 	rm -f *.o
 	rm -f *.out
+	rm -f *.gcov
+	rm -f *.gcda
+	rm -f *.gcno
 
 tests:
 	# simple functions tests, copy functions to tests module into main
@@ -223,7 +225,7 @@ tests_display:
 
 tests_comm:
 	# first module objects to test
-	gcc -c src/comm.c -I. $(INCDIR)
+	gcc -c src/comm.c -I. $(INCDIR) $(DDEFS)
 	# second auxiliary helper modules
 	gcc -c src/tests_ok.c -I $(INCDIR)
 	# compile the test and link with modules
@@ -233,15 +235,17 @@ tests_comm:
 
 tests_comm_coverage:
 	# first module objects to test
-	gcc -c --coverage src/comm.c -I. $(INCDIR)
+	gcc -c --coverage src/comm.c -I. $(INCDIR) $(DDEFS)
 	# second auxiliary helper modules
 	gcc -c --coverage src/tests_ok.c -I $(INCDIR)
 	# compile the test and link with modules
 	gcc --coverage src/tests_comm.c comm.o tests_ok.o
 	# test execution
 	./a.out
+	#
 	# process coverage
-	gcov src/comm.c -m
+	#
+	gcov comm.c -m
 
 
 # *** EOF ***

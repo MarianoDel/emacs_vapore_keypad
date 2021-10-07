@@ -13,6 +13,7 @@
 #include "hard.h"
 #include "usart.h"
 #include "flash_program.h"
+#include "parameters.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -87,8 +88,6 @@ const char s_grabar [] = {"Grabar,"};
 unsigned char InterpretarMsg (unsigned char lstate, char * pStr)	
 {
 #ifdef PROGRAMA_DE_GESTION
-    // unsigned char mem[16];
-    // unsigned char i;
 
     if (strncmp(pStr, (const char *) "Starting Goto 115200",
                 sizeof((const char *) "Starting Goto 115200") - 1) == 0)
@@ -103,13 +102,13 @@ unsigned char InterpretarMsg (unsigned char lstate, char * pStr)
     }
 
     //FUNCIONES PARA GRABAR MEMORIA
-    //SST0
     if (strncmp(pStr, s_borrar_sst, sizeof(s_borrar_sst) - 1) == 0)
         return GESTION_SM_TO_FLUSH_SST;
 
     if (strncmp(pStr, s_grabar_sstconf, sizeof(s_grabar_sstconf) - 1) == 0)
         return GESTION_SM_TO_WRITE_SST_CONF;
 
+    //SST0
     if (strncmp(pStr, s_grabar_sst0, sizeof(s_grabar_sst0) - 1) == 0)
         return GESTION_SM_TO_WRITE_SST0;
     //SST1
@@ -197,7 +196,7 @@ unsigned char InterpretarMsg (unsigned char lstate, char * pStr)
     }
 
 
-#endif
+#endif    // PROGRAMA_DE_GESTION
 
     // Give posibility to activate alarm from serial port (Activation by SMS)
     if (strncmp(pStr, "ACT_12V ACTIVO", sizeof("ACT_12V ACTIVO") - 1) == 0)

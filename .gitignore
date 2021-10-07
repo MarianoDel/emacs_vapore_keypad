@@ -11,3 +11,5 @@ GRTAGS
 GTAGS
 *.zip
 *.gcno
+*.gcov
+*.gcda

@@ -8,42 +8,37 @@
 // #### KEYPAD.C #######################################
 //------------------------------------------------------
 
-/* Includes ------------------------------------------------------------------*/
+// Includes --------------------------------------------------------------------
 #include "keypad.h"
 #include "hard.h"
 #include "stm32f0xx.h"
 #include "spi.h"
 #include "display_7seg.h"
+#include "parameters.h"
 
-// #include <string.h>
-// #include <stdio.h>
 
-#include "flash_program.h"    //TODO: sacar esto tambien!!!
-
-/* Externals variables ---------------------------------------------------------*/
+// Externals -------------------------------------------------------------------
 //para el timer
 extern volatile unsigned char keypad_timeout;
 extern volatile unsigned short keypad_interdigit_timeout;
 
-#ifdef CONFIGURATION_IN_SST    //TODO: sacra esto a la mierda
 extern parameters_typedef param_struct;
-#endif
 
 
-/* Externals functions??? ------------------------------------------------------*/
+// Externals functions??? ------------------------------------------------------
 extern void BuzzerCommands(unsigned char, unsigned char);
 
 
-/* Global variables ------------------------------------------------------------*/
+// Global ----------------------------------------------------------------------
 unsigned char last_keypad_key = 0;
 unsigned char keypad_state = 0;
 
-// display_sm_t display_state = DISPLAY_SM_INIT;
 
-/* Private Module Functions ----------------------------------------------------*/
+// Private Module Functions ----------------------------------------------------
 unsigned char ReadSwitches_Internals (void);
 
-/* Module Functions ------------------------------------------------------------*/
+
+// Module Functions ------------------------------------------------------------
 
 //funciona tipo Zero Order Hold con tiempo de muestreo KEYPAD_TIMEOUT
 //revisa los switches cada 50ms, le da tiempo al display para mostrar los numeros
