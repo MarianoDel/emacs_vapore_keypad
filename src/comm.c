@@ -12,7 +12,6 @@
 #include "comm.h"
 #include "hard.h"
 #include "usart.h"
-// #include "flash_program.h"
 #include "parameters.h"
 
 #include <string.h>

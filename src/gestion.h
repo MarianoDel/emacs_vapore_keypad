@@ -1,23 +1,23 @@
-//------------------------------------------------------
-// #### PROYECTO PANEL ALARMA VAPORE - Custom Board ####
+//----------------------------------------------------------
+// #### VAPORE ALARM WITH KEYPAD PROJECT - Custom Board ####
 // ##
 // ## @Author: Med
 // ## @Editor: Emacs - ggtags
 // ## @TAGS:   Global
 // ##
-// #### GESTION.H #################################
-//------------------------------------------------------
+// #### GESTION.H ##########################################
+//----------------------------------------------------------
 #ifndef _GESTION_H_
 #define _GESTION_H_
 
-// Additional Includes for Configuration ------------------------------
+// Additional Includes for Configuration ---------------------------------------
 
 
-// Defines for Configuration ----------------------------------------
+// Defines for Configuration ---------------------------------------------------
 
 
 
-// Exported Macros and Defines ----------------------------------------
+// Module Exported Types Constants and Macros ----------------------------------
 //estados de la SM de GESTION
 typedef enum {
     GESTION_SM_INIT = 0,
@@ -58,10 +58,7 @@ typedef enum {
 
 
 
-
-
-
-// Exported Module Functions ------------------------------------------
+// Module Exported Functions ---------------------------------------------------
 void FuncGestion (void);
 
 
