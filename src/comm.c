@@ -8,11 +8,11 @@
 // #### COMM.C #######################################
 //------------------------------------------------------
 
-/* Includes ------------------------------------------------------------------*/
+// Includes --------------------------------------------------------------------
 #include "comm.h"
 #include "hard.h"
 #include "usart.h"
-#include "flash_program.h"
+// #include "flash_program.h"
 #include "parameters.h"
 
 #include <string.h>
@@ -21,35 +21,15 @@
 #include "gestion.h"
 
 
-/* Externals variables ---------------------------------------------------------*/
-// extern const char s_ok [];
-
+// Externals variables ---------------------------------------------------------
 extern unsigned char next_pckt;
 extern unsigned char file_done;
 
-#ifdef CONFIGURATION_IN_FLASH
-extern unsigned char b1t;
-extern unsigned char b1r;
-extern unsigned char b2t;
-extern unsigned char b2r;
-extern unsigned char b3t;
-extern unsigned char b3r;
-extern unsigned char b4t;
-extern unsigned char b4r;
-#endif
-
-#ifdef CONFIGURATION_IN_SST
 extern parameters_typedef param_struct;
-#endif
 
 
-/* Global variables ------------------------------------------------------------*/
-const char s_tiempos [] = {"Tiempos"};
-// const char s_256 [] = {"Code Dump"};
-// const char s_512 [] = {"Code Dump2"};
-
+// Globals ---------------------------------------------------------------------
 #ifdef PROGRAMA_DE_GESTION
-const char s_read_sst[] = {"Leer SST"};
 const char s_grabar_sst0[] = {"Grabar SST0"};
 const char s_grabar_sst1[] = {"Grabar SST1"};
 const char s_grabar_sst2[] = {"Grabar SST2"};
@@ -62,28 +42,18 @@ const char s_grabar_sst8[] = {"Grabar SST8"};
 const char s_grabar_sst9[] = {"Grabar SST9"};
 const char s_grabar_sstb1[] = {"Grabar SSTB1"};
 const char s_grabar_sstb3[] = {"Grabar SSTB3"};
+
 const char s_grabar_sstconf[] = {"Grabar Conf SST"};
 const char s_grabar_prox[] = {"Proximo"};
 const char s_grabar_term[] = {"Terminado"};
 const char s_borrar_sst[] = {"Borrar SST"};
-
-const char s_leer10[] = {"Leer 10"};
-const char s_num0[] = {"Num0"};
-const char s_num1[] = {"Num1"};
-const char s_num2[] = {"Num2"};
-const char s_num3[] = {"Num3"};
-const char s_num4[] = {"Num4"};
-const char s_num5[] = {"Num5"};
-const char s_num6[] = {"Num6"};
-const char s_num7[] = {"Num7"};
-const char s_num8[] = {"Num8"};
-const char s_num9[] = {"Num9"};
-const char s_grabar [] = {"Grabar,"};
+// const char s_read_sst[] = {"Leer SST"};
+const char s_tiempos [] = {"Tiempos"};
 #endif
 
 
 
-/* Module Functions ------------------------------------------------------------*/
+// Module Functions ------------------------------------------------------------
 //TODO copiar payload solo en las cuestiones de LCD y no en los comandos
 unsigned char InterpretarMsg (unsigned char lstate, char * pStr)	
 {
@@ -163,14 +133,7 @@ unsigned char InterpretarMsg (unsigned char lstate, char * pStr)
     if (strncmp(pStr, s_tiempos, sizeof(s_tiempos) - 1) == 0)
     {
         char s_to_send [96] = { 0 };
-#ifdef INFO_IN_FLASH
-        sprintf(s_to_send, "Tiempos %d,%d,%d,%d,%d,%d,%d,%d,\r\n",
-                b1t, b1r,
-                b2t, b2r,
-                b3t, b3r,
-                b4t, b4r);
-#endif
-#ifdef INFO_IN_SST
+
         sprintf(s_to_send, "Tiempos %d,%d,%d,%d,%d,%d,%d,%d,",
                 param_struct.b1t,
                 param_struct.b1r,
@@ -191,7 +154,6 @@ unsigned char InterpretarMsg (unsigned char lstate, char * pStr)
           else
               strcat(s_to_send,"0,\r\n");
         
-#endif
         Usart1Send(s_to_send);
     }
 
@@ -207,6 +169,7 @@ unsigned char InterpretarMsg (unsigned char lstate, char * pStr)
     
     return lstate;
 }
+
 
 unsigned short ToInt3 (char * p)
 {
