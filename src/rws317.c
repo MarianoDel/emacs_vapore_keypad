@@ -104,7 +104,7 @@ unsigned int CheckIndexInMemory_FLASH (unsigned short index_to_find)
 		return 0xffffffff;
 }
 
-//0 sino existe el boton sino de 1 a 4
+//0 si no es un boton del panel remoto, 1 a 12
 unsigned char CheckButtonRemote (unsigned short c0,  unsigned short c1)
 {
 	if (c0 != 0x5554)

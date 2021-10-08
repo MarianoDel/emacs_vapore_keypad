@@ -196,18 +196,6 @@
 
 
 //ESTADOS DE LA ALARMA
-// originales
-// #define ALARM_START				0
-// #define ALARM_BUTTON1			10
-// #define ALARM_BUTTON1_A			11
-// #define ALARM_BUTTON1_B			12
-// #define ALARM_BUTTON1_C			13
-// #define ALARM_BUTTON1_D			14
-// #define ALARM_BUTTON1_E			15
-// #define ALARM_BUTTON1_FINISH	16
-// #define ALARM_BUTTON1_FINISH_B	17
-
-// para prueba audio
 #define ALARM_START				0
 #define ALARM_BUTTON1			10
 #define ALARM_BUTTON1_A			11

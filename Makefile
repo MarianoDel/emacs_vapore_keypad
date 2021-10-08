@@ -247,5 +247,20 @@ tests_comm_coverage:
 	#
 	gcov comm.c -m
 
+tests_func_alarm:
+	# first module objects to test
+	gcc -c --coverage src/func_alarm.c -I. $(INCDIR) $(DDEFS)
+	# second auxiliary helper modules
+	gcc -c --coverage src/tests_ok.c -I $(INCDIR)
+	gcc -c --coverage src/tests_mock_usart.c -I $(INCDIR)
+	# compile the test and link with modules
+	gcc --coverage src/tests_func_alarm.c func_alarm.o tests_mock_usart.o tests_ok.o -I $(INCDIR) $(DDEFS)
+	# test execution
+	./a.out
+	#
+	# process coverage
+	#
+	gcov func_alarm.c -m
+
 
 # *** EOF ***
