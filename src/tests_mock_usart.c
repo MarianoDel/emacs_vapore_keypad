@@ -23,6 +23,7 @@
 unsigned char usart1_have_data = 0;
 char usart1_msg_received [200] = { 0 };
 char usart1_msg_sended [200] = { 0 };
+unsigned char usart1_output_enable = 1;
 
 // Mock the Usart2
 unsigned char usart2_have_data = 0;
@@ -34,8 +35,11 @@ char usart2_msg_sended [200] = { 0 };
 void Usart1Send (char * msg)
 {
     strcpy(usart1_msg_sended, msg);
-    PrintYellow("usart1 tx -> ");
-    printf("%s\n", msg);    
+    if (usart1_output_enable)
+    {
+        PrintYellow("usart1 tx -> ");
+        printf("%s\n", msg);
+    }
 }
 
 
@@ -58,6 +62,12 @@ void Usart1FillRxBuffer (char * msg)
     PrintYellow("usart1 rx <- ");
     printf("%s\n", msg);
     usart1_have_data = 1;
+}
+
+
+void Usart1OuputEnable (unsigned char ena)
+{
+    usart1_output_enable = ena;
 }
 
 

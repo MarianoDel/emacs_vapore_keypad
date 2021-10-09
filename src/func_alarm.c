@@ -177,7 +177,7 @@ resp_t Func_Alarm_SM (func_alarm_status_e status, unsigned short position, unsig
         if ((status == NEWCODE_ALARM) &&
             (button == 1))    // check only for button 1
         {
-            sprintf(str, "Desactivo: %03d\r\n", position);
+            sprintf(str, "Desactivo: %03d B1\r\n", position);
             Usart1Send(str);
             alarm_st = F_ALARM_BUTTON1_FINISH;
         }
@@ -187,7 +187,7 @@ resp_t Func_Alarm_SM (func_alarm_status_e status, unsigned short position, unsig
         if ((status == NEWCODE_ALARM) &&
             (button == 4))    // check only for button 4
         {
-            sprintf(str, "Desactivo: %03d\r\n", position);
+            sprintf(str, "Desactivo: %03d B4\r\n", position);
             Usart1Send(str);
             alarm_st = F_ALARM_BUTTON1_FINISH;
         }
@@ -307,7 +307,7 @@ resp_t Func_Alarm_SM (func_alarm_status_e status, unsigned short position, unsig
         {
             if (button == 2)	//reviso solo boton 2
             {
-                sprintf(str, "Desactivo: %03d\r\n", position);
+                sprintf(str, "Desactivo: %03d B2\r\n", position);
                 Usart1Send(str);
                 alarm_st = F_ALARM_BUTTON2_FINISH;
             }
@@ -366,7 +366,7 @@ resp_t Func_Alarm_SM (func_alarm_status_e status, unsigned short position, unsig
 
             if (button == 4)	//reviso boton 4 para desactivar
             {
-                sprintf(str, "Desactivo: %03d\r\n", position);
+                sprintf(str, "Desactivo: %03d B4\r\n", position);
                 Usart1Send(str);
                 alarm_st = F_ALARM_BUTTON2_FINISH;
             }
@@ -438,7 +438,7 @@ resp_t Func_Alarm_SM (func_alarm_status_e status, unsigned short position, unsig
         {
             if (button == 3)	//reviso solo boton 3
             {
-                sprintf(str, "Desactivo: %03d\r\n", position);
+                sprintf(str, "Desactivo: %03d B3\r\n", position);
                 Usart1Send(str);
                 alarm_st = F_ALARM_BUTTON3_FINISH;
             }
@@ -472,7 +472,7 @@ resp_t Func_Alarm_SM (func_alarm_status_e status, unsigned short position, unsig
 
         if (button == 4)	//reviso solo boton 4
         {
-            sprintf(str, "Desactivo: %03d\r\n", position);
+            sprintf(str, "Desactivo: %03d B4\r\n", position);
             Usart1Send(str);
             alarm_st = F_ALARM_BUTTON3_FINISH;
         }
@@ -543,6 +543,8 @@ resp_t Func_Alarm_SM (func_alarm_status_e status, unsigned short position, unsig
         {
             //termino de enviar audio
             alarm_st++;
+            sprintf(str, "Timeout B4 %03d\r\n", last_position_one_or_three);
+            Usart1Send(str);
         }
         break;
 
