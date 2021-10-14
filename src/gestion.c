@@ -92,25 +92,25 @@ void FuncGestion (void)
             Usart1Send((char *) "Monitoring on 115200 confirmed\r\n");
             Display_ShowNumbers(DISPLAY_REMOTE);
             LoadConfiguration();
-            Wait_ms(50);
+            Wait_ms(100);
 
             if (readJEDEC())
                 Usart1Send((char *) "Memory OK\r\n");
             else
                 Usart1Send((char *) "Memory WRONG!\r\n");
-            Wait_ms(50);
+            Wait_ms(100);
             
             if (readNVM(0) != 0xFF)
                 Usart1Send((char *) "Filesystem seems OK\r\n");
             else
                 Usart1Send((char *) "No Filesystem finded\r\n");
-            Wait_ms(50);
+            Wait_ms(100);
 
             if (readNVM(OFFSET_CONFIGURATION) != 0xFF)
                 Usart1Send((char *) "Configuration seems OK\r\n");
             else
                 Usart1Send((char *) "No Configuration finded\r\n");
-            Wait_ms(50);
+            Wait_ms(100);
             
             gestion_state = GESTION_SM_IN_MONITORING;
             break;
