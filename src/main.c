@@ -35,7 +35,9 @@
 #include "porton_kirno.h"
 #include "factory_test.h"
 
-
+//TODO: para pruebas nuevo soft
+// #include "func_alarm.h"
+//FIN: para pruebas nuevo soft
 
 /* Externals ------------------------------------------------------------------*/
 // ------- Externals para timers -------
@@ -108,7 +110,10 @@ unsigned short freq_us = 0;
 unsigned char siren_steps = 0;
 
 
-
+//TODO: para nuevo codigo
+// unsigned short new_global_position = 0;
+// unsigned char new_global_button = 0;
+//FIN: para nuevo codigo
 
 volatile unsigned short wait_for_code_timeout;
 volatile unsigned short interdigit_timeout;
@@ -443,8 +448,28 @@ int main(void)
             switches = CheckRemoteKeypad(&switches_posi0, &switches_posi1, &switches_posi2, &position);
             if (switches == RK_MUST_BE_CONTROL)
             {
+                //TODO: codigo original OK
                 alarm_state = ALARM_START;	//resetea la maquina de estados de FuncAlarm()
                 main_state = MAIN_IN_ALARM;
+                //FIN: codigo original OK
+
+                //TODO: codigo nuevo a probar
+                // no funciona bien, ver mas abajo
+                // unsigned short code_position = 0;
+                // unsigned char button = 0;
+                // code_position = CheckBaseCodeInMemory(code);
+                // if ((code_position >= 0) && (code_position <= 1023))
+                //     button = SST_CheckButtonInCode(code);
+
+                // if ((button > 0) && (button <= 4))
+                // {
+                //     Func_Alarm_Reset_SM();
+                //     new_global_position = code_position;
+                //     new_global_button = button;
+                //     main_state = MAIN_IN_ALARM;
+                // }
+                //FIN: codigo nuevo a probar
+                
             }
             else if (switches == RK_NUMBER_FINISH)
             {
@@ -545,8 +570,28 @@ int main(void)
             switches = CheckRemoteKeypad(&switches_posi0, &switches_posi1, &switches_posi2, &position);
             if (switches == RK_MUST_BE_CONTROL)
             {
+                //TODO: codigo original OK
                 alarm_state = ALARM_START;	//resetea la maquina de estados de FuncAlarm()
                 main_state = MAIN_IN_ALARM;
+                //FIN: codigo original OK
+
+                //TODO: codigo nuevo a probar
+                // no funciona bien, ver mas abajo
+                // unsigned short code_position = 0;
+                // unsigned char button = 0;
+                // code_position = CheckBaseCodeInMemory(code);
+                // if ((code_position >= 0) && (code_position <= 1023))
+                //     button = SST_CheckButtonInCode(code);
+
+                // if ((button > 0) && (button <= 4))
+                // {
+                //     Func_Alarm_Reset_SM();
+                //     new_global_position = code_position;
+                //     new_global_button = button;
+                //     main_state = MAIN_IN_ALARM;
+                // }
+                //FIN: codigo nuevo a probar
+                
             }
             else if (switches == RK_NUMBER_FINISH)
             {
@@ -601,7 +646,8 @@ int main(void)
             break;
 
         case MAIN_IN_ALARM:
-            //check if we get here from sms or control
+            //TODO: version anterior que funciona
+            // check if we get here from sms or control
             if (CheckSMS())
             {
                 result = FuncAlarm(1);    //sms activation only needs one kick
@@ -614,6 +660,45 @@ int main(void)
             {
                 main_state = MAIN_TO_MAIN_WAIT_5SEGS;
             }
+            //FIN: version anterior que funciona
+
+            //TODO: nueva version FuncAlarm
+            // no funciona activacion con botones B2 al B4
+            // activa con B1 pero nunca sale de sirena, no pasa audios ni termina
+            // falta timer???
+            // if (CheckSMS())
+            // {
+            //     //llegue a la alarma por SMS, doy el primer kick
+            //     result = Func_Alarm_SM(SMS_ALARM, 0, 0);
+            //     ResetSMS();
+            // }
+            // else
+            // {
+            //     //Reviso si hay nuevo control, si no estoy pasando audio
+            //     unsigned char button = 0;
+            //     unsigned int code = 0;
+            //     unsigned short code_position = 0;
+                
+            //     if (audio_state == AUDIO_INIT)
+            //         button = CheckForButtons(&code_position, &code);
+                
+            //     if (button)
+            //     {
+            //         new_global_position = code_position;
+            //         new_global_button = button;
+            //         result = Func_Alarm_SM(NEWCODE_ALARM, new_global_position, new_global_button);
+            //     }
+            //     else
+            //     {
+            //         result = Func_Alarm_SM(CONTROL_ALARM, new_global_position, new_global_button);
+            //     }
+            // }
+
+            // if (result == resp_ok)
+            // {
+            //     main_state = MAIN_TO_MAIN_WAIT_5SEGS;
+            // }            
+            //FIN: nueva version FuncAlarm
             break;
 
         case MAIN_TO_SAVE_AT_LAST:

@@ -12,12 +12,14 @@
 #include "func_alarm.h"
 // #include "hard.h"
 // #include "stm32f0xx.h"
-// #include "usart.h"
+#include "usart.h"
 // #include "tim.h"
 // #include "display_7seg.h"
 #include "codes.h"
 #include "parameters.h"
 #include "rws317.h"
+
+#include "outputs.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -60,7 +62,9 @@ typedef enum {
 extern parameters_typedef param_struct;
 extern unsigned char audio_state;
 
-
+extern void SirenCommands(unsigned char);
+extern void VectorToSpeak (unsigned char);
+extern void PositionToSpeak(unsigned short);
 // Globals ---------------------------------------------------------------------
 func_alarm_state_e alarm_st = F_ALARM_START;
 unsigned short last_position_one_or_three = 0;

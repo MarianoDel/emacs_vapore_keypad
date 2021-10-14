@@ -87,6 +87,9 @@ SRC += ./src/porton_kirno.c
 SRC += ./src/codes.c
 SRC += ./src/factory_test.c
 SRC += ./src/send_segments.c
+## TODO: para nuevo codigo, no funciona bien
+# SRC += ./src/func_alarm.c
+# SRC += ./src/outputs.c
 
 
 ## Core Support

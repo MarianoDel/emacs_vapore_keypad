@@ -41,7 +41,8 @@
 //---- Configuration for Hardware Versions -------
 #ifdef VER_1_3
 #define HARDWARE_VERSION_1_3
-#define SOFTWARE_VERSION_2_1    //corrije problemas ver2.0 y agrega welcome code
+#define SOFTWARE_VERSION_2_2    //suma audios en botones B1 y B3 con configuracion en gestion
+// #define SOFTWARE_VERSION_2_1    //corrije problemas ver2.0 y agrega welcome code
 // #define SOFTWARE_VERSION_2_0
 // 2.0 tiene un problema con el grabado en secuencia con mas controles de 255
 //     no puede borrar controles de a uno, se confunde y entra a guardar en secuencia
@@ -58,6 +59,9 @@
 #endif
 
 //--- Software Welcome Code ------------------//
+#ifdef SOFTWARE_VERSION_2_2
+#define SOFT "Software V: 2.2\r\n"
+#endif
 #ifdef SOFTWARE_VERSION_2_1
 #define SOFT "Software V: 2.1\r\n"
 #endif
