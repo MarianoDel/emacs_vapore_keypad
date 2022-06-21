@@ -144,14 +144,6 @@ unsigned int * p_files_addr;
 unsigned int * p_files_length;
 unsigned int current_size = 0;
 
-//--- Para revisar la bateria
-#ifdef CON_MODIFICACION_DIODO_BATERIA
-volatile unsigned char timer_battery = 0;
-unsigned short ac_counter = 0;
-unsigned short bat_counter = 0;
-unsigned char slow_toggle = 0;
-#endif
-
 
 // Module Functions ------------------------------------------------------------
 void SysTickError (void);
@@ -1967,51 +1959,79 @@ void UpdateAudio (void)
 }
 
 #ifdef CON_MODIFICACION_DIODO_BATERIA
+#define KEYPAD_WITH_AC    0
+#define KEYPAD_WITH_BATT    1
+volatile unsigned char timer_battery = 0;
+unsigned short ac_counter = 0;
+unsigned short bat_counter = 0;
+unsigned char slow_toggle = 0;
+unsigned char battery_state = KEYPAD_WITH_AC;
+
+// with AC toggle led on 400ms
+// without AC toggle led on 1200ms
 void UpdateBattery (void)
 {
-	if (!timer_battery)
-	{
-		timer_battery = 1;
-		//reviso la pata
+    if (!timer_battery)
+    {
+        timer_battery = 1;
+        //reviso la pata
 
-		if (ac_counter < 400)
-		{
-			ac_counter++;
-			if (AC_PIN)
-				bat_counter++;
-		}
-		else
-		{
-			ac_counter = 0;
-			//me fijo si hago toggle
-			if (bat_counter > 370)
-			{
-				//CON TENSION AC
-				//titila rapido
-				if (LED)
-					LED_OFF;
-				else
-					LED_ON;
-			}
-			else
-			{
-				//SIN TENSION AC
-				//titila lento
-				if (!slow_toggle)
-				{
-					slow_toggle = 2;
-					if (LED)
-						LED_OFF;
-					else
-						LED_ON;
-				}
-				else
-					slow_toggle--;
+        if (ac_counter < 400)
+        {
+            ac_counter++;
+            if (AC_PIN)
+                bat_counter++;
+        }
+        else
+        {
+            unsigned char current_batt_state;
+            
+            ac_counter = 0;
+            //me fijo si hago toggle
+            if (bat_counter > 370)
+            {
+                current_batt_state = KEYPAD_WITH_AC;
+                //CON TENSION AC
+                //titila rapido
+                if (LED)
+                    LED_OFF;
+                else
+                    LED_ON;
+            }
+            else
+            {
+                current_batt_state = KEYPAD_WITH_BATT;
+                //SIN TENSION AC
+                //titila lento
+                if (!slow_toggle)
+                {
+                    slow_toggle = 2;
+                    if (LED)
+                        LED_OFF;
+                    else
+                        LED_ON;
+                }
+                else
+                    slow_toggle--;
 
-			}
-			bat_counter = 0;
-		}
-	}
+            }
+            bat_counter = 0;
+
+            // check batt state
+            if ((battery_state == KEYPAD_WITH_AC) &&
+                (current_batt_state == KEYPAD_WITH_BATT))
+            {
+                battery_state = KEYPAD_WITH_BATT;
+                Usart1Send("\r\nKeypad on BATT\r\n");
+            }
+            else if ((battery_state == KEYPAD_WITH_BATT) &&
+                     (current_batt_state == KEYPAD_WITH_AC))
+            {
+                battery_state = KEYPAD_WITH_AC;
+                Usart1Send("\r\nKeypad with AC\r\n");
+            }
+        }
+    }
 }
 #endif
 

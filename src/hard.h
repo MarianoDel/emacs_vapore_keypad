@@ -27,10 +27,10 @@
 // #define USE_F12_PLUS_SM_NEGATE
 #endif
 
-// #define PROGRAMA_NORMAL
+#define PROGRAMA_NORMAL
 // #define PROGRAMA_DE_BUCLE
 // #define PROGRAMA_FACTORY_TEST
-#define PROGRAMA_DE_GESTION
+// #define PROGRAMA_DE_GESTION
 // #define PROGRAMA_PORTON_KIRNO
 
 // #define DEBUG_ERROR_CODES
@@ -41,7 +41,8 @@
 //---- Configuration for Hardware Versions -------
 #ifdef VER_1_3
 #define HARDWARE_VERSION_1_3
-#define SOFTWARE_VERSION_2_2    //suma audios en botones B1 y B3 con configuracion en gestion
+#define SOFTWARE_VERSION_2_3    // check if we are in battery and send info by usart1
+// #define SOFTWARE_VERSION_2_2    //suma audios en botones B1 y B3 con configuracion en gestion
 // #define SOFTWARE_VERSION_2_1    //corrije problemas ver2.0 y agrega welcome code
 // #define SOFTWARE_VERSION_2_0
 // 2.0 tiene un problema con el grabado en secuencia con mas controles de 255
@@ -59,6 +60,9 @@
 #endif
 
 //--- Software Welcome Code ------------------//
+#ifdef SOFTWARE_VERSION_2_3
+#define SOFT "Software V: 2.3\r\n"
+#endif
 #ifdef SOFTWARE_VERSION_2_2
 #define SOFT "Software V: 2.2\r\n"
 #endif
