@@ -77,14 +77,51 @@ void FuncPortonKirno (void)
                         my_codes.bits);
                 Usart1Send(s_send);
 
+#ifdef USE_KIRNO_CODES                
                 //chequeo parametros del codigo y activo
                 if ((my_codes.bits == 28) &&
                     (my_codes.lambda > 300) &&
-                    (my_codes.lambda < 330) &&
-                    ((my_codes.code == 0x63d1f45) || (my_codes.code == 0x63d1f15)))
+                    (my_codes.lambda < 330))
                 {
-                    porton_state = PK_OUTPUT_TO_ACTIVATE;
+                    // control 1 B3 y B4
+                    // control 2 B3 y B4
+                    if ((my_codes.code == 0x63d1f45) ||
+                        (my_codes.code == 0x63d1f15) ||
+                        (my_codes.code == 0x7401045) ||
+                        (my_codes.code == 0x7401015))
+                    {
+                        porton_state = PK_OUTPUT_TO_ACTIVATE;                        
+                    }
                 }
+#endif
+#ifdef USE_MEMB_CODES
+                if ((my_codes.bits == 12) &&
+                    (my_codes.lambda > 440) &&
+                    (my_codes.lambda < 500))
+                {
+                    // controls B1
+                    if (my_codes.code == 0x1)
+                    {
+                        porton_state = PK_OUTPUT_TO_DELAY_ACTIVATE;
+                        timer_standby = 10000;    // wait 10 secs
+                        Usart1Send("Delay output for 10 secs\n");
+                        siren_timeout = 0;
+                    }
+                }                
+#endif
+            }
+            break;
+
+        case PK_OUTPUT_TO_DELAY_ACTIVATE:
+            if (!timer_standby)
+            {
+                porton_state = PK_OUTPUT_TO_ACTIVATE;                
+            }
+
+            if (!siren_timeout)
+            {
+                BuzzerCommands(BUZZER_SHORT_CMD, 1);
+                siren_timeout = 1000;
             }
             break;
 
@@ -95,7 +132,7 @@ void FuncPortonKirno (void)
             Usart1Send("Output is ON for 5 minutes\n");
             porton_state = PK_OUTPUT_ACTIVE;
             break;
-
+            
         case PK_OUTPUT_ACTIVE:
             if (!timer_standby)
             {

@@ -27,11 +27,28 @@
 // #define USE_F12_PLUS_SM_NEGATE
 #endif
 
-#define PROGRAMA_NORMAL
+// #define PROGRAMA_NORMAL
 // #define PROGRAMA_DE_BUCLE
 // #define PROGRAMA_FACTORY_TEST
 // #define PROGRAMA_DE_GESTION
-// #define PROGRAMA_PORTON_KIRNO
+#define PROGRAMA_PORTON_KIRNO
+
+#ifdef PROGRAMA_PORTON_KIRNO
+#define WITH_WELCOME_CODE_ON_DISPLAY
+// #define USE_KIRNO_CODES    // this or the next
+#define USE_MEMB_CODES    // this or the former
+#endif
+
+// -- Sanity Checks For Porton Kirno -----------
+#ifdef PROGRAMA_PORTON_KIRNO
+#if (defined USE_KIRNO_CODES) && (defined USE_MEMB_CODES)
+#error "Select codes for Kirno or Memb, no boths"
+#endif
+#if (!defined USE_KIRNO_CODES) && (!defined USE_MEMB_CODES)
+#error "Select which codes used to work with Kirno or Memb"
+#endif
+#endif
+// -- End of Sanity Checks For Porton Kirno ----
 
 // #define DEBUG_ERROR_CODES
 

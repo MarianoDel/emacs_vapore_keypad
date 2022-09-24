@@ -27,7 +27,8 @@ typedef struct {
 typedef enum {
     PK_INIT = 0,
     PK_STAND_BY,
-    PK_OUTPUT_TO_ACTIVATE,
+    PK_OUTPUT_TO_DELAY_ACTIVATE,
+    PK_OUTPUT_TO_ACTIVATE,    
     PK_OUTPUT_ACTIVE
 
 } porton_kirno_sm_t;
