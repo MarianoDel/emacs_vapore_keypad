@@ -58,7 +58,8 @@
 //---- Configuration for Hardware Versions -------
 #ifdef VER_1_3
 #define HARDWARE_VERSION_1_3
-#define SOFTWARE_VERSION_2_3    // check if we are in battery and send info by usart1
+#define SOFTWARE_VERSION_2_4    // dead time on audio amp
+// #define SOFTWARE_VERSION_2_3    // check if we are in battery and send info by usart1
 // #define SOFTWARE_VERSION_2_2    //suma audios en botones B1 y B3 con configuracion en gestion
 // #define SOFTWARE_VERSION_2_1    //corrije problemas ver2.0 y agrega welcome code
 // #define SOFTWARE_VERSION_2_0
@@ -77,6 +78,9 @@
 #endif
 
 //--- Software Welcome Code ------------------//
+#ifdef SOFTWARE_VERSION_2_4
+#define SOFT "Software V: 2.4\r\n"
+#endif
 #ifdef SOFTWARE_VERSION_2_3
 #define SOFT "Software V: 2.3\r\n"
 #endif

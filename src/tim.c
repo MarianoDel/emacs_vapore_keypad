@@ -15,8 +15,33 @@
 #include "rws317.h"
 
 
+// Module Private Types Constants and Macros -----------------------------------
+#define RCC_TIM1_CLK    (RCC->APB2ENR & 0x00000800)
+#define RCC_TIM1_CLK_ON    (RCC->APB2ENR |= 0x00000800)
+#define RCC_TIM1_CLK_OFF    (RCC->APB2ENR &= ~0x00000800)
 
-/* Externals variables ---------------------------------------------------------*/
+#define RCC_TIM3_CLK    (RCC->APB1ENR & 0x00000002)
+#define RCC_TIM3_CLK_ON    (RCC->APB1ENR |= 0x00000002)
+#define RCC_TIM3_CLK_OFF    (RCC->APB1ENR &= ~0x00000002)
+
+#define RCC_TIM14_CLK    (RCC->APB1ENR & 0x00000100)
+#define RCC_TIM14_CLK_ON    (RCC->APB1ENR |= 0x00000100)
+#define RCC_TIM14_CLK_OFF    (RCC->APB1ENR &= ~0x00000100)
+
+#define RCC_TIM15_CLK    (RCC->APB2ENR & 0x00010000)
+#define RCC_TIM15_CLK_ON    (RCC->APB2ENR |= 0x00010000)
+#define RCC_TIM15_CLK_OFF    (RCC->APB2ENR &= ~0x00010000)
+
+#define RCC_TIM16_CLK    (RCC->APB2ENR & 0x00020000)
+#define RCC_TIM16_CLK_ON    (RCC->APB2ENR |= 0x00020000)
+#define RCC_TIM16_CLK_OFF    (RCC->APB2ENR &= ~0x00020000)
+
+#define RCC_TIM17_CLK    (RCC->APB2ENR & 0x00040000)
+#define RCC_TIM17_CLK_ON    (RCC->APB2ENR |= 0x00040000)
+#define RCC_TIM17_CLK_OFF    (RCC->APB2ENR &= ~0x00040000)
+
+
+// Externals -------------------------------------------------------------------
 extern volatile unsigned char timer_1seg;
 extern volatile unsigned short timer_led_comm;
 extern volatile unsigned short timer_standby;
@@ -28,7 +53,7 @@ extern volatile unsigned char buff_in_use;
 extern volatile unsigned short v_pwm[];
 
 
-/* Global variables ------------------------------------------------------------*/
+// Globals ---------------------------------------------------------------------
 volatile unsigned short timer_1000 = 0;
 volatile unsigned char new_sample = 0;
 
@@ -235,24 +260,7 @@ void TIM_1_Init (void)
     if (!RCC_TIM1_CLK)
         RCC_TIM1_CLK_ON;
 
-    // /* Connect PXx to TIM1_CH1N */
-    // GPIO_PinAFConfig(TIM1_CH1N_GPIO_PORT, TIM1_CH1N_SOURCE, TIM1_CH1N_AF);
-
-    // /* Connect PXx to TIM1_CH1 */
-    // GPIO_PinAFConfig(TIM1_CH1_GPIO_PORT, TIM1_CH1_SOURCE, TIM1_CH1_AF);
-
-    // /* Configure TIM1 CH1N and CH1 as alternate function push-pull */
-    // GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-    // GPIO_InitStructure.GPIO_Speed = GPIO_Speed_Level_3;
-    // GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-    // GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;
-    // GPIO_InitStructure.GPIO_Pin = TIM1_CH1N_PIN;
-    // GPIO_Init(TIM1_CH1N_GPIO_PORT, &GPIO_InitStructure);
-
-    // GPIO_InitStructure.GPIO_Pin = TIM1_CH1_PIN;
-    // GPIO_Init(TIM1_CH1_GPIO_PORT, &GPIO_InitStructure);
-
-    //Configuracion del timer.
+    // timer config
     //TIM1->CR1 = 0x00;		//clk int / 1; upcounting ARPE bit in the TIMx_CR1 para pwm mode 1
     TIM1->CR1 = TIM_CR1_ARPE;
     TIM1->CR2 = 0x00;		//igual al reset
@@ -270,7 +278,9 @@ void TIM_1_Init (void)
     //hab general de OC y estado inhabilitado alto
     //TIM1->BDTR |= TIM_BDTR_MOE;
     //hab general de OC y estado inhabilitado bajo
-    TIM1->BDTR |= TIM_BDTR_MOE | TIM_BDTR_OSSI;
+    // TIM1->BDTR |= TIM_BDTR_MOE | TIM_BDTR_OSSI;
+    // general enable for OC, low disable, 2us @ 48MHz dead-time
+    TIM1->BDTR |= TIM_BDTR_MOE | TIM_BDTR_OSSI | 96;
 
     TIM1->ARR = TIM1_ARR;
     TIM1->CNT = 0;
