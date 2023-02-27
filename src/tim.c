@@ -278,9 +278,13 @@ void TIM_1_Init (void)
     //hab general de OC y estado inhabilitado alto
     //TIM1->BDTR |= TIM_BDTR_MOE;
     //hab general de OC y estado inhabilitado bajo
-    // TIM1->BDTR |= TIM_BDTR_MOE | TIM_BDTR_OSSI;
+#ifndef USE_DEADTIME_ON_TRANSISTORS
+    // general enable for OC, low disable    
+    TIM1->BDTR |= TIM_BDTR_MOE | TIM_BDTR_OSSI;
+#else
     // general enable for OC, low disable, 2us @ 48MHz dead-time
     TIM1->BDTR |= TIM_BDTR_MOE | TIM_BDTR_OSSI | 96;
+#endif
 
     TIM1->ARR = TIM1_ARR;
     TIM1->CNT = 0;

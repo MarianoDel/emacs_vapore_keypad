@@ -247,22 +247,25 @@ void Clear4KNVM(unsigned int address)
 
 unsigned char readJEDEC(void)
 {
-	unsigned char buf[3];
+    unsigned char buf[3];
 
-	// Send Read Command
-	NVM_On;
+    // Send Read Command
+    NVM_On;
 
-	writeSPI2(SST25_JEDEC);
+    writeSPI2(SST25_JEDEC);
 
     // receive data
-	buf[0] = readSPI2();
-	buf[1] = readSPI2();
-	buf[2] = readSPI2();
+    buf[0] = readSPI2();
+    buf[1] = readSPI2();
+    buf[2] = readSPI2();
     NVM_Off;
 
-    //comparo
-    if ((buf[0] == 0xBF) && (buf[1] == 0x25) && (buf[2] == 0x41))
+    // 16Mbit (0x41h)  or 32Mbit memory (0x4Ah)
+    if (((buf[0] == 0xBF) && (buf[1] == 0x25) && (buf[2] == 0x41)) ||
+        ((buf[0] == 0xBF) && (buf[1] == 0x25) && (buf[2] == 0x4A)))
+    {        
         return 1;
+    }
     else
     	return 0;
 }

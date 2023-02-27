@@ -22,14 +22,17 @@
 // #define USE_F12_PLUS_WITH_SM
 #define USE_F12_PLUS_ON_BUTTON1
 
+// coloca un deadtime de 2us en los transistores del amplificador
+// #define USE_DEADTIME_ON_TRANSISTORS
+
 #ifdef USE_F12_PLUS_WITH_SM
 #define USE_F12_PLUS_SM_DIRECT
 // #define USE_F12_PLUS_SM_NEGATE
 #endif
 
 // #define PROGRAMA_NORMAL
-// #define PROGRAMA_DE_BUCLE
-#define PROGRAMA_FACTORY_TEST
+#define PROGRAMA_DE_BUCLE
+// #define PROGRAMA_FACTORY_TEST
 // #define PROGRAMA_DE_GESTION
 // #define PROGRAMA_PORTON_KIRNO
 
@@ -58,7 +61,7 @@
 //---- Configuration for Hardware Versions -------
 #ifdef VER_1_3
 #define HARDWARE_VERSION_1_3
-#define SOFTWARE_VERSION_2_4    // dead time on audio amp
+#define SOFTWARE_VERSION_2_4    // possible dead time on audio amp, and sst25 memory to 32Mbit
 // #define SOFTWARE_VERSION_2_3    // check if we are in battery and send info by usart1
 // #define SOFTWARE_VERSION_2_2    //suma audios en botones B1 y B3 con configuracion en gestion
 // #define SOFTWARE_VERSION_2_1    //corrije problemas ver2.0 y agrega welcome code
