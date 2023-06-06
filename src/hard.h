@@ -31,10 +31,11 @@
 #endif
 
 // #define PROGRAMA_NORMAL
-#define PROGRAMA_DE_BUCLE
-// #define PROGRAMA_FACTORY_TEST
+// #define PROGRAMA_DE_BUCLE
+#define PROGRAMA_FACTORY_TEST
 // #define PROGRAMA_DE_GESTION
 // #define PROGRAMA_PORTON_KIRNO
+// #define PROGRAMA_CHICKEN_BUCLE    //boton 1, 2, 3, el 4 apaga
 
 #ifdef PROGRAMA_PORTON_KIRNO
 #define WITH_WELCOME_CODE_ON_DISPLAY
@@ -113,6 +114,10 @@
 #ifdef PROGRAMA_PORTON_KIRNO
 #define KIND_OF_PROGRAM "Programa del Porton de Kirno\r\n"
 #endif
+#ifdef PROGRAMA_CHICKEN_BUCLE
+#define KIND_OF_PROGRAM "Programa para Bucle Chicken Features\r\n"
+#endif
+
 //---- End of Program Configuration ----------
 
 
@@ -289,6 +294,8 @@
 #define SIREN_CONFIRM_OK		16
 #define SIREN_CONFIRM_OK_A		17
 #define SIREN_CONFIRM_OK_B		18
+#define SIREN_SINGLE_CHOPP_SMALL_ON    20
+#define SIREN_SINGLE_CHOPP_SMALL_OFF    21
 
 
 //COMANDOS DE LA SIRENA	(tienen que ser los del estado de arriba)
@@ -301,6 +308,8 @@
 #define SIREN_HALF_CMD				SIREN_HALF
 #define SIREN_LONG_CMD				SIREN_LONG
 #define SIREN_CONFIRM_OK_CMD		SIREN_CONFIRM_OK
+
+#define SIREN_SINGLE_CHOPP_SMALL_CMD    SIREN_SINGLE_CHOPP_SMALL_ON
 
 //TIEMPOS DE LA SIRENA POLICIAL
 //#define SIREN_FIRST_FREQ	800		//este es el tiempo en us (1/Hz) donde arranca la sirena

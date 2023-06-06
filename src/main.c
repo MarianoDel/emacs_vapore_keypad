@@ -174,6 +174,11 @@ void F12_State_Machine_Reset (void);
 void F12_State_Machine (void);
 #endif
 
+#ifdef PROGRAMA_CHICKEN_BUCLE
+//funcion de alarmas, revisa codigo en memoria y actua en consecuencia
+unsigned char FuncAlarmChickenBucle (unsigned char sms_alarm);
+#endif
+
 //-------------------------------------------//
 // @brief  Main program.
 // @param  None
@@ -638,6 +643,7 @@ int main(void)
             break;
 
         case MAIN_IN_ALARM:
+#ifndef PROGRAMA_CHICKEN_BUCLE            
             //TODO: version anterior que funciona
             // check if we get here from sms or control
             if (CheckSMS())
@@ -653,6 +659,16 @@ int main(void)
                 main_state = MAIN_TO_MAIN_WAIT_5SEGS;
             }
             //FIN: version anterior que funciona
+#endif
+            
+#ifdef PROGRAMA_CHICKEN_BUCLE
+            result = FuncAlarmChickenBucle(0);
+            
+            if (result == END_OK)
+            {
+                main_state = MAIN_TO_MAIN_WAIT_5SEGS;
+            }            
+#endif
 
             //TODO: nueva version FuncAlarm
             // no funciona activacion con botones B2 al B4
@@ -1465,6 +1481,321 @@ unsigned char FuncAlarm (unsigned char sms_alarm)
     return WORKING;
 }
 
+
+#ifdef PROGRAMA_CHICKEN_BUCLE
+//funcion de alarmas, revisa codigo en memoria y actua en consecuencia
+unsigned char FuncAlarmChickenBucle (unsigned char sms_alarm)
+{
+    unsigned char button;
+    unsigned int code;
+    unsigned short code_position;
+
+    char str[50];
+
+    switch (alarm_state)
+    {
+    case ALARM_START:
+        alarm_state = ALARM_NO_CODE;
+        code = code0;
+        code <<= 16;
+        code |= code1;
+
+        if (sms_alarm)
+        {
+            Usart1Send("SMS Not supported\r\n");
+        }
+        else
+        {
+            //code_position = CheckCodeInMemory(code);
+            code_position = CheckBaseCodeInMemory(code);
+
+            if ((code_position >= 0) && (code_position <= 1023))
+            {
+                sprintf(str, (char *) "Activo: %03d ", code_position);
+                //el codigo existe en memoria
+                //reviso el boton
+                button = SST_CheckButtonInCode(code);
+                if (button == 1)
+                {
+                    last_one_or_three = code_position;
+                    alarm_state = ALARM_BUTTON1;
+                    strcat(str, (char *) "B1\r\n");
+                    repetition_counter = param_struct.b1r;
+#ifdef USE_F12_PLUS_WITH_SM
+                    //modificacion 24-01-2019 F12PLUS espera 10 segundos y se activa 5 segundos
+                    F12_State_Machine_Start();
+#endif
+
+                }
+                else if (button == 2)
+                {
+                    //original boton 2
+                    last_two = code_position;
+                    alarm_state = ALARM_BUTTON2;
+                    strcat(str, (char *) "B2\r\n");
+                    repetition_counter = param_struct.b2r;                    
+                }
+                else if (button == 3)
+                {
+                    last_one_or_three = code_position;
+                    alarm_state = ALARM_BUTTON3;
+                    strcat(str, (char *) "B3\r\n");
+                    repetition_counter = param_struct.b3r;
+                }
+                else if (button == 4)
+                {
+                    alarm_state = ALARM_BUTTON4;
+                    strcat(str, (char *) "B4\r\n");
+                    repetition_counter = param_struct.b4r;
+                }
+
+                //button_timer_secs = 5;	//5 segundos suena seguro EVITA PROBLEMAS EN LA VUELTA
+                button_timer_secs = ACT_DESACT_IN_SECS;	//2 segundos OK y buena distancia 20-5-15
+
+                Usart1Send(str);
+            }
+        }
+        break;
+
+    case ALARM_BUTTON1:
+        FPLUS_ON;
+        F5PLUS_ON;
+#ifdef USE_F12_PLUS_ON_BUTTON1
+        F12PLUS_ON;
+#endif
+
+        SirenCommands(SIREN_MULTIPLE_UP_CMD);
+        last_two = 0;
+        alarm_state++;
+        break;
+
+    case ALARM_BUTTON1_A:
+        if (!button_timer_secs)
+        {
+            button_timer_secs = 90;
+            alarm_state++;
+        }
+        break;
+
+    case ALARM_BUTTON1_B:
+        //me quedo esperando que apaguen o timer
+        if (CheckForButtons(&code_position, &code) == 4)	//desactivo solo con 4
+        {
+            alarm_state = ALARM_BUTTON1_D;
+        }
+        
+        if (!button_timer_secs)
+        {
+            //tengo timeout, corto
+            alarm_state++;
+        }
+        break;
+
+    case ALARM_BUTTON1_C:
+        Usart1Send((char*) "Timeout B1 ");
+
+        SirenCommands(SIREN_STOP_CMD);
+        FPLUS_OFF;
+        F5PLUS_OFF;
+#ifdef USE_F12_PLUS_WITH_SM
+        F12_State_Machine_Reset();
+#else
+        F12PLUS_OFF;
+#endif
+
+        PositionToSpeak(last_one_or_three);
+        alarm_state = ALARM_BUTTON1_FINISH;
+        break;
+
+    case ALARM_BUTTON1_D:
+        sprintf(str, "Desactivo: %03d\r\n", last_one_or_three);
+        Usart1Send(str);
+
+        SirenCommands(SIREN_STOP_CMD);
+        FPLUS_OFF;
+        F5PLUS_OFF;
+#ifdef USE_F12_PLUS_WITH_SM
+        F12_State_Machine_Reset();
+#else
+        F12PLUS_OFF;
+#endif
+
+        PositionToSpeak(last_one_or_three);
+        alarm_state++;
+        break;
+
+    case ALARM_BUTTON1_FINISH:
+        if (audio_state == AUDIO_INIT)
+        {
+            //termino de enviar audio
+            return END_OK;
+        }        
+        break;
+
+    case ALARM_BUTTON1_FINISH_B:
+        break;
+
+    case ALARM_BUTTON2:		//solo enciendo reflectores y sirena
+        FPLUS_ON;
+        // SirenCommands(SIREN_MULTIPLE_DOWN_CMD);
+        SirenCommands(SIREN_SINGLE_CHOPP_CMD);        
+        last_one_or_three = 0;
+        alarm_state++;
+        break;
+
+    case ALARM_BUTTON2_A:		//espero los primeros 2 segundos
+        if (!button_timer_secs)
+        {
+            // button_timer_secs = param_struct.b2t;
+            button_timer_secs = 90;    //1.5 min         
+            alarm_state++;
+        }
+        break;
+
+    case ALARM_BUTTON2_B:
+        //me quedo esperando que apaguen o timer
+        if (CheckForButtons(&code_position, &code) == 4)	//desactivo solo con 4
+        {
+            alarm_state = ALARM_BUTTON2_D;
+        }
+        
+        if (!button_timer_secs)
+        {
+            //tengo timeout, corto
+            alarm_state++;
+        }
+        break;
+
+    case ALARM_BUTTON2_C:
+        Usart1Send((char*) "Timeout B2 ");
+        
+        SirenCommands(SIREN_STOP_CMD);
+        FPLUS_OFF;
+        PositionToSpeak(last_two);
+        alarm_state = ALARM_BUTTON2_FINISH;
+        break;
+
+    case ALARM_BUTTON2_D:
+        sprintf(str, "Desactivo: %03d\r\n", last_two);
+        Usart1Send(str);
+
+        SirenCommands(SIREN_STOP_CMD);
+        FPLUS_OFF;
+        PositionToSpeak(last_two);
+        alarm_state++;
+        break;
+
+    case ALARM_BUTTON2_E:
+        alarm_state++;
+        break;
+
+    case ALARM_BUTTON2_FINISH:
+        if (audio_state == AUDIO_INIT)
+        {
+            //termino de enviar audio
+            return END_OK;
+        }
+        break;
+
+    case ALARM_BUTTON3:
+        FPLUS_ON;
+        SirenCommands(SIREN_SINGLE_CHOPP_SMALL_CMD);
+        last_two = 0;        
+        alarm_state++;
+        break;
+
+    case ALARM_BUTTON3_A:
+        if (!button_timer_secs)
+        {
+            button_timer_secs = 90;
+            alarm_state++;
+        }
+        break;
+
+    case ALARM_BUTTON3_B:
+        //me quedo esperando que apaguen o timer
+        if (CheckForButtons(&code_position, &code) == 4)	//desactivo solo con 4
+        {
+            alarm_state = ALARM_BUTTON3_D;
+        }
+        
+        if (!button_timer_secs)
+        {
+            //tengo timeout, corto
+            alarm_state++;
+        }
+        break;
+
+    case ALARM_BUTTON3_C:
+        Usart1Send((char*) "Timeout B3 ");
+        
+            // alarm_state = ALARM_BUTTON3_FINISH;
+        SirenCommands(SIREN_STOP_CMD);
+        FPLUS_OFF;
+        PositionToSpeak(last_one_or_three);
+        alarm_state = ALARM_BUTTON3_FINISH;
+        break;
+
+    case ALARM_BUTTON3_D:
+        sprintf(str, "Desactivo: %03d\r\n", last_one_or_three);
+        Usart1Send(str);
+
+        SirenCommands(SIREN_STOP_CMD);
+        FPLUS_OFF;
+        PositionToSpeak(last_one_or_three);
+        alarm_state++;
+        break;
+
+    case ALARM_BUTTON3_FINISH:
+        if (audio_state == AUDIO_INIT)
+        {
+            //termino de enviar audio
+            return END_OK;
+        }
+        break;
+
+    case ALARM_BUTTON3_FINISH_B:
+        break;
+
+    case ALARM_BUTTON4:
+        SirenCommands(SIREN_STOP_CMD);
+        if (last_one_or_three)
+            PositionToSpeak(last_one_or_three);
+        else if (last_two)
+            PositionToSpeak(last_two);
+        
+        alarm_state++;
+        break;
+
+    case ALARM_BUTTON4_A:
+        if (audio_state == AUDIO_INIT)
+        {
+            //termino de enviar audio
+            alarm_state++;
+        }
+        break;
+
+    case ALARM_BUTTON4_FINISH:
+        return END_OK;
+        break;
+
+    case ALARM_NO_CODE:
+        return END_OK;
+        break;
+    default:
+        alarm_state = 0;
+        break;
+    }
+
+#ifdef USE_F12_PLUS_WITH_SM
+    F12_State_Machine();
+#endif
+
+    return WORKING;
+}
+#endif    //PROGRAMA_CHICKEN_BUCLE
+
+
 #ifdef USE_F12_PLUS_WITH_SM
 #ifdef USE_F12_PLUS_SM_DIRECT
 #define F12PLUS_ACTIVE    F12PLUS_ON
@@ -2043,182 +2374,201 @@ void SirenCommands(unsigned char command)
 
 void UpdateSiren (void)
 {
-	switch (siren_state)
-	{
-		case SIREN_INIT:
-			break;
+    switch (siren_state)
+    {
+    case SIREN_INIT:
+        break;
 
-		case SIREN_SINGLE:
-			//cargo frecuencia y ciclo de trabajo
-			//ChangeAmpli(FREQ_1000HZ, DUTY_50_1000);
-			ChangeAmpli(FREQ_800HZ, DUTY_50_800);
-			Power_Ampli_Ena();
-			siren_state = SIREN_SINGLE_RINGING;
-			break;
+    case SIREN_SINGLE:
+        //cargo frecuencia y ciclo de trabajo
+        //ChangeAmpli(FREQ_1000HZ, DUTY_50_1000);
+        ChangeAmpli(FREQ_800HZ, DUTY_50_800);
+        Power_Ampli_Ena();
+        siren_state = SIREN_SINGLE_RINGING;
+        break;
 
-		case SIREN_SINGLE_RINGING:
-			break;
+    case SIREN_SINGLE_RINGING:
+        break;
 
-		case SIREN_SINGLE_CHOPP_ON:
-			if (!siren_timeout)
-			{
-				//cargo frecuencia y ciclo de trabajo
-				//ChangeAmpli(FREQ_1000HZ, DUTY_50_1000);
-				ChangeAmpli(FREQ_800HZ, DUTY_50_800);
-				Power_Ampli_Ena();
-				siren_state = SIREN_SINGLE_CHOPP_OFF;
-				siren_timeout = 1500;					//2 seg
-			}
-			break;
+    case SIREN_SINGLE_CHOPP_ON:
+        if (!siren_timeout)
+        {
+            //cargo frecuencia y ciclo de trabajo
+            //ChangeAmpli(FREQ_1000HZ, DUTY_50_1000);
+            ChangeAmpli(FREQ_800HZ, DUTY_50_800);
+            Power_Ampli_Ena();
+            siren_state = SIREN_SINGLE_CHOPP_OFF;
+            siren_timeout = 1500;					//2 seg
+        }
+        break;
 
-		case SIREN_SINGLE_CHOPP_OFF:
-			if (!siren_timeout)
-			{
-				//vuelvo y dejo 500ms apagado
-				Power_Ampli_Disa();
-				siren_state--;
-				siren_timeout = 500;
-			}
-			break;
+    case SIREN_SINGLE_CHOPP_OFF:
+        if (!siren_timeout)
+        {
+            //vuelvo y dejo 500ms apagado
+            Power_Ampli_Disa();
+            siren_state--;
+            siren_timeout = 500;
+        }
+        break;
 
-		case SIREN_MULTIPLE_UP:
-			siren_steps = 0;
-			siren_state = SIREN_MULTIPLE_UP_B;
-			Power_Ampli_Ena();
-			break;
+    case SIREN_SINGLE_CHOPP_SMALL_ON:
+        if (!siren_timeout)
+        {
+            ChangeAmpli(FREQ_800HZ, DUTY_50_800);
+            Power_Ampli_Ena();
+            siren_state = SIREN_SINGLE_CHOPP_SMALL_OFF;
+            siren_timeout = 500;
+        }
+        break;
 
-		case SIREN_MULTIPLE_UP_A:
-			if (!siren_timeout)
-			{
-				//se termino el tiempo, cambio la frecuencia
-				if (siren_steps)
-					siren_steps--;
-				siren_state = SIREN_MULTIPLE_UP_B;
-			}
-			break;
+    case SIREN_SINGLE_CHOPP_SMALL_OFF:
+        if (!siren_timeout)
+        {
+            Power_Ampli_Disa();
+            siren_state--;
+            siren_timeout = 1500;
+        }
+        break;
+                        
+    case SIREN_MULTIPLE_UP:
+        siren_steps = 0;
+        siren_state = SIREN_MULTIPLE_UP_B;
+        Power_Ampli_Ena();
+        break;
 
-		case SIREN_MULTIPLE_UP_B:
-			if (siren_steps)
-			{
-				freq_us = freq_us + SIREN_FREQ_STEP;
-				siren_timeout = SIREN_STEP_TIMEOUT;
-				ChangeAmpli(freq_us, freq_us >> 1);
-				siren_state = SIREN_MULTIPLE_UP_A;
-			}
-			else
-			{
-				//empiezo el ciclo de nuevo
-				siren_steps = SIREN_STEP_RELOAD;
-				freq_us = SIREN_FIRST_FREQ;
-				ChangeAmpli(freq_us, freq_us >> 1);
-				siren_state = SIREN_MULTIPLE_UP_A;
-				siren_timeout = SIREN_STEP_TIMEOUT;
-			}
-			break;
+    case SIREN_MULTIPLE_UP_A:
+        if (!siren_timeout)
+        {
+            //se termino el tiempo, cambio la frecuencia
+            if (siren_steps)
+                siren_steps--;
+            siren_state = SIREN_MULTIPLE_UP_B;
+        }
+        break;
 
-		case SIREN_CONFIRM_OK:
-			siren_steps = 7;
-			siren_state = SIREN_CONFIRM_OK_B;
-			siren_timeout = SIREN_SHORT_TIMEOUT;
-			Power_Ampli_Ena();
-			break;
+    case SIREN_MULTIPLE_UP_B:
+        if (siren_steps)
+        {
+            freq_us = freq_us + SIREN_FREQ_STEP;
+            siren_timeout = SIREN_STEP_TIMEOUT;
+            ChangeAmpli(freq_us, freq_us >> 1);
+            siren_state = SIREN_MULTIPLE_UP_A;
+        }
+        else
+        {
+            //empiezo el ciclo de nuevo
+            siren_steps = SIREN_STEP_RELOAD;
+            freq_us = SIREN_FIRST_FREQ;
+            ChangeAmpli(freq_us, freq_us >> 1);
+            siren_state = SIREN_MULTIPLE_UP_A;
+            siren_timeout = SIREN_STEP_TIMEOUT;
+        }
+        break;
 
-		case SIREN_CONFIRM_OK_A:
-			if (!siren_timeout)
-			{
-				if (siren_steps)
-				{
-					//se termino el bip
-					siren_steps--;
-					siren_timeout = SIREN_SHORT_TIMEOUT;
-					siren_state = SIREN_CONFIRM_OK_B;
-					Power_Ampli_Ena();
-				}
-				else
-				{
-					//termino la secuencia
-					siren_state = SIREN_TO_STOP;
-				}
-			}
-			break;
+    case SIREN_CONFIRM_OK:
+        siren_steps = 7;
+        siren_state = SIREN_CONFIRM_OK_B;
+        siren_timeout = SIREN_SHORT_TIMEOUT;
+        Power_Ampli_Ena();
+        break;
 
-		case SIREN_CONFIRM_OK_B:
-			if (!siren_timeout)
-			{
-				//se termino el tiempo
-				Power_Ampli_Disa();
-				siren_state = SIREN_CONFIRM_OK_A;
-				siren_timeout = SIREN_SHORT_TIMEOUT;
-			}
-			break;
+    case SIREN_CONFIRM_OK_A:
+        if (!siren_timeout)
+        {
+            if (siren_steps)
+            {
+                //se termino el bip
+                siren_steps--;
+                siren_timeout = SIREN_SHORT_TIMEOUT;
+                siren_state = SIREN_CONFIRM_OK_B;
+                Power_Ampli_Ena();
+            }
+            else
+            {
+                //termino la secuencia
+                siren_state = SIREN_TO_STOP;
+            }
+        }
+        break;
 
-		case SIREN_MULTIPLE_DOWN:
-			siren_steps = 0;
-			siren_state = SIREN_MULTIPLE_DOWN_B;
-			Power_Ampli_Ena();
-			break;
+    case SIREN_CONFIRM_OK_B:
+        if (!siren_timeout)
+        {
+            //se termino el tiempo
+            Power_Ampli_Disa();
+            siren_state = SIREN_CONFIRM_OK_A;
+            siren_timeout = SIREN_SHORT_TIMEOUT;
+        }
+        break;
 
-		case SIREN_MULTIPLE_DOWN_A:
-			if (!siren_timeout)
-			{
-				//se termino el tiempo, cambio la frecuencia
-				if (siren_steps)
-					siren_steps--;
-				siren_state = SIREN_MULTIPLE_DOWN_B;
-			}
-			break;
+    case SIREN_MULTIPLE_DOWN:
+        siren_steps = 0;
+        siren_state = SIREN_MULTIPLE_DOWN_B;
+        Power_Ampli_Ena();
+        break;
 
-		case SIREN_MULTIPLE_DOWN_B:
-			if (siren_steps)
-			{
-				freq_us = freq_us - SIREN_FREQ_STEP;
-				siren_timeout = SIREN_STEP_TIMEOUT;
-				ChangeAmpli(freq_us, freq_us >> 1);
-				siren_state = SIREN_MULTIPLE_DOWN_A;
-			}
-			else
-			{
-				//empiezo el ciclo de nuevo
-				siren_steps = SIREN_STEP_RELOAD;
-				freq_us = SIREN_FIRST_FREQ;
-				ChangeAmpli(freq_us, freq_us >> 1);
-				siren_state = SIREN_MULTIPLE_DOWN_A;
-				siren_timeout = SIREN_STEP_TIMEOUT;
-			}
-			break;
+    case SIREN_MULTIPLE_DOWN_A:
+        if (!siren_timeout)
+        {
+            //se termino el tiempo, cambio la frecuencia
+            if (siren_steps)
+                siren_steps--;
+            siren_state = SIREN_MULTIPLE_DOWN_B;
+        }
+        break;
 
-		case SIREN_SHORT:
-			siren_timeout = SIREN_SHORT_TIMEOUT;
-			siren_state = SIREN_SHL_TIMEOUT;
-			Power_Ampli_Ena();
-			break;
+    case SIREN_MULTIPLE_DOWN_B:
+        if (siren_steps)
+        {
+            freq_us = freq_us - SIREN_FREQ_STEP;
+            siren_timeout = SIREN_STEP_TIMEOUT;
+            ChangeAmpli(freq_us, freq_us >> 1);
+            siren_state = SIREN_MULTIPLE_DOWN_A;
+        }
+        else
+        {
+            //empiezo el ciclo de nuevo
+            siren_steps = SIREN_STEP_RELOAD;
+            freq_us = SIREN_FIRST_FREQ;
+            ChangeAmpli(freq_us, freq_us >> 1);
+            siren_state = SIREN_MULTIPLE_DOWN_A;
+            siren_timeout = SIREN_STEP_TIMEOUT;
+        }
+        break;
 
-		case SIREN_HALF:
-			siren_timeout = SIREN_HALF_TIMEOUT;
-			siren_state = SIREN_SHL_TIMEOUT;
-			Power_Ampli_Ena();
-			break;
+    case SIREN_SHORT:
+        siren_timeout = SIREN_SHORT_TIMEOUT;
+        siren_state = SIREN_SHL_TIMEOUT;
+        Power_Ampli_Ena();
+        break;
 
-		case SIREN_LONG:
-			siren_timeout = SIREN_LONG_TIMEOUT;
-			siren_state = SIREN_SHL_TIMEOUT;
-			Power_Ampli_Ena();
-			break;
+    case SIREN_HALF:
+        siren_timeout = SIREN_HALF_TIMEOUT;
+        siren_state = SIREN_SHL_TIMEOUT;
+        Power_Ampli_Ena();
+        break;
 
-		case SIREN_SHL_TIMEOUT:
-			if (!siren_timeout)
-			{
-				//se termino el tiempo
-				siren_state = SIREN_TO_STOP;
-			}
-			break;
+    case SIREN_LONG:
+        siren_timeout = SIREN_LONG_TIMEOUT;
+        siren_state = SIREN_SHL_TIMEOUT;
+        Power_Ampli_Ena();
+        break;
 
-		case SIREN_TO_STOP:
-		default:
-			Power_Ampli_Disa();
-			siren_state = SIREN_INIT;
-			break;
-	}
+    case SIREN_SHL_TIMEOUT:
+        if (!siren_timeout)
+        {
+            //se termino el tiempo
+            siren_state = SIREN_TO_STOP;
+        }
+        break;
+
+    case SIREN_TO_STOP:
+    default:
+        Power_Ampli_Disa();
+        siren_state = SIREN_INIT;
+        break;
+    }
 }
 
 

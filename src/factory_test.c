@@ -28,6 +28,8 @@ typedef enum
 {
     TEST_INIT,
     TEST_CHECK_BUZZER,
+    TEST_CHECK_RF,
+    TEST_CHECK_HBRIDGE,
     TEST_CHECK_USART,
     TEST_CHECK_USART_DELAY,    
     TEST_CHECK_MEMORY_WRITE,
@@ -37,6 +39,16 @@ typedef enum
         
 } TestState_e;
 
+
+// PA7
+#define H_L    ((GPIOA->ODR & 0x0080) != 0)
+#define H_L_ON    (GPIOA->BSRR = 0x00000080)
+#define H_L_OFF    (GPIOA->BSRR = 0x00800000)
+
+// PA8
+#define H_H    ((GPIOA->ODR & 0x0100) != 0)
+#define H_H_ON    (GPIOA->BSRR = 0x00000100)
+#define H_H_OFF    (GPIOA->BSRR = 0x01000000)
 
 // Externals -------------------------------------------------------------------
 extern volatile unsigned short timer_standby;
@@ -61,13 +73,25 @@ void FuncFactoryTest (void)
     TestState_e test_state = TEST_INIT;
     Display_ResetSM();
 
+    // for test on rf_pin
+    unsigned char rf_pin_last = 0;
+    unsigned short rf_pin_changes = 0;
+
+    // for tests on hbridge
+    unsigned int temp = 0;
+    temp = GPIOA->MODER;    //2 bits por pin
+    temp &= 0xFFFC3FFF;    //PA7 PA8 push pull
+    temp |= 0x00014000;    //
+    GPIOA->MODER = temp;
+    H_L_OFF;
+    H_H_OFF;
 
     while (1)
     {
         switch (test_state)
         {
         case TEST_INIT:
-            Display_ShowNumbers(4);
+            Display_ShowNumbers(6);
             BuzzerCommands(BUZZER_SHORT_CMD, 2);
             timer_standby = 900;
             test_state++;
@@ -78,10 +102,55 @@ void FuncFactoryTest (void)
                 (BuzzerIsFree())) //espero que termine de enviar el buzzer
             {
                 test_state++;
-                Display_ShowNumbers(3);
+                Display_ShowNumbers(5);
+                timer_standby = 1000;
             }
             break;
 
+        case TEST_CHECK_RF:
+            if (!timer_standby)
+            {
+                if (rf_pin_changes > 40)
+                {
+                    test_state++;
+                    Display_ShowNumbers(4);
+                }
+                else
+                    test_state = TEST_ERROR;
+            }
+
+            if (rf_pin_last != RX_CODE)
+            {
+                rf_pin_last = RX_CODE;
+                rf_pin_changes++;
+            }
+            break;
+
+        case TEST_CHECK_HBRIDGE:
+            if (!timer_standby)
+            {
+                timer_standby = 500;
+                if (H_L)
+                {
+                    H_L_OFF;
+                    H_H_ON;
+                }
+                else
+                {
+                    H_L_ON;
+                    H_H_OFF;
+                }
+            }
+            
+            if (UpdateSwitches() != NO_KEY)
+            {
+                H_L_OFF;
+                H_H_OFF;
+                test_state++;
+                Display_ShowNumbers(3);
+            }
+            break;
+            
         case TEST_CHECK_USART:
             if (!timer_standby)
             {
