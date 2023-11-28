@@ -13,6 +13,7 @@
 // Additional Includes for Configuration ------------------------------
 #include "flash_program.h"    //info in sst or info in flash
 #include "hard.h"             //info del tipo de programa
+#include "rws317_hard_conf.h"    //hardware conf mostly for tims
 
 
 //------ FUNCIONAMIENTO GENERAL DEL EQUIPO ------//
@@ -32,11 +33,15 @@
 
 
 // Exported Macros and Defines ----------------------------------------
-#ifdef PROGRAMA_NORMAL
+#ifdef PRODUCCION_NORMAL
 #define ACT_DESACT_IN_SECS	2
 #define ACT_DESACT_IN_MSECS	2000
 #endif
-#ifdef PROGRAMA_DE_BUCLE
+#ifdef PRODUCCION_BUCLE
+#define ACT_DESACT_IN_SECS	6
+#define ACT_DESACT_IN_MSECS	6000
+#endif
+#ifdef PRODUCCION_CHICKEN_BUCLE
 #define ACT_DESACT_IN_SECS	6
 #define ACT_DESACT_IN_MSECS	6000
 #endif
@@ -51,10 +56,6 @@
 #ifdef PROGRAMA_PORTON_KIRNO	//evita problemas de compilacion en el main
 #define ACT_DESACT_IN_SECS	2
 #define ACT_DESACT_IN_MSECS	2000
-#endif
-#ifdef PROGRAMA_CHICKEN_BUCLE
-#define ACT_DESACT_IN_SECS	6
-#define ACT_DESACT_IN_MSECS	6000
 #endif
 
 #ifdef EV1527
@@ -243,9 +244,6 @@
 #define ENDED_OK	4
 #define NO_CODE		5
 
-
-#define RxCode_Disable()	TIM14_IC_CH1_OFF ()
-#define RxCode_Enable() 	TIM14_IC_CH1_ON ()
 
 //--- BOTONES DE LOS CODIGOS REMOTOS 12 CANALES ---//
 #define REM_NO		0

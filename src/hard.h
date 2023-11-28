@@ -22,7 +22,8 @@
 // #define USE_F12_PLUS_WITH_SM
 #define USE_F12_PLUS_ON_BUTTON1
 
-// coloca un deadtime de 2us en los transistores del amplificador
+// coloca un deadtime de 3.8us o 5us (revisar tim1)
+// en los transistores del amplificador
 // #define USE_DEADTIME_ON_TRANSISTORS
 
 #ifdef USE_F12_PLUS_WITH_SM

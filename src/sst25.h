@@ -84,8 +84,12 @@ unsigned char readStatusNVM(void);
 void readBufNVM(unsigned char *buf, unsigned short len, unsigned int address);
 void readBufNVM8u(unsigned char *buf, unsigned short len, unsigned int address);
 unsigned char readJEDEC (void);
+void getJEDEC (unsigned char * jedec);
 
-//privadas
-//unsigned char writeSPI2 (unsigned char);
+void writePageNVM(unsigned char *buf, unsigned short len, unsigned int address);
+void writeBufferNVM (unsigned char *buff, unsigned short len, unsigned int address);
+
+unsigned char readStatus2NVM(void);
+unsigned char readStatus3NVM(void);
 
 #endif

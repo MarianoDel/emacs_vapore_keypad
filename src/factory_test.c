@@ -28,12 +28,12 @@ typedef enum
 {
     TEST_INIT,
     TEST_CHECK_BUZZER,
-    TEST_CHECK_RF,
     TEST_CHECK_HBRIDGE,
     TEST_CHECK_USART,
     TEST_CHECK_USART_DELAY,    
     TEST_CHECK_MEMORY_WRITE,
     TEST_CHECK_MEMORY_READ,
+    TEST_CHECK_RF,    
     TEST_CHECK_KEYPAD,
     TEST_ERROR
         
@@ -103,26 +103,6 @@ void FuncFactoryTest (void)
             {
                 test_state++;
                 Display_ShowNumbers(5);
-                timer_standby = 1000;
-            }
-            break;
-
-        case TEST_CHECK_RF:
-            if (!timer_standby)
-            {
-                if (rf_pin_changes > 40)
-                {
-                    test_state++;
-                    Display_ShowNumbers(4);
-                }
-                else
-                    test_state = TEST_ERROR;
-            }
-
-            if (rf_pin_last != RX_CODE)
-            {
-                rf_pin_last = RX_CODE;
-                rf_pin_changes++;
             }
             break;
 
@@ -147,7 +127,7 @@ void FuncFactoryTest (void)
                 H_L_OFF;
                 H_H_OFF;
                 test_state++;
-                Display_ShowNumbers(3);
+                Display_ShowNumbers(4);
             }
             break;
             
@@ -179,7 +159,7 @@ void FuncFactoryTest (void)
             if (!timer_standby)
             {
                 test_state++;
-                Display_ShowNumbers(2);
+                Display_ShowNumbers(3);
                 timer_standby = 900;
             }
             break;
@@ -192,7 +172,7 @@ void FuncFactoryTest (void)
             {
                 timer_standby = 900;
                 test_state++;
-                Display_ShowNumbers(1);                
+                Display_ShowNumbers(2);
             }
             else
                 test_state = TEST_ERROR;
@@ -205,7 +185,7 @@ void FuncFactoryTest (void)
 
             if (SST_CheckIndexInMemory(100) == 0x5555)
             {
-                Display_ShowNumbers(0);
+                Display_ShowNumbers(1);
                 timer_standby = 900;
                 test_state++;
             }
@@ -213,6 +193,27 @@ void FuncFactoryTest (void)
                 test_state = TEST_ERROR;
 
             break;
+
+        case TEST_CHECK_RF:
+            if (!timer_standby)
+            {
+                if (rf_pin_changes > 40)
+                {
+                    test_state++;
+                    Display_ShowNumbers(0);
+                    timer_standby = 500;
+                }
+                else
+                    test_state = TEST_ERROR;
+            }
+
+            if (rf_pin_last != RX_CODE)
+            {
+                rf_pin_last = RX_CODE;
+                rf_pin_changes++;
+            }
+            break;
+            
 
         case TEST_CHECK_KEYPAD:
             if (timer_standby)

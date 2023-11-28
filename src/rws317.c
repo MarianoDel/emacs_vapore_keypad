@@ -176,7 +176,7 @@ unsigned char RxCode (void)
 					//destrabo la interrupcion
 					bitstate = FIRST_HIGH;
 //					F5PLUS_OFF;
-					TIM14->CNT = 0;
+                                        RxCode_TIM_CNT(0);
 				}
 			}
 			else

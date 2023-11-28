@@ -16,6 +16,9 @@
 #include "usart.h"
 #include "tim.h"
 
+// for new version 2
+#include "memory_conf.h"
+
 #include <stdio.h>
 
 
@@ -32,6 +35,10 @@ extern mem_bkp_typedef memory_backup;
 
 // Globals ---------------------------------------------------------------------
 
+
+
+// Module Private Functions ----------------------------------------------------
+unsigned char SST_UpdateNewCode (unsigned int * p, unsigned short posi, unsigned int new_code);
 
 
 // Module Functions ------------------------------------------------------------
@@ -90,17 +97,28 @@ unsigned char SST_WriteCodeToMemory (unsigned short position, unsigned int new_c
 
     // page bkp -- 1kByte
     readBufNVM8u((unsigned char *) memory_backup.v_bkp_8u, 1024, base_page_address);
-    
+
     // page erase -- 4kBytes
     Clear4KNVM(base_page_address);
     
     // update 4bytes code on 1kByte backuped page
-    if (UpdateNewCode(memory_backup.v_bkp, address_offset_in_page, new_code) == FAILED)
+    if (SST_UpdateNewCode(memory_backup.v_bkp, address_offset_in_page, new_code) == FAILED)
         return FAILED;
     
     // write back 1kBytes from backuped page
-    writeBufNVM16u((unsigned short *) memory_backup.v_bkp_16u, 512, base_page_address);
-    
+    writeBufferNVM ((unsigned char *) memory_backup.v_bkp_8u, 1024, base_page_address);
+            
+    return PASSED;
+}
+
+
+unsigned char SST_UpdateNewCode (unsigned int * p, unsigned short posi, unsigned int new_code)
+{
+    if (posi > 255)
+        return FAILED;
+
+    *(p + posi ) = new_code;
+
     return PASSED;
 }
 

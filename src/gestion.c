@@ -19,6 +19,11 @@
 // #include "spi.h"
 #include "display_7seg.h"
 
+// compativility new version
+#include "memory_conf.h"
+#include "comm.h"
+#include "memory_utils.h"
+
 
 // Externals -------------------------------------------------------------------
 extern volatile unsigned short timer_standby;
@@ -51,7 +56,7 @@ unsigned char file_last_action = 0;
 // Module Functions ------------------------------------------------------------
 void FuncGestion (void)
 {
-    Usart1Send((char *) "STM32F030K6 Memory Manager Program\r\n");
+    Usart1Send((char *) "STM32F030 Memory Manager Program\r\n");
 
     //cargo los valores de memoria
     if (readJEDEC() == 0)
@@ -161,7 +166,7 @@ void FuncGestion (void)
         case GESTION_SM_TO_WRITE_SST_CONFB:	//me quedo esperando completar el buffer
             if (binary_full)
             {
-                writeBufNVM16u(memory_backup.v_bkp_16u, 512, OFFSET_CONFIGURATION);
+                writeBufferNVM ((unsigned char *) memory_backup.v_bkp_8u, 1024, OFFSET_CONFIGURATION);
                 Usart1Send((char *) s_ok_finish_conf);	//termine de recibir 1024
                 gestion_state++;
             }
@@ -177,7 +182,6 @@ void FuncGestion (void)
             {
                 Usart1Send((char *) "Memory OK - clearing all!\r\n");
                 clearNVM();
-
                 files.posi0 = OFFSET_FIRST_FILE;
                 pfile_position = &files.posi0;
                 pfile_size = &files.length0;
@@ -200,7 +204,9 @@ void FuncGestion (void)
         case GESTION_SM_WAIT_BINARY_CHUNK:    // get the chunk bytes and save it to mem
             if (binary_full)
             {
-                writeBufNVM16u(memory_backup.v_bkp_16u, 512, *pfile_position + file_size);
+                writeBufferNVM ((unsigned char *) memory_backup.v_bkp_8u,
+                                1024,
+                                *pfile_position + file_size);
                 file_size += 1024;
                 Usart1Send((char *) s_ok);	//end of chunk and process
                 gestion_state = GESTION_SM_WAIT_NEXT_CHUNK;

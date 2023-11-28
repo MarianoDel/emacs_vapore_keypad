@@ -270,10 +270,10 @@ void TIM_1_Init (void)
     //TIM1->CCMR1 = 0x0028;			//CH1 output; inactive on output match; update on UE	NO FUNCIONA
 
     //CH1 y CH1N negado enable on pin CC1P CC1NP active high
-    TIM1->CCER |= TIM_CCER_CC1E |  TIM_CCER_CC1NE;
+    TIM1->CCER |= TIM_CCER_CC1E |  TIM_CCER_CC1NE;    // original board
     //TIM1->CCER |= TIM_CCER_CC1E |  TIM_CCER_CC1NE | TIM_CCER_CC1P;	//salen las 2 en fase
     //CH1 y CH1N negado enable on pin CC1P CC1NP active low
-    //TIM1->CCER |= TIM_CCER_CC1E |  TIM_CCER_CC1NE | TIM_CCER_CC1P | TIM_CCER_CC1NP;	//contrafase activo al reves
+    // TIM1->CCER |= TIM_CCER_CC1E |  TIM_CCER_CC1NE | TIM_CCER_CC1P | TIM_CCER_CC1NP;	//contrafase activo al reves
 
     //hab general de OC y estado inhabilitado alto
     //TIM1->BDTR |= TIM_BDTR_MOE;
@@ -282,8 +282,9 @@ void TIM_1_Init (void)
     // general enable for OC, low disable    
     TIM1->BDTR |= TIM_BDTR_MOE | TIM_BDTR_OSSI;
 #else
-    // general enable for OC, low disable, 2us @ 48MHz dead-time
-    TIM1->BDTR |= TIM_BDTR_MOE | TIM_BDTR_OSSI | 96;
+    // general enable for OC, low disable, and dead-time
+    // TIM1->BDTR |= TIM_BDTR_MOE | TIM_BDTR_OSSI | 182;    //5us @ 48MHz
+    TIM1->BDTR |= TIM_BDTR_MOE | TIM_BDTR_OSSI | (128 + 28);    //3.8us @ 48MHz    
 #endif
 
     TIM1->ARR = TIM1_ARR;
@@ -360,6 +361,13 @@ inline void TIM14_IC_CH1_ON (void)
 	//ena int
 	TIM14->DIER |= TIM_DIER_CC1IE;
 }
+
+
+void TIM14_IC_CNT (unsigned short new_counter)
+{
+    TIM14->CNT = new_counter;
+}
+
 
 void TIM14_IRQHandler (void)	//100uS
 {

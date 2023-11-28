@@ -45,18 +45,25 @@
 
 
 
+typedef enum {
+    SST25_DETECTED = 0,
+    W25_DETECTED
 
+} detected_mem_e;
 
 
 //------------------------ PRIVATE PROTOTYPES --------------------------
 void unprotectNVM(void);
 unsigned char readStatusNVM(void);
 void writeSPI2 (unsigned char);
+void writeMultiplePageNVM (unsigned char *buf, unsigned short len, unsigned int address);
 
+
+// Globals ---------------------------------------------------------------------
+detected_mem_e nvm_detected = SST25_DETECTED;
 
 
 //--------------------------- FUNCTIONS --------------------------------
-
 
 
 //--------------- initNVM --------------------
@@ -121,6 +128,7 @@ void initNVM(void)
 */
 
 
+
 //---------------- writeNVM -------------------
 
 // write one byte to the NVM
@@ -148,6 +156,73 @@ unsigned char readStatusNVM(void)
 	NVM_Off;
 
 	return data;
+}
+
+
+unsigned char readStatus2NVM(void)
+{
+    unsigned char data;
+
+    NVM_On;
+    writeSPI2(0x35);
+    data = readSPI2();
+    NVM_Off;
+
+    return data;
+}
+
+
+unsigned char readStatus3NVM(void)
+{
+    unsigned char data;
+
+    NVM_On;
+    writeSPI2(0x15);
+    data = readSPI2();
+    NVM_Off;
+
+    return data;
+}
+
+
+void writeStatus2NVM (unsigned char data)
+{
+    // Enable Write for Non-Volatile bits
+    // NVM_On;
+    // writeSPI2(SST25_WREN);
+    // NVM_Off;
+
+    // Enable Write for Volatile bits
+    NVM_On;
+    writeSPI2(0x50);
+    NVM_Off;
+    
+    // Write to Status Register 2 on 0x35
+    NVM_On;
+    writeSPI2(0x31);
+    writeSPI2(data);
+    NVM_Off;
+
+    // Wait until write to complete
+    while(busyNVM());    
+}
+
+
+void writeStatus3NVM (unsigned char data)
+{
+    // Enable Write
+    NVM_On;
+    writeSPI2(0x50);
+    NVM_Off;
+
+    // Write to Status Register 3 on 0x11
+    NVM_On;
+    writeSPI2(0x11);
+    writeSPI2(data);
+    NVM_Off;
+
+    // Wait until write to complete
+    while(busyNVM());
 }
 
 
@@ -187,17 +262,19 @@ void unprotectNVM(void)
 
 
 //-------------- clearNVM ------------------
-
 // Clear the entire memory
-
+// for both W25 & SST25
 void clearNVM(void)
 {
-	// Disable Write Protection
-	unprotectNVM();
+    if (nvm_detected == SST25_DETECTED)
+    {
+        // Disable Write Protection
+        unprotectNVM();
+    }
 
-	// Enable Write
-	NVM_On;
-	writeSPI2(SST25_WREN);
+    // Enable Write
+    NVM_On;
+    writeSPI2(SST25_WREN);
     NVM_Off;
 
     // Chip Erase
@@ -209,21 +286,64 @@ void clearNVM(void)
     while(busyNVM());
 }
 
+
+// for W25
+// void clearNVM (void)
+// {
+//     // Enable Write
+//     NVM_On;
+//     writeSPI2(SST25_WREN);
+//     NVM_Off;
+
+//     // Chip Erase
+//     NVM_On;
+//     writeSPI2(SST25_CHIP_ERASE);
+//     NVM_Off;
+
+//     // Wait until Erasing is complete
+//     while(busyNVM());
+// }
+
+
+// for SST25
+// void clearNVM_Unprotect (void)
+// {
+//     // Disable Write Protection
+//     unprotectNVM();
+
+//     // Enable Write
+//     NVM_On;
+//     writeSPI2(SST25_WREN);
+//     NVM_Off;
+
+//     // Chip Erase
+//     NVM_On;
+//     writeSPI2(SST25_CHIP_ERASE);
+//     NVM_Off;
+
+//     // Wait until Erasing is complete
+//     while(busyNVM());
+// }
+
 //-------------- clear4KNVM ------------------
 // Clear 4K at specified address
 
-void Clear4KNVM(unsigned int address)
+// for both W25 & SST25
+void Clear4KNVM (unsigned int address)
 {
-	// Disable Write Protection
-	unprotectNVM();
+    if (nvm_detected == SST25_DETECTED)
+    {
+        // Disable Write Protection
+        unprotectNVM();
+    }
 
-	// Enable Write
-	NVM_On;
-	writeSPI2(SST25_WREN);
-	NVM_Off;
-	while(busyNVM());
+    // Enable Write
+    NVM_On;
+    writeSPI2(SST25_WREN);
+    NVM_Off;
+
     // 4K Erase
-	NVM_On;
+    NVM_On;
     writeSPI2(SST25_SECTOR_ERASE);
 
     // Send Address to be erase
@@ -237,16 +357,63 @@ void Clear4KNVM(unsigned int address)
     while(busyNVM());
 }
 
+
+// for W25
+// void Clear4KNVM (unsigned int address)
+// {
+//     // Enable Write
+//     NVM_On;
+//     writeSPI2(SST25_WREN);
+//     NVM_Off;
+
+//     // 4K Erase
+//     NVM_On;
+//     writeSPI2(SST25_SECTOR_ERASE);
+
+//     // Send Address to be erase
+//     writeSPI2((address & 0x00FF0000) >> 16);	// MSB
+//     writeSPI2((address & 0x0000FF00) >> 8);
+//     writeSPI2((address & 0x000000FF) );			// LSB
+
+//     NVM_Off;
+
+//     // Wait until Erasing is complete
+//     while(busyNVM());
+// }
+
+
+// for SST25
+// void Clear4KNVM_Unprotect (unsigned int address)
+// {
+//     // Disable Write Protection
+//     unprotectNVM();
+
+//     // Enable Write
+//     NVM_On;
+//     writeSPI2(SST25_WREN);
+//     NVM_Off;
+
+//     // 4K Erase
+//     NVM_On;
+//     writeSPI2(SST25_SECTOR_ERASE);
+
+//     // Send Address to be erase
+//     writeSPI2((address & 0x00FF0000) >> 16);	// MSB
+//     writeSPI2((address & 0x0000FF00) >> 8);
+//     writeSPI2((address & 0x000000FF) );			// LSB
+
+//     NVM_Off;
+
+//     // Wait until Erasing is complete
+//     while(busyNVM());
+// }
+
+
 //--------------- readJEDEC ----------------
-
-// Reads 3 bytes from the NVM
-//void readJEDEC(unsigned char * buf)
-//{
-
-//}
-
+// for both W25 & SST25
 unsigned char readJEDEC(void)
 {
+    unsigned char answer = 0;
     unsigned char buf[3];
 
     // Send Read Command
@@ -260,14 +427,67 @@ unsigned char readJEDEC(void)
     buf[2] = readSPI2();
     NVM_Off;
 
-    // 16Mbit (0x41h)  or 32Mbit memory (0x4Ah)
-    if (((buf[0] == 0xBF) && (buf[1] == 0x25) && (buf[2] == 0x41)) ||
-        ((buf[0] == 0xBF) && (buf[1] == 0x25) && (buf[2] == 0x4A)))
-    {        
-        return 1;
+    // for winbond 0xEF 0x40 0x15
+    if ((buf[0] == 0xEF) && (buf[1] == 0x40) && (buf[2] == 0x15))
+    {
+        nvm_detected = W25_DETECTED;
+        answer = 1;
     }
-    else
-    	return 0;
+    else if (((buf[0] == 0xBF) && (buf[1] == 0x25) && (buf[2] == 0x41)) ||
+             ((buf[0] == 0xBF) && (buf[1] == 0x25) && (buf[2] == 0x4A)))
+    {
+        // 16Mbit (0x41h)  or 32Mbit memory (0x4Ah)
+        nvm_detected = SST25_DETECTED;        
+        answer = 1;
+    }
+
+    return answer;
+}
+
+
+// unsigned char readJEDEC(void)
+// {
+//     unsigned char buf[3];
+
+//     // Send Read Command
+//     NVM_On;
+
+//     writeSPI2(SST25_JEDEC);
+
+//     // receive data
+//     buf[0] = readSPI2();
+//     buf[1] = readSPI2();
+//     buf[2] = readSPI2();
+//     NVM_Off;
+
+//     // for winbond 0xEF 0x40 0x15
+//     // for microchip 0xBF 0x25 ... 16Mbit (0x41h)  or 32Mbit memory (0x4Ah)
+//     if (((buf[0] == 0xEF) && (buf[1] == 0x40) && (buf[2] == 0x15)) ||
+//         ((buf[0] == 0xBF) && (buf[1] == 0x25) && (buf[2] == 0x41)) ||
+//         ((buf[0] == 0xBF) && (buf[1] == 0x25) && (buf[2] == 0x4A)))
+//     {
+//         return 1;
+//     }
+
+//     return 0;
+// }
+
+
+// For SST 16Mbit (0x41h)  or 32Mbit memory (0x4Ah)
+void getJEDEC (unsigned char * jedec)
+{
+    // Send Read Command
+    NVM_On;
+
+    writeSPI2(SST25_JEDEC);
+
+    // receive data
+    *(jedec + 0 ) = readSPI2();
+    *(jedec + 1 ) = readSPI2();
+    *(jedec + 2 ) = readSPI2();
+
+    NVM_Off;
+
 }
 
 
@@ -548,5 +768,90 @@ void writeBufNVM16u(unsigned short *buf, unsigned short len, unsigned int addres
 }
 
 
+// --- New function writePageNVM -> w25 Page Write -----------
+// Write bytes from 1 to 256 bytes (entire page) to w25
+// Address must be even, because of aligniment
+// little-endian ( LSB first)
+void writePageNVM(unsigned char *buf, unsigned short len, unsigned int address)
+{
+    unsigned short cnt = 0;
+    
+    // Enable Writes
+    NVM_On;
+    writeSPI2(SST25_WREN);
+    NVM_Off;
+
+    // Send Sequential Write Command
+    NVM_On;
+    writeSPI2(SST25_WRITE);
+
+    // Send Address to be written
+    writeSPI2((address & 0x00FF0000) >> 16);    // MSB
+    writeSPI2((address & 0x0000FF00) >> 8);
+    writeSPI2((address & 0x000000FF) );    // LSB
+
+    // Send byte or bytes
+    do {
+        writeSPI2(*(buf + cnt));
+        cnt++;
+        
+    } while (cnt < len);
+
+    NVM_Off;
+
+    // Wait until write is complete    
+    while(busyNVM());
+
+    // Disables future writings    
+    NVM_On;
+    writeSPI2(SST25_WRDI);
+    NVM_Off;
+
+}
+
+
+// --- New function writeBufferNVM -> for w25 Multiple Pages Writes -----------
+// Address must be even, because of aligniment
+void writeMultiplePageNVM (unsigned char *buf, unsigned short len, unsigned int address)
+{
+    unsigned short pages = 0;
+    unsigned short pages_cnt = 0;
+    unsigned short remaining = 0;
+    unsigned short bytes_offset = 0;
+
+    pages = len >> 8;
+
+    // send complete pages
+    if (pages)
+    {
+        remaining = len - (pages << 8);
+        
+        do {
+            bytes_offset = (pages_cnt << 8);
+            writePageNVM ((buf + bytes_offset), 256, (address + bytes_offset));
+            pages_cnt++;
+        
+        } while (pages_cnt < pages);
+    }
+    else
+        remaining = len;
+
+    // send remaining bytes
+    if (remaining)
+    {
+        bytes_offset = (pages_cnt << 8);
+        writePageNVM ((buf + bytes_offset), remaining, (address + bytes_offset));
+    }
+}
+
+
+void writeBufferNVM (unsigned char *buff, unsigned short len, unsigned int address)
+{
+    if (nvm_detected == SST25_DETECTED)
+        writeBufNVM16u ((unsigned short *) buff, len >> 1, address);
+    else
+        writeMultiplePageNVM ((unsigned char *) buff, len, address);
+
+}
 
 

@@ -25,6 +25,7 @@
 // Module Exported Functions ---------------------------------------------------
 void TIM14_IC_CH1_OFF (void);
 void TIM14_IC_CH1_ON (void);
+void TIM14_IC_CNT (unsigned short new_counter);
 void Power_Ampli_Ena (void);
 void Power_Ampli_Disa (void);
 void ChangeAmpli(unsigned short, unsigned short);
