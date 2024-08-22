@@ -124,6 +124,11 @@ volatile unsigned short f12_plus_timer;
 volatile unsigned char button_timer_secs;
 volatile unsigned short button_timer_internal;
 
+#ifdef SOFTWARE_VERSION_2_5
+#define	BUTTON4_5MINS_TT    (1000 * 60 * 5)
+volatile unsigned int button4_only5mins_timeout = 0;
+#endif
+
 //--- Respecto del KeyPad
 unsigned char remote_keypad_state = 0;
 unsigned char unlock_by_remote = 0;
@@ -189,7 +194,7 @@ int main(void)
     unsigned char main_state = 0;
     // unsigned short dummy16 = 0;
     //unsigned char i;	//, j;
-    char str [40];
+    char str [42];
 
     unsigned short position, mass_erase_position;
     unsigned short seq_number = 0;
@@ -288,12 +293,24 @@ int main(void)
         Display_UpdateSM();
 #endif
 
+#ifdef SOFTWARE_VERSION_2_5
+    Display_VectorToStr("s2.5");
+    while (!Display_IsFree())
+        Display_UpdateSM();    
+#endif
+
+#ifdef SOFTWARE_VERSION_2_4
+    Display_VectorToStr("s2.4");
+    while (!Display_IsFree())
+        Display_UpdateSM();    
+#endif
+    
 #ifdef SOFTWARE_VERSION_2_1
     Display_VectorToStr("s2.1");
     while (!Display_IsFree())
         Display_UpdateSM();    
 #endif
-
+    
 #ifdef SOFTWARE_VERSION_2_0
     Display_VectorToStr("s2.0");
     while (!Display_IsFree())
@@ -1029,7 +1046,9 @@ unsigned char FuncAlarm (unsigned char sms_alarm)
             //modificacion 24-01-2019 F12PLUS espera 10 segundos y se activa 5 segundos
             F12_State_Machine_Start();
 #endif
-            
+#ifdef SOFTWARE_VERSION_2_5
+	    button4_only5mins_timeout = BUTTON4_5MINS_TT;
+#endif            
         }
         else
         {
@@ -1052,6 +1071,9 @@ unsigned char FuncAlarm (unsigned char sms_alarm)
                     //modificacion 24-01-2019 F12PLUS espera 10 segundos y se activa 5 segundos
                     F12_State_Machine_Start();
 #endif
+#ifdef SOFTWARE_VERSION_2_5
+		    button4_only5mins_timeout = BUTTON4_5MINS_TT;
+#endif            
 
                 }
                 else if (button == 2)
@@ -1067,6 +1089,9 @@ unsigned char FuncAlarm (unsigned char sms_alarm)
                     alarm_state = ALARM_BUTTON3;
                     strcat(str, (char *) "B3\r\n");
                     repetition_counter = param_struct.b3r;
+#ifdef SOFTWARE_VERSION_2_5
+		    button4_only5mins_timeout = BUTTON4_5MINS_TT;
+#endif            		    
                 }
                 else if (button == 4)
                 {
@@ -1449,9 +1474,19 @@ unsigned char FuncAlarm (unsigned char sms_alarm)
         break;
 
     case ALARM_BUTTON4:
+
+#ifdef SOFTWARE_VERSION_2_5
+	SirenCommands(SIREN_STOP_CMD);
+
+	if (button4_only5mins_timeout)
+	    PositionToSpeak(last_one_or_three);
+	
+	alarm_state++;
+#else
         SirenCommands(SIREN_STOP_CMD);
-        PositionToSpeak(last_one_or_three);
-        alarm_state++;
+	PositionToSpeak(last_one_or_three);
+	alarm_state++;
+#endif
         break;
 
     case ALARM_BUTTON4_A:
@@ -2129,7 +2164,7 @@ void VectorToSpeak (unsigned char new_number)
 {
 	unsigned char i;
 	//me fijo si hay espacio
-	if (p_numbers_speak < &numbers_speak[LAST_NUMBER_SPEAK])            
+	if (p_numbers_speak < &numbers_speak[LAST_NUMBER_SPEAK - 1])
 	{
 		//busco la primer posicion vacia y pongo el nuevo numero
 		for (i = 0; i < LAST_NUMBER_SPEAK; i++)
@@ -2219,6 +2254,13 @@ void UpdateAudio (void)
             p_files_addr = &files.posi11;
             p_files_length = &files.length11;            
             break;
+
+	default:
+	    // error in number or audio value
+	    *p_numbers_speak = 0;
+	    audio_state = AUDIO_INIT;
+	    return;
+	    break;
         }
 
         Load16SamplesShort((unsigned short *)v_samples1, *p_files_addr + FILE_OFFSET);
@@ -2621,6 +2663,12 @@ void TimingDelay_Decrement(void)
     if (timer_battery)
         timer_battery--;
 #endif
+
+#ifdef SOFTWARE_VERSION_2_5
+    if (button4_only5mins_timeout)
+	button4_only5mins_timeout--;
+#endif
+    
     //cuenta 1 segundo
     if (button_timer_internal)
         button_timer_internal--;

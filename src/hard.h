@@ -18,6 +18,7 @@
 #define CON_BLOQUEO_DE_KEYPAD
 #define CON_MODIFICACION_DIODO_BATERIA
 // #define WITH_WELCOME_CODE_ON_DISPLAY
+#define USE_BUTTON4_ONLY_5MINS
 
 // #define USE_F12_PLUS_WITH_SM
 #define USE_F12_PLUS_ON_BUTTON1
@@ -32,8 +33,8 @@
 #endif
 
 // #define PROGRAMA_NORMAL
-// #define PROGRAMA_DE_BUCLE
-#define PROGRAMA_FACTORY_TEST
+#define PROGRAMA_DE_BUCLE
+// #define PROGRAMA_FACTORY_TEST
 // #define PROGRAMA_DE_GESTION
 // #define PROGRAMA_PORTON_KIRNO
 // #define PROGRAMA_CHICKEN_BUCLE    //boton 1, 2, 3, el 4 apaga
@@ -63,7 +64,8 @@
 //---- Configuration for Hardware Versions -------
 #ifdef VER_1_3
 #define HARDWARE_VERSION_1_3
-#define SOFTWARE_VERSION_2_4    // possible dead time on audio amp, and sst25 memory to 32Mbit
+#define SOFTWARE_VERSION_2_5    // button 4 only sends active control on 5 minutes
+// #define SOFTWARE_VERSION_2_4    // possible dead time on audio amp, and sst25 memory to 32Mbit
 // #define SOFTWARE_VERSION_2_3    // check if we are in battery and send info by usart1
 // #define SOFTWARE_VERSION_2_2    //suma audios en botones B1 y B3 con configuracion en gestion
 // #define SOFTWARE_VERSION_2_1    //corrije problemas ver2.0 y agrega welcome code
@@ -83,6 +85,9 @@
 #endif
 
 //--- Software Welcome Code ------------------//
+#ifdef SOFTWARE_VERSION_2_5
+#define SOFT "Software V: 2.5\r\n"
+#endif
 #ifdef SOFTWARE_VERSION_2_4
 #define SOFT "Software V: 2.4\r\n"
 #endif
