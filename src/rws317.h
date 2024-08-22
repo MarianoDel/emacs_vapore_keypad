@@ -33,15 +33,15 @@
 
 
 // Exported Macros and Defines ----------------------------------------
-#ifdef PROGRAMA_NORMAL
+#if (defined PROGRAMA_NORMAL) || (defined PRODUCCION_NORMAL)
 #define ACT_DESACT_IN_SECS	2
 #define ACT_DESACT_IN_MSECS	2000
 #endif
-#ifdef PROGRAMA_DE_BUCLE
+#if (defined PROGRAMA_DE_BUCLE) || (defined PRODUCCION_BUCLE)
 #define ACT_DESACT_IN_SECS	6
 #define ACT_DESACT_IN_MSECS	6000
 #endif
-#ifdef PROGRAMA_CHICKEN_BUCLE
+#if (defined PROGRAMA_CHICKEN_BUCLE) || (defined PRODUCCION_CHICKEN_BUCLE)
 #define ACT_DESACT_IN_SECS	6
 #define ACT_DESACT_IN_MSECS	6000
 #endif
