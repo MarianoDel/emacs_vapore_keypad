@@ -45,7 +45,7 @@
 #define ACT_DESACT_IN_SECS	6
 #define ACT_DESACT_IN_MSECS	6000
 #endif
-#ifdef PROGRAMA_FACTORY_TEST	//evita problemas de compilacion
+#if (defined PROGRAMA_FACTORY_TEST) || (defined PROGRAMA_FACTORY_TEST_ONLY_RF)	//evita problemas de compilacion
 #define ACT_DESACT_IN_SECS	2
 #define ACT_DESACT_IN_MSECS	2000
 #endif

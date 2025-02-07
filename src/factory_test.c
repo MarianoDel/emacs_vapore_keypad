@@ -19,6 +19,8 @@
 #include "sst25codes.h"
 #include "keypad.h"
 
+#include "porton_kirno.h"
+
 #include <stdio.h>
 #include <string.h>
 
@@ -57,11 +59,13 @@ extern volatile unsigned char usart1_have_data;
 extern volatile unsigned char rx1buff[];
 extern volatile unsigned char * prx1;
 
+extern resp_t PortonKirnoCodes (porton_kirno_codes_t *);
 
 // Globals ---------------------------------------------------------------------
 
 
 // Private Module Functions ----------------------------------------------------
+
 
 
 // Module Functions ------------------------------------------------------------
@@ -255,6 +259,74 @@ void FuncFactoryTest (void)
             }
             break;
 
+
+        default:
+            test_state = TEST_INIT;
+            break;
+        }
+
+        UpdateBuzzer();
+
+    }
+}
+
+
+void FuncFactoryTest_Only_Rf (void)    
+{
+    resp_t resp = resp_continue;
+    porton_kirno_codes_t my_codes;
+
+    // unsigned char switches = 0;
+    // unsigned char last_switches = 0;
+    // unsigned char usart_error_cnt = 0;
+    TestState_e test_state = TEST_INIT;
+    Display_ResetSM();
+
+    // for test on rf_pin
+    unsigned char rf_pin_last = 0;
+    unsigned short rf_pin_changes = 0;
+
+    // para rx codes?
+    TIM_16_Init();
+    
+    while (1)
+    {
+        switch (test_state)
+        {
+        case TEST_INIT:
+            Display_ShowNumbers(0);
+            BuzzerCommands(BUZZER_SHORT_CMD, 1);
+            timer_standby = 900;
+            test_state = TEST_CHECK_RF;
+            break;
+
+        case TEST_CHECK_RF:
+            if (!timer_standby)
+            {
+		if (rf_pin_changes > 40)
+                    Display_ShowNumbers(1);
+                else
+                    Display_ShowNumbers(0);
+
+		rf_pin_changes = 0;
+		timer_standby = 500;
+            }
+
+            if (rf_pin_last != RX_CODE)
+            {
+                rf_pin_last = RX_CODE;
+                rf_pin_changes++;
+            }
+
+	    // rx codes
+	    resp = PortonKirnoCodes(&my_codes);
+            
+            if (resp == resp_ok)
+	    {
+		Display_ShowNumbers(2);
+		timer_standby = 2000;
+	    }
+            break;            
 
         default:
             test_state = TEST_INIT;

@@ -33,8 +33,9 @@
 #endif
 
 // #define PROGRAMA_NORMAL
-#define PROGRAMA_DE_BUCLE
+// #define PROGRAMA_DE_BUCLE
 // #define PROGRAMA_FACTORY_TEST
+#define PROGRAMA_FACTORY_TEST_ONLY_RF
 // #define PROGRAMA_DE_GESTION
 // #define PROGRAMA_PORTON_KIRNO
 // #define PROGRAMA_CHICKEN_BUCLE    //boton 1, 2, 3, el 4 apaga
@@ -113,6 +114,9 @@
 #endif
 #ifdef PROGRAMA_FACTORY_TEST
 #define KIND_OF_PROGRAM "Panel con Programa de testeo en fabrica\r\n"
+#endif
+#ifdef PROGRAMA_FACTORY_TEST_ONLY_RF
+#define KIND_OF_PROGRAM "Panel con Programa de testeo en fabrica - solo para Rf -\r\n"
 #endif
 #ifdef PROGRAMA_DE_GESTION
 #define KIND_OF_PROGRAM "Programa de Gestion para Grabar SST\r\n"

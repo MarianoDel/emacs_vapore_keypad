@@ -21,6 +21,7 @@
 
 // Exported Module Functions ---------------------------------------------------
 void FuncFactoryTest (void);
+void FuncFactoryTest_Only_Rf (void);
 
 
 #endif    /* _FACTORY_TEST_H_ */

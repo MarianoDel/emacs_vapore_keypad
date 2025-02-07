@@ -231,7 +231,7 @@ int main(void)
         SysTickError();
 
 
-#ifndef PROGRAMA_FACTORY_TEST
+#if (!defined PROGRAMA_FACTORY_TEST) && (!defined PROGRAMA_FACTORY_TEST_ONLY_RF)
     Wait_ms(2000);
 #endif
 
@@ -240,7 +240,7 @@ int main(void)
     TIM_1_Init();
 
     //para codigos
-#ifndef PROGRAMA_PORTON_KIRNO
+#if (!defined PROGRAMA_PORTON_KIRNO) && (!defined PROGRAMA_FACTORY_TEST_ONLY_RF)
     RxCode();	//trabo la interrupcion
     TIM_14_Init();
 #endif
@@ -340,6 +340,11 @@ int main(void)
 #ifdef PROGRAMA_FACTORY_TEST
 
     FuncFactoryTest();
+
+#endif
+#ifdef PROGRAMA_FACTORY_TEST_ONLY_RF
+
+    FuncFactoryTest_Only_Rf();
 
 #endif
     //--- FIN PROGRAMA DE PRUEBAS EN FABRICA ---//
